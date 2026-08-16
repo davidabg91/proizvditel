@@ -68,76 +68,31 @@ export function PaymentForm({ initial }: { initial: Initial }) {
   function save() {
     setStatus(null);
     startTransition(async () => {
-      const res = await updatePayment({
-        acceptsBankTransfer: f.acceptsBankTransfer,
-        bankName: f.bankName.trim(),
-        bankIban: f.bankIban.trim(),
-        bankHolder: f.bankHolder.trim(),
-        acceptsRevolut: f.acceptsRevolut,
-        revolutLink: f.revolutLink.trim(),
-        acceptsCod: f.acceptsCod,
-        codNote: f.codNote.trim(),
-      });
-      if (res.ok) {
-        setStatus("saved");
-        router.refresh();
-      } else {
-        setStatus(res.error);
+      try {
+        const res = await updatePayment({
+          acceptsBankTransfer: false,
+          bankName: "",
+          bankIban: "",
+          bankHolder: "",
+          acceptsRevolut: false,
+          revolutLink: "",
+          acceptsCod: f.acceptsCod,
+          codNote: f.codNote.trim(),
+        });
+        if (res.ok) {
+          setStatus("saved");
+          router.refresh();
+        } else {
+          setStatus(res.error);
+        }
+      } catch {
+        setStatus("Грешка при запазването.");
       }
     });
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <MethodToggle
-        enabled={f.acceptsRevolut}
-        onToggle={(v) => set({ acceptsRevolut: v })}
-        title="Revolut"
-        description="Оставете линк към профила си в Revolut. Клиентът натиска бутона и попълва плащането директно."
-      >
-        <Field
-          label="Линк към Revolut"
-          description="напр. https://revolut.me/vashiyat-profil"
-        >
-          <Input
-            value={f.revolutLink}
-            onChange={(e) => set({ revolutLink: e.target.value })}
-            placeholder="https://revolut.me/…"
-          />
-        </Field>
-      </MethodToggle>
-
-      <MethodToggle
-        enabled={f.acceptsBankTransfer}
-        onToggle={(v) => set({ acceptsBankTransfer: v })}
-        title="Банков превод"
-        description="Данните за банковата ви сметка, за да получавате преводи директно."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Титуляр на сметката">
-            <Input
-              value={f.bankHolder}
-              onChange={(e) => set({ bankHolder: e.target.value })}
-              placeholder="Име на титуляра"
-            />
-          </Field>
-          <Field label="Банка">
-            <Input
-              value={f.bankName}
-              onChange={(e) => set({ bankName: e.target.value })}
-              placeholder="напр. ОББ"
-            />
-          </Field>
-        </div>
-        <Field label="IBAN">
-          <Input
-            value={f.bankIban}
-            onChange={(e) => set({ bankIban: e.target.value })}
-            placeholder="BG00 XXXX 0000 0000 0000 00"
-          />
-        </Field>
-      </MethodToggle>
-
       <MethodToggle
         enabled={f.acceptsCod}
         onToggle={(v) => set({ acceptsCod: v })}

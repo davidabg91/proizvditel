@@ -40,8 +40,6 @@ export function OrderBox({
 
   const methods: string[] = [];
   if (info?.card) methods.push("Карта");
-  if (info?.payment?.acceptsRevolut) methods.push("Revolut");
-  if (info?.payment?.acceptsBankTransfer) methods.push("Банков превод");
   if (info?.payment?.acceptsCod) methods.push("Наложен платеж");
 
   const message = [
