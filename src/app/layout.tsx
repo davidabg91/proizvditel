@@ -28,8 +28,8 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "производител.net — Направо от нивата",
-    template: "%s · производител.net",
+    default: "Производител.net — Направо от нивата",
+    template: "%s · Производител.net",
   },
   description:
     "Платформа за българските земеделски производители. Регистрирайте стопанството си, представете продукцията си и продавайте директно на клиентите.",
@@ -42,15 +42,15 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    siteName: "производител.net",
-    title: "производител.net — Направо от нивата",
+    siteName: "Производител.net",
+    title: "Производител.net — Направо от нивата",
     description:
       "Прясна, местна продукция директно от българския производител.",
     locale: "bg_BG",
   },
   twitter: {
     card: "summary_large_image",
-    title: "производител.net — Направо от нивата",
+    title: "Производител.net — Направо от нивата",
     description:
       "Прясна, местна продукция директно от българския производител.",
   },

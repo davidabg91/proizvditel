@@ -119,7 +119,7 @@ export default async function Home() {
             <div className="w-full max-w-[520px] overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface shadow-lg ring-1 ring-border/50">
               <Image
                 src="/logo3.png"
-                alt="производител.net — от производителя, директно за вас"
+                alt="Производител.net — от производителя, директно за вас"
                 width={1536}
                 height={1024}
                 priority

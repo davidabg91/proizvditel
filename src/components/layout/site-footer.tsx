@@ -63,7 +63,7 @@ export function SiteFooter() {
           ))}
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} производител.net. Всички права запазени.</p>
+          <p>© {new Date().getFullYear()} Производител.net. Всички права запазени.</p>
           <div className="flex gap-6">
             <Link href="/usloviya" className="hover:text-foreground">
               Общи условия

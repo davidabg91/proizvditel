@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Марката „производител.net" — икона (logo.png) + wordmark.
+ * Марката „Производител.net" — икона (logo.png) + wordmark.
  */
 export function Logo({
   className,
@@ -18,7 +18,7 @@ export function Logo({
     <Link
       href={href}
       className={cn("group inline-flex items-center gap-2.5", className)}
-      aria-label="производител.net — начало"
+      aria-label="Производител.net — начало"
     >
       <Image
         src="/logo.png"
@@ -30,7 +30,7 @@ export function Logo({
       />
       <span className="flex flex-col leading-none">
         <span className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          производител
+          Производител
           <span className="text-accent">.net</span>
         </span>
         {withTagline ? (
