@@ -26,11 +26,19 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     });
 
     const blob = Array.isArray(result) ? result[0] : result;
+    if (!blob || (blob as Blob).size === 0) {
+      throw new Error("Празен резултат от конверсията.");
+    }
     const newName = file.name.replace(/\.hei[cf]$/i, ".jpg");
-    return new File([blob], newName, { type: "image/jpeg" });
+    return new File([blob as Blob], newName, { type: "image/jpeg" });
   } catch (error) {
-    console.warn("Неуспешно HEIC конвертиране с heic2any, продължаваме с оригинала:", error);
-    return file;
+    console.error("Неуспешно HEIC конвертиране:", error);
+    // Не качваме оригиналния HEIC — браузърите не го показват.
+    throw new Error(
+      "HEIC снимката не можа да се обработи. Съвет: на iPhone включете " +
+        "Настройки → Камера → Формати → Най-съвместим (снима в JPG), " +
+        "или качете снимката като JPG/PNG.",
+    );
   }
 }
 
