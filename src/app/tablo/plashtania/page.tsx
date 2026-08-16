@@ -1,22 +1,38 @@
 import { redirect } from "next/navigation";
 import { getCurrentProducer } from "@/lib/session";
 import { PaymentForm } from "./payment-form";
+import { StripeConnect } from "./stripe-connect";
 
-export default async function PaymentPage() {
+export default async function PaymentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stripe?: string }>;
+}) {
   const producer = await getCurrentProducer();
   if (!producer) redirect("/vhod");
 
   const p = producer.payment;
+  const { stripe: stripeParam } = await searchParams;
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-semibold sm:text-3xl">Начини на плащане</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Изберете как клиентите да ви плащат. Плащанията се извършват директно
-          между вас и клиента — платформата не обработва пари.
+          Изберете как клиентите да ви плащат. Плащането с карта минава през Stripe
+          и постъпва директно при вас; останалите методи се уговарят директно с
+          клиента.
         </p>
       </div>
+
+      <div className="mb-8">
+        <StripeConnect
+          hasAccount={!!producer.stripeAccountId}
+          chargesEnabled={producer.stripeChargesEnabled}
+          justReturned={stripeParam === "return"}
+        />
+      </div>
+
       <PaymentForm
         initial={{
           acceptsBankTransfer: p?.acceptsBankTransfer ?? false,

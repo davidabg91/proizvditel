@@ -139,6 +139,10 @@ export default function CartPage() {
                     orderLines={group.items.map(
                       (i) => `${i.title} × ${i.qty} ${i.unit}`,
                     )}
+                    items={group.items.map((i) => ({
+                      listingId: i.listingId,
+                      qty: i.qty,
+                    }))}
                   />
                 </div>
 

@@ -8,7 +8,13 @@ export async function GET(
   const { slug } = await params;
   const producer = await prisma.producer.findUnique({
     where: { slug },
-    select: { farmName: true, phone: true, contactEmail: true, payment: true },
+    select: {
+      farmName: true,
+      phone: true,
+      contactEmail: true,
+      stripeChargesEnabled: true,
+      payment: true,
+    },
   });
   if (!producer) {
     return NextResponse.json({ error: "Не е намерен." }, { status: 404 });
@@ -19,6 +25,7 @@ export async function GET(
     farmName: producer.farmName,
     phone: producer.phone,
     contactEmail: producer.contactEmail,
+    card: producer.stripeChargesEnabled,
     payment: {
       acceptsBankTransfer: p?.acceptsBankTransfer ?? false,
       bankName: p?.bankName ?? null,

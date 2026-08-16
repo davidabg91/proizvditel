@@ -35,6 +35,7 @@ model User {
   forumTopics   ForumTopic[]   @relation("ForumTopics")
   forumPosts    ForumPost[]    @relation("ForumPosts")
   blogPosts     BlogPost[]     @relation("BlogPosts")
+  orders        Order[]        @relation("CustomerOrders")
 
   @@index([role])
 }
@@ -78,6 +79,10 @@ model Producer {
   // Доставчици, с които работи (кодове, разделени със запетая): econt,speedy,pigeon,personal
   deliveryProviders String?
 
+  // Stripe Connect — плащане с карта директно към производителя
+  stripeAccountId      String? // acct_... на свързания акаунт
+  stripeChargesEnabled Boolean @default(false) // може ли да приема плащания
+
   // Статистика
   visits      Int   @default(0)
   ratingAvg   Float @default(0)
@@ -98,6 +103,7 @@ model Producer {
   purchases       Purchase[]
   partnersSelected ProducerPartner[] @relation("PartnerFrom")
   partneredBy      ProducerPartner[] @relation("PartnerTo")
+  orders          Order[]
 
   @@index([region])
   @@index([town])
@@ -280,6 +286,43 @@ model ProducerPartner {
 
   @@unique([producerId, partnerId])
   @@index([partnerId])
+}
+
+// ─────────────────────────────────────────────
+//  Поръчки (платени с карта през Stripe)
+// ─────────────────────────────────────────────
+
+model Order {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   User?    @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: SetNull)
+
+  stripeSessionId String  @unique
+  paymentIntentId String?
+  amountTotal     Int // в стотинки
+  applicationFee  Int     @default(0) // комисиона на платформата (стотинки)
+  currency        String  @default("bgn")
+  email           String?
+  status          String  @default("paid")
+
+  createdAt DateTime @default(now())
+
+  items OrderItem[]
+
+  @@index([producerId])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  title     String
+  unitPrice Int // стотинки
+  qty       Int
 }
 
 // ─────────────────────────────────────────────
