@@ -46,22 +46,17 @@ export type CropInput = z.infer<typeof cropSchema>;
 export const profileSchema = z.object({
   farmName: z.string().trim().min(2, "Въведете име на стопанството").max(120),
   ownerName: z.string().trim().min(2, "Въведете име на собственика").max(120),
-  description: z.string().trim().max(2000).optional().or(z.literal("")),
-  urn: z.string().trim().max(40).optional().or(z.literal("")),
-  region: z.enum(REGIONS).optional().or(z.literal("")),
+  description: z.string().trim().max(4000).optional().or(z.literal("")),
+  urn: z.string().trim().max(100).optional().or(z.literal("")),
+  region: z.string().trim().optional().or(z.literal("")),
   town: z.string().trim().max(120).optional().or(z.literal("")),
-  phone: z.string().trim().max(40).optional().or(z.literal("")),
-  contactEmail: z
-    .string()
-    .trim()
-    .email("Невалиден имейл")
-    .optional()
-    .or(z.literal("")),
-  website: z.string().trim().max(200).optional().or(z.literal("")),
+  phone: z.string().trim().max(60).optional().or(z.literal("")),
+  contactEmail: z.string().trim().optional().or(z.literal("")),
+  website: z.string().trim().max(300).optional().or(z.literal("")),
   startedYear: z.number().int().min(1900).max(currentYear).optional().nullable(),
   totalDecares: z.number().min(0).max(1_000_000).optional().nullable(),
   sharedDelivery: z.boolean().default(false),
-  deliveryProviders: z.array(z.string().max(20)).max(10).default([]),
+  deliveryProviders: z.array(z.string()).default([]),
   logoUrl: z.string().trim().optional().or(z.literal("")),
   coverUrl: z.string().trim().optional().or(z.literal("")),
 });
