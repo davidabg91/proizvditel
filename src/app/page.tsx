@@ -110,13 +110,13 @@ export default async function Home() {
               className="pointer-events-none absolute bottom-8 right-4 -z-10 hidden h-56 w-56 rounded-full bg-accent/20 blur-3xl lg:block"
             />
 
-            {/* Брандов панел с лого2 — скрит на мобилни устройства */}
-            <div className="hidden w-full max-w-[460px] overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-lg ring-1 ring-border/70 lg:block">
+            {/* Лого2 — вградено, без фон; скрито на мобилни устройства */}
+            <div className="hidden w-full max-w-[500px] lg:block">
               <Image
-                src="/logo2.png"
+                src="/logo2-transparent.png"
                 alt="производител.net — от производителя, директно за вас"
-                width={560}
-                height={560}
+                width={600}
+                height={600}
                 priority
                 className="h-auto w-full object-contain"
               />
