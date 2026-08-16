@@ -51,14 +51,19 @@ export const profileSchema = z.object({
   region: z.enum(REGIONS).optional().or(z.literal("")),
   town: z.string().trim().max(120).optional().or(z.literal("")),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
-  contactEmail: z.string().trim().email("Невалиден имейл").optional().or(z.literal("")),
+  contactEmail: z
+    .string()
+    .trim()
+    .email("Невалиден имейл")
+    .optional()
+    .or(z.literal("")),
   website: z.string().trim().max(200).optional().or(z.literal("")),
   startedYear: z.number().int().min(1900).max(currentYear).optional().nullable(),
   totalDecares: z.number().min(0).max(1_000_000).optional().nullable(),
   sharedDelivery: z.boolean().default(false),
   deliveryProviders: z.array(z.string().max(20)).max(10).default([]),
-  logoUrl: z.string().trim().max(400).optional().or(z.literal("")),
-  coverUrl: z.string().trim().max(400).optional().or(z.literal("")),
+  logoUrl: z.string().trim().optional().or(z.literal("")),
+  coverUrl: z.string().trim().optional().or(z.literal("")),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
@@ -74,7 +79,7 @@ export const listingSchema = z.object({
   available: z.boolean().default(true),
   isOffer: z.boolean().default(false),
   stockNote: z.string().trim().max(200).optional().or(z.literal("")),
-  photos: z.array(z.string().trim().max(400)).max(8).default([]),
+  photos: z.array(z.string().trim()).max(8).default([]),
 });
 
 export type ListingInput = z.infer<typeof listingSchema>;
@@ -124,7 +129,7 @@ export const blogPostSchema = z.object({
   category: z.enum(BLOG_CATEGORIES),
   excerpt: z.string().trim().max(300).optional().or(z.literal("")),
   body: z.string().trim().min(30, "Съдържанието е твърде кратко").max(20000),
-  coverUrl: z.string().trim().max(400).optional().or(z.literal("")),
+  coverUrl: z.string().trim().optional().or(z.literal("")),
   published: z.boolean().default(true),
 });
 

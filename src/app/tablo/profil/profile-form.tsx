@@ -45,28 +45,33 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
   function save() {
     setStatus(null);
     startTransition(async () => {
-      const res = await updateProfile({
-        farmName: f.farmName.trim(),
-        ownerName: f.ownerName.trim(),
-        description: f.description.trim(),
-        urn: f.urn.trim(),
-        region: (f.region as (typeof REGIONS)[number]) || "",
-        town: f.town.trim(),
-        phone: f.phone.trim(),
-        contactEmail: f.contactEmail.trim(),
-        website: f.website.trim(),
-        startedYear: numOrNull(f.startedYear) as number | null,
-        totalDecares: numOrNull(f.totalDecares) as number | null,
-        sharedDelivery: f.sharedDelivery,
-        deliveryProviders: f.deliveryProviders,
-        logoUrl: f.logoUrl ?? "",
-        coverUrl: f.coverUrl ?? "",
-      });
-      if (res.ok) {
-        setStatus("saved");
-        router.refresh();
-      } else {
-        setStatus(res.error);
+      try {
+        const res = await updateProfile({
+          farmName: f.farmName.trim(),
+          ownerName: f.ownerName.trim(),
+          description: f.description.trim(),
+          urn: f.urn.trim(),
+          region: (f.region as (typeof REGIONS)[number]) || "",
+          town: f.town.trim(),
+          phone: f.phone.trim(),
+          contactEmail: f.contactEmail.trim(),
+          website: f.website.trim(),
+          startedYear: numOrNull(f.startedYear) as number | null,
+          totalDecares: numOrNull(f.totalDecares) as number | null,
+          sharedDelivery: f.sharedDelivery,
+          deliveryProviders: f.deliveryProviders,
+          logoUrl: f.logoUrl ?? "",
+          coverUrl: f.coverUrl ?? "",
+        });
+        if (res.ok) {
+          setStatus("saved");
+          router.refresh();
+        } else {
+          setStatus(res.error);
+        }
+      } catch (e) {
+        console.error("Save profile error:", e);
+        setStatus("Възникна грешка при запазването. Моля, опитайте отново.");
       }
     });
   }
