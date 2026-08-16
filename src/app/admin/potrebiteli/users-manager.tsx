@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { setUserBanned, verifyProducerUrn } from "../actions";
+import { DocumentPreviewModal } from "@/components/media/document-preview-modal";
 
 export type UserRow = {
   id: string;
@@ -119,6 +120,7 @@ export function UsersManager({ users }: { users: UserRow[] }) {
 function UserItem({ user }: { user: UserRow }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [showDocModal, setShowDocModal] = useState(false);
 
   return (
     <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -173,16 +175,15 @@ function UserItem({ user }: { user: UserRow }) {
             <span>Собственик: {user.name}</span>
           )}
 
-          {/* Документ за верификация */}
+          {/* Документ за верификация - Отваря модален прозорец */}
           {user.urnDocumentUrl && (
-            <a
-              href={user.urnDocumentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-primary hover:underline inline-flex items-center gap-1"
+            <button
+              type="button"
+              onClick={() => setShowDocModal(true)}
+              className="font-semibold text-primary hover:underline inline-flex items-center gap-1 bg-primary-soft/50 px-2 py-0.5 rounded border border-primary/20"
             >
               <span>📄 Преглед на регистрационна карта</span>
-            </a>
+            </button>
           )}
 
           {/* Бърза справка в официален регистър */}
@@ -250,6 +251,45 @@ function UserItem({ user }: { user: UserRow }) {
           {user.banned ? "Отблокирай" : "Блокирай"}
         </button>
       </div>
+
+      {/* Модален прозорец за преглед на картата */}
+      {showDocModal && user.urnDocumentUrl && (
+        <DocumentPreviewModal
+          url={user.urnDocumentUrl}
+          title={`Регистрационна карта — ${user.farmName || user.name} (УРН: ${user.urn || "—"})`}
+          onClose={() => setShowDocModal(false)}
+          actions={
+            user.producerId && (
+              <>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await verifyProducerUrn(user.producerId!, !user.urnVerified);
+                      setShowDocModal(false);
+                      router.refresh();
+                    })
+                  }
+                  className={[
+                    "rounded-[var(--radius-sm)] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors",
+                    user.urnVerified ? "bg-danger hover:bg-danger/90" : "bg-success hover:bg-success/90",
+                  ].join(" ")}
+                >
+                  {user.urnVerified ? "Отмени верификацията на УРН" : "✓ Одобри и верифицирай УРН"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDocModal(false)}
+                  className="rounded-[var(--radius-sm)] border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface-muted transition-colors"
+                >
+                  Затвори
+                </button>
+              </>
+            )
+          }
+        />
+      )}
     </li>
   );
 }

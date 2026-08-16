@@ -11,6 +11,7 @@ import { registerProducer } from "./actions";
 
 import { uploadFile } from "@/lib/upload";
 import { validateUrnFormat } from "@/lib/validators";
+import { DocumentPreviewModal } from "@/components/media/document-preview-modal";
 
 type Crop = {
   name: string;
@@ -45,6 +46,7 @@ export function RegisterWizard() {
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showDocModal, setShowDocModal] = useState(false);
 
   // Акаунт
   const [farmName, setFarmName] = useState("");
@@ -305,6 +307,13 @@ export function RegisterWizard() {
               {urnDocumentUrl ? (
                 <div className="flex items-center gap-2 rounded bg-surface px-3 py-1.5 text-xs font-medium text-success border border-success/30">
                   <span>✓ Документът е качен успешно</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowDocModal(true)}
+                    className="font-semibold text-primary hover:underline ml-1"
+                  >
+                    (Преглед)
+                  </button>
                   <button
                     type="button"
                     onClick={() => setUrnDocumentUrl("")}
@@ -612,6 +621,14 @@ export function RegisterWizard() {
           </Button>
         )}
       </div>
+
+      {showDocModal && urnDocumentUrl && (
+        <DocumentPreviewModal
+          url={urnDocumentUrl}
+          title="Регистрационна карта — Преглед"
+          onClose={() => setShowDocModal(false)}
+        />
+      )}
     </div>
   );
 }

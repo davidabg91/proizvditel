@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { ImageUploader } from "@/components/media/image-uploader";
+import { DocumentPreviewModal } from "@/components/media/document-preview-modal";
 import { REGIONS, DELIVERY_PROVIDERS } from "@/lib/constants";
 import { updateProfile } from "./actions";
 
@@ -44,6 +45,7 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | "saved" | string>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
 
   const [f, setF] = useState(initial);
   const set = (patch: Partial<InitialProfile>) =>
@@ -304,14 +306,13 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
                 </label>
                 {f.urnDocumentUrl ? (
                   <div className="flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-success/30 bg-success/5 p-2.5 text-xs text-foreground">
-                    <a
-                      href={f.urnDocumentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => setShowDocModal(true)}
                       className="font-medium text-primary hover:underline flex items-center gap-1.5 truncate"
                     >
                       <span>📄 Преглед на качената карта</span>
-                    </a>
+                    </button>
                     <button
                       type="button"
                       onClick={() => set({ urnDocumentUrl: "" })}
@@ -475,6 +476,14 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           {pending ? "Запазваме…" : "Запази промените"}
         </Button>
       </div>
+
+      {showDocModal && f.urnDocumentUrl && (
+        <DocumentPreviewModal
+          url={f.urnDocumentUrl}
+          title={`Регистрационна карта — ${f.farmName || f.ownerName}`}
+          onClose={() => setShowDocModal(false)}
+        />
+      )}
     </div>
   );
 }
