@@ -1,0 +1,18 @@
+import { ComingSoon } from "@/components/layout/coming-soon";
+
+export const metadata = { title: "Новини и събития" };
+
+export default function NewsPage() {
+  return (
+    <ComingSoon
+      eyebrow="Новини"
+      title="Събития за фермери"
+      description="Всяка седмица тук ще намирате актуални събития, изложения и обучения за земеделски производители в България, събрани автоматично от мрежата."
+      bullets={[
+        "Панаири, изложения и борси",
+        "Обучения и семинари",
+        "Програми и субсидии за земеделие",
+      ]}
+    />
+  );
+}

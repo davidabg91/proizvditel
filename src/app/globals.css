@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  производител.net — Дизайн система
+  Топла, издържана палитра за земеделска платформа.
+  Дълбоко горско зелено + кремаво + житна охра.
+*/
+
+@theme {
+  /* Неутрални (топли) */
+  --color-background: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f0ece3;
+  --color-foreground: #1b1e1a;
+  --color-muted-foreground: #5b6157;
+  --color-border: #e4e0d6;
+  --color-border-strong: #d3cdbf;
+
+  /* Основен — дълбоко горско зелено */
+  --color-primary: #1f4a38;
+  --color-primary-hover: #163a2b;
+  --color-primary-soft: #e8efe9;
+  --color-primary-foreground: #f7f5f0;
+
+  /* Акцент — житна охра */
+  --color-accent: #a9752a;
+  --color-accent-hover: #8f6122;
+  --color-accent-soft: #f4ecdb;
+  --color-accent-foreground: #ffffff;
+
+  /* Състояния */
+  --color-success: #2f7d54;
+  --color-success-soft: #e6f2ea;
+  --color-danger: #b3402e;
+  --color-danger-soft: #f7e7e3;
+  --color-info: #2b5b7a;
+
+  /* Типография */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", ui-serif, Georgia, serif;
+
+  /* Радиуси */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  /* Сенки — меки, естествени */
+  --shadow-xs: 0 1px 2px 0 rgb(27 30 26 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(27 30 26 / 0.06), 0 1px 2px -1px rgb(27 30 26 / 0.04);
+  --shadow-md: 0 4px 16px -4px rgb(27 30 26 / 0.08), 0 2px 6px -2px rgb(27 30 26 / 0.05);
+  --shadow-lg: 0 12px 32px -8px rgb(27 30 26 / 0.12), 0 4px 12px -4px rgb(27 30 26 / 0.06);
+
+  /* Ширина на съдържанието */
+  --container-page: 76rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-foreground);
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* По-мек, естествен скролбар */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 999px;
+    border: 3px solid var(--color-background);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted-foreground);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: var(--container-page);
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  /* Фина текстура/винетка за hero секции */
+  .surface-grain {
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 70%);
+  }
+
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+}
+
+/* Движеща се лента (тикер) за времето — без скролбар */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll linear infinite;
+}
+
+.ticker-clip:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
 }

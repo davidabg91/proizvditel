@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Качени файлове от потребители
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Локална база данни
+/prisma/dev.db
+/prisma/dev.db-journal

@@ -1,0 +1,363 @@
+// Нива — схема на базата данни
+// Локална разработка: SQLite. Структурата е портируема към PostgreSQL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+//  Потребители и автентикация
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  // "producer" — земеделски производител | "customer" — купувач | "admin"
+  role         String   @default("producer")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  producer Producer?
+  reviews  Review[]  @relation("ReviewAuthor")
+
+  conversations Conversation[] @relation("CustomerConversations")
+  messages      Message[]      @relation("SentMessages")
+  purchases     Purchase[]     @relation("CustomerPurchases")
+  forumTopics   ForumTopic[]   @relation("ForumTopics")
+  forumPosts    ForumPost[]    @relation("ForumPosts")
+  blogPosts     BlogPost[]     @relation("BlogPosts")
+
+  @@index([role])
+}
+
+// ─────────────────────────────────────────────
+//  Профил на производителя
+// ─────────────────────────────────────────────
+
+model Producer {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Основни данни
+  urn         String? // Уникален регистрационен номер (зелен картон на ЗП)
+  farmName    String
+  slug        String  @unique
+  ownerName   String
+  description String? // Кратко представяне на стопанството
+
+  // Локация
+  region String? // Област
+  town   String? // Град / село
+
+  // Контакти
+  phone        String?
+  contactEmail String?
+  website      String?
+
+  // Обобщени данни от въпросника
+  startedYear  Int? // От коя година се занимават със земеделие
+  totalDecares Float? // Обща обработваема площ (декари)
+
+  // Визуална идентичност
+  logoUrl  String?
+  coverUrl String? // Снимка на площта (напр. градина) за корица
+
+  // Съвместно пазаруване / доставка
+  sharedDelivery Boolean @default(false)
+
+  // Доставчици, с които работи (кодове, разделени със запетая): econt,speedy,pigeon,personal
+  deliveryProviders String?
+
+  // Статистика
+  visits      Int   @default(0)
+  ratingAvg   Float @default(0)
+  ratingCount Int   @default(0)
+
+  // Настройка дали профилът е публикуван
+  published Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  crops         Crop[]
+  photos        Photo[]
+  listings      ProductListing[]
+  payment       PaymentSettings?
+  reviews         Review[]          @relation("ReviewTarget")
+  conversations   Conversation[]
+  purchases       Purchase[]
+  partnersSelected ProducerPartner[] @relation("PartnerFrom")
+  partneredBy      ProducerPartner[] @relation("PartnerTo")
+
+  @@index([region])
+  @@index([town])
+  @@index([sharedDelivery])
+}
+
+// Култура / продукция (какво, от кога, сортове, декари, годишна продукция)
+model Crop {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  name        String // Напр. "Ягоди", "Домати"
+  category    String? // плодове / зеленчуци / зърнени / млечни / мед / друго
+  varieties   String? // Сортове или видове (свободен текст)
+  sinceYear   Int? // От коя година се произвежда тази култура
+  decares     Float? // Площ за тази култура (декари)
+  annualYield Float? // Годишна продукция (количество)
+  yieldUnit   String? // Мерна единица: кг / тона / бр / литра
+  notes       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([producerId])
+}
+
+// Снимки на профила (площ, продукти, галерия)
+model Photo {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  url     String
+  // "field" — площ/градина | "product" — продукция | "gallery" — общи
+  type    String  @default("gallery")
+  caption String?
+  sort    Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([producerId, type])
+}
+
+// ─────────────────────────────────────────────
+//  Каталог с продукти за продажба
+// ─────────────────────────────────────────────
+
+model ProductListing {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  slug        String
+  title       String
+  description String?
+  category    String?
+
+  price    Float
+  oldPrice Float? // За оферти / намаления
+  unit     String  @default("кг") // кг / бр / връзка / литър / кашон
+  currency String  @default("BGN")
+
+  available Boolean @default(true)
+  isOffer   Boolean @default(false)
+  stockNote String? // Напр. сезонна наличност
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos ListingPhoto[]
+
+  @@unique([producerId, slug])
+  @@index([category])
+  @@index([available])
+}
+
+model ListingPhoto {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   ProductListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  url  String
+  sort Int    @default(0)
+
+  @@index([listingId])
+}
+
+// ─────────────────────────────────────────────
+//  Начини на плащане
+// ─────────────────────────────────────────────
+
+model PaymentSettings {
+  id         String   @id @default(cuid())
+  producerId String   @unique
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  // Банков превод
+  acceptsBankTransfer Boolean @default(false)
+  bankName            String?
+  bankIban            String?
+  bankHolder          String? // Титуляр на сметката
+
+  // Revolut
+  acceptsRevolut Boolean @default(false)
+  revolutLink    String? // Линк към Revolut профил / .me страница
+
+  // Наложен платеж
+  acceptsCod Boolean @default(false)
+  codNote    String? // Напр. с коя куриерска фирма
+
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+//  Оценки (само от купувачи)
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//  Съобщения (чат клиент → производител)
+// ─────────────────────────────────────────────
+
+model Conversation {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation("CustomerConversations", fields: [customerId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+
+  messages Message[]
+
+  @@unique([producerId, customerId])
+  @@index([customerId])
+  @@index([producerId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  body   String
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+// Потвърдена покупка — производителят потвърждава, че клиентът е купувал от него.
+// Отключва възможността този клиент да остави оценка.
+model Purchase {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation("CustomerPurchases", fields: [customerId], references: [id], onDelete: Cascade)
+
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([producerId, customerId])
+  @@index([producerId])
+  @@index([customerId])
+}
+
+// Насочен избор за партньорство. Взаимен избор (A→B и B→A) = активно партньорство.
+model ProducerPartner {
+  id         String   @id @default(cuid())
+  producerId String
+  partnerId  String
+  producer   Producer @relation("PartnerFrom", fields: [producerId], references: [id], onDelete: Cascade)
+  partner    Producer @relation("PartnerTo", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([producerId, partnerId])
+  @@index([partnerId])
+}
+
+// ─────────────────────────────────────────────
+//  Блог
+// ─────────────────────────────────────────────
+
+model BlogPost {
+  id       String  @id @default(cuid())
+  title    String
+  slug     String  @unique
+  excerpt  String?
+  body     String
+  coverUrl String?
+  category String
+
+  authorId String
+  author   User   @relation("BlogPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([published])
+}
+
+// ─────────────────────────────────────────────
+//  Форум
+// ─────────────────────────────────────────────
+
+model ForumTopic {
+  id       String @id @default(cuid())
+  title    String
+  slug     String @unique
+  category String
+  body     String
+
+  authorId String
+  author   User   @relation("ForumTopics", fields: [authorId], references: [id], onDelete: Cascade)
+
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastReplyAt DateTime @default(now())
+
+  posts ForumPost[]
+
+  @@index([category])
+  @@index([lastReplyAt])
+}
+
+model ForumPost {
+  id      String     @id @default(cuid())
+  topicId String
+  topic   ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("ForumPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([topicId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation("ReviewTarget", fields: [producerId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1..5
+  comment String?
+  // Дали покупката е потвърдена от производителя (тъй като плащането е извън платформата)
+  verified Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([producerId, authorId])
+  @@index([producerId])
+}
