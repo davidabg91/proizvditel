@@ -2,20 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-
-async function uploadFile(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error("Сървърна грешка при качването. Моля, опитайте отново.");
-  }
-  if (!res.ok) throw new Error(data?.error ?? "Грешка при качване.");
-  return data.url as string;
-}
+import { uploadFile } from "@/lib/upload";
 
 export function ImageUploader({
   value,
@@ -101,7 +88,7 @@ export function ImageUploader({
           </button>
         ) : (
           <span className="text-xs text-muted-foreground">
-            JPG, PNG или WEBP · макс. 6 MB
+            JPG, PNG, WEBP или HEIC
           </span>
         )}
       </div>
@@ -111,7 +98,7 @@ export function ImageUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,.HEIC,.HEIF"
         hidden
         onChange={(e) => handleFiles(e.target.files)}
       />

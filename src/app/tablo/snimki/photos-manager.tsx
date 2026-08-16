@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addPhoto, deletePhoto } from "./actions";
+import { uploadFile } from "@/lib/upload";
 
 export type PhotoRow = {
   id: string;
@@ -10,20 +11,6 @@ export type PhotoRow = {
   type: string;
   caption: string | null;
 };
-
-async function uploadFile(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error("Сървърна грешка при качването. Моля, опитайте отново.");
-  }
-  if (!res.ok) throw new Error(data?.error ?? "Грешка при качване.");
-  return data.url as string;
-}
 
 export function PhotosManager({ photos }: { photos: PhotoRow[] }) {
   const field = photos.filter((p) => p.type === "field");
@@ -132,7 +119,7 @@ function PhotoSection({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,.HEIC,.HEIF"
         multiple
         hidden
         onChange={(e) => onFiles(e.target.files)}

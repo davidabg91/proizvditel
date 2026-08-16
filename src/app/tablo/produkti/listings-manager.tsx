@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, UNITS } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 import { createListing, updateListing, deleteListing } from "./actions";
+import { uploadFile } from "@/lib/upload";
 
 export type ListingRow = {
   id: string;
@@ -202,20 +203,6 @@ function ListingDisplay({
   );
 }
 
-async function uploadFile(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error("Сървърна грешка при качването. Моля, опитайте отново.");
-  }
-  if (!res.ok) throw new Error(data?.error ?? "Грешка при качване.");
-  return data.url as string;
-}
-
 function ListingEditor({
   initial,
   onSubmit,
@@ -294,7 +281,7 @@ function ListingEditor({
           <input
             ref={inputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif,.HEIC,.HEIF"
             multiple
             hidden
             onChange={(e) => onFiles(e.target.files)}

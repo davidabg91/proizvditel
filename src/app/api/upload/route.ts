@@ -16,9 +16,13 @@ const ALLOWED = new Set([
   "image/gif",
   "image/heic",
   "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+  "image/x-heic",
+  "application/octet-stream",
 ]);
 
-const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
+const MAX_BYTES = 12 * 1024 * 1024; // 12 MB
 
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -29,8 +33,11 @@ const EXT: Record<string, string> = {
   "image/webp": "webp",
   "image/avif": "avif",
   "image/gif": "gif",
-  "image/heic": "heic",
-  "image/heif": "heif",
+  "image/heic": "jpg",
+  "image/heif": "jpg",
+  "image/heic-sequence": "jpg",
+  "image/heif-sequence": "jpg",
+  "image/x-heic": "jpg",
 };
 
 export async function POST(req: Request) {
@@ -58,22 +65,22 @@ export async function POST(req: Request) {
       const fileNameExt = file.name.split(".").pop()?.toLowerCase();
       if (
         fileNameExt &&
-        ["jpg", "jpeg", "png", "webp", "avif", "gif", "heic"].includes(fileNameExt)
+        ["jpg", "jpeg", "png", "webp", "avif", "gif", "heic", "heif"].includes(fileNameExt)
       ) {
-        ext = fileNameExt === "jpeg" ? "jpg" : fileNameExt;
+        ext = ["jpeg", "heic", "heif"].includes(fileNameExt) ? "jpg" : fileNameExt;
       }
     }
 
     if (!ext && (!mimeType || !ALLOWED.has(mimeType))) {
       return NextResponse.json(
-        { error: "Позволени са само изображения (JPG, PNG, WEBP, AVIF, GIF)." },
+        { error: "Позволени са само изображения (JPG, PNG, WEBP, AVIF, HEIC)." },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_BYTES) {
       return NextResponse.json(
-        { error: "Файлът е твърде голям (макс. 6 MB)." },
+        { error: "Файлът е твърде голям (макс. 12 MB)." },
         { status: 400 }
       );
     }
