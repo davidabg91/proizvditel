@@ -34,7 +34,7 @@ export default async function ProducersPage({
     orderBy: { createdAt: "desc" },
     take: 60,
     include: {
-      crops: { select: { name: true }, take: 3 },
+      crops: { select: { name: true }, take: 4 },
       _count: { select: { listings: { where: { available: true } } } },
     },
   });
@@ -43,6 +43,7 @@ export default async function ProducersPage({
     slug: p.slug,
     farmName: p.farmName,
     ownerName: p.ownerName,
+    description: p.description,
     town: p.town,
     region: p.region,
     logoUrl: p.logoUrl,
@@ -51,6 +52,8 @@ export default async function ProducersPage({
     coverPositionX: p.coverPositionX,
     coverScale: p.coverScale,
     urnVerified: p.urnVerified,
+    startedYear: p.startedYear,
+    totalDecares: p.totalDecares,
     ratingAvg: p.ratingAvg,
     ratingCount: p.ratingCount,
     sharedDelivery: p.sharedDelivery,
