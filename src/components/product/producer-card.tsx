@@ -72,10 +72,10 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
       </div>
 
       {/* Основно тяло */}
-      <div className="flex flex-1 flex-col p-5">
-        {/* Лого / Аватар, изнесен леко над съдържанието */}
-        <div className="-mt-12 mb-3 flex items-end justify-between">
-          <div className="h-16 w-16 overflow-hidden rounded-[var(--radius-lg)] border-2 border-surface bg-surface-muted shadow-md shrink-0">
+      <div className="flex flex-1 flex-col p-5 pt-4">
+        {/* Лого и рейтинг - чисто позиционирани под корицата */}
+        <div className="mb-3.5 flex items-center justify-between gap-3">
+          <div className="h-14 w-14 overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface-muted shadow-sm shrink-0">
             {producer.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={producer.logoUrl} alt="" className="h-full w-full object-cover" />
@@ -86,7 +86,7 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
             )}
           </div>
 
-          <div className="pb-1">
+          <div className="pb-0.5">
             <RatingStars value={producer.ratingAvg} count={producer.ratingCount} size="sm" />
           </div>
         </div>
