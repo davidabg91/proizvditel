@@ -20,11 +20,12 @@ export default async function ProducersPage({
   const where: Prisma.ProducerWhereInput = { published: true };
   if (sp.region) where.region = sp.region;
   if (sp.shared === "1") where.sharedDelivery = true;
-  if (sp.q) {
+  if (sp.q?.trim()) {
+    const query = sp.q.trim();
     where.OR = [
-      { farmName: { contains: sp.q } },
-      { description: { contains: sp.q } },
-      { crops: { some: { name: { contains: sp.q } } } },
+      { farmName: { contains: query, mode: "insensitive" } },
+      { description: { contains: query, mode: "insensitive" } },
+      { crops: { some: { name: { contains: query, mode: "insensitive" } } } },
     ];
   }
 

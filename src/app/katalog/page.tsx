@@ -33,12 +33,14 @@ export default async function CatalogPage({
   if (sp.region) {
     where.producer = { published: true, region: sp.region };
   }
-  if (sp.q) {
+  if (sp.q?.trim()) {
+    const query = sp.q.trim();
     where.OR = [
-      { title: { contains: sp.q } },
-      { description: { contains: sp.q } },
-      { category: { contains: sp.q } },
-      { producer: { farmName: { contains: sp.q } } },
+      { title: { contains: query, mode: "insensitive" } },
+      { description: { contains: query, mode: "insensitive" } },
+      { category: { contains: query, mode: "insensitive" } },
+      { producer: { farmName: { contains: query, mode: "insensitive" } } },
+      { producer: { crops: { some: { name: { contains: query, mode: "insensitive" } } } } },
     ];
   }
 
