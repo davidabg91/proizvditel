@@ -6,6 +6,13 @@ export default async function PhotosPage() {
   const producer = await getCurrentProducer();
   if (!producer) redirect("/vhod");
 
+  const photos = (producer.photos ?? []).map((p) => ({
+    id: p.id,
+    url: p.url,
+    type: p.type || "field",
+    caption: p.caption ?? null,
+  }));
+
   return (
     <div>
       <div className="mb-8">
@@ -14,14 +21,7 @@ export default async function PhotosPage() {
           Добрите снимки печелят доверие. Качете изгледи от площта и продукцията.
         </p>
       </div>
-      <PhotosManager
-        photos={producer.photos.map((p) => ({
-          id: p.id,
-          url: p.url,
-          type: p.type,
-          caption: p.caption,
-        }))}
-      />
+      <PhotosManager photos={photos} />
     </div>
   );
 }

@@ -12,9 +12,10 @@ export type PhotoRow = {
   caption: string | null;
 };
 
-export function PhotosManager({ photos }: { photos: PhotoRow[] }) {
-  const field = photos.filter((p) => p.type === "field");
-  const product = photos.filter((p) => p.type === "product");
+export function PhotosManager({ photos = [] }: { photos?: PhotoRow[] }) {
+  const safePhotos = Array.isArray(photos) ? photos : [];
+  const field = safePhotos.filter((p) => p.type === "field");
+  const product = safePhotos.filter((p) => p.type === "product");
 
   return (
     <div className="flex flex-col gap-10">
@@ -49,6 +50,7 @@ function PhotoSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   async function onFiles(files: FileList | null) {
@@ -64,44 +66,65 @@ function PhotoSection({
       }
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Грешка при качване.");
+      console.error("Грешка при качване на снимка:", e);
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Възникна грешка при качването. Моля, опитайте отново.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section>
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <section className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+        </div>
+        <span className="text-xs font-medium text-muted-foreground">
+          {photos.length} {photos.length === 1 ? "снимка" : "снимки"}
+        </span>
       </div>
 
       {error ? (
-        <p className="mb-3 text-sm font-medium text-danger">{error}</p>
+        <div className="mb-4 rounded-[var(--radius-md)] border border-danger/30 bg-danger/10 px-4 py-2.5 text-xs font-medium text-danger">
+          ⚠️ {error}
+        </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {photos.map((photo) => (
           <div
             key={photo.id}
-            className="group relative aspect-square overflow-hidden rounded-[var(--radius-md)] border border-border bg-surface-muted"
+            className="group relative aspect-square overflow-hidden rounded-[var(--radius-md)] border border-border bg-surface-muted transition-all hover:border-primary"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo.url} alt="" className="h-full w-full object-cover" />
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  await deletePhoto(photo.id);
-                  router.refresh();
-                })
-              }
-              className="absolute right-2 top-2 rounded-md bg-foreground/70 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
-            >
-              Изтрий
-            </button>
+            <img
+              src={photo.url}
+              alt=""
+              onClick={() => setActivePhoto(photo.url)}
+              className="h-full w-full cursor-zoom-in object-cover transition-transform duration-200 group-hover:scale-105"
+            />
+
+            <div className="absolute inset-0 flex items-start justify-end p-2 opacity-0 transition-opacity group-hover:opacity-100 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startTransition(async () => {
+                    await deletePhoto(photo.id);
+                    router.refresh();
+                  });
+                }}
+                className="pointer-events-auto rounded bg-danger px-2 py-1 text-xs font-semibold text-white shadow hover:bg-danger/90 transition-colors"
+              >
+                Изтрий
+              </button>
+            </div>
           </div>
         ))}
 
@@ -109,10 +132,10 @@ function PhotoSection({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border border-dashed border-border-strong bg-surface text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+          className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-[var(--radius-md)] border border-dashed border-border-strong bg-surface text-sm font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary hover:bg-primary-soft/30 disabled:opacity-60"
         >
           <span className="text-2xl font-light leading-none">+</span>
-          {busy ? "Качваме…" : "Добави снимка"}
+          <span className="text-xs">{busy ? "Качваме…" : "Добави снимка"}</span>
         </button>
       </div>
 
@@ -124,6 +147,30 @@ function PhotoSection({
         hidden
         onChange={(e) => onFiles(e.target.files)}
       />
+
+      {/* Преглед на голяма снимка (Lightbox) */}
+      {activePhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setActivePhoto(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activePhoto}
+              alt=""
+              className="max-h-[85vh] max-w-[85vw] rounded-[var(--radius-lg)] object-contain shadow-2xl"
+            />
+            <button
+              type="button"
+              onClick={() => setActivePhoto(null)}
+              className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black font-bold shadow-lg hover:bg-surface-muted"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
