@@ -100,18 +100,18 @@ export default async function Home() {
           </div>
 
           <div className="relative flex flex-col items-center lg:pl-6">
-            {/* Меки цветни ореоли за дълбочина */}
+            {/* Меки цветни ореоли за дълбочина (само на голям екран) */}
             <div
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-0 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
+              className="pointer-events-none absolute left-1/2 top-0 -z-10 hidden h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl lg:block"
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute bottom-8 right-4 -z-10 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
+              className="pointer-events-none absolute bottom-8 right-4 -z-10 hidden h-56 w-56 rounded-full bg-accent/20 blur-3xl lg:block"
             />
 
-            {/* Брандов панел с лого2 */}
-            <div className="w-full max-w-[460px] overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-lg ring-1 ring-border/70">
+            {/* Брандов панел с лого2 — скрит на мобилни устройства */}
+            <div className="hidden w-full max-w-[460px] overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-lg ring-1 ring-border/70 lg:block">
               <Image
                 src="/logo2.png"
                 alt="производител.net — от производителя, директно за вас"
@@ -122,7 +122,7 @@ export default async function Home() {
               />
             </div>
 
-            <div className="mt-6 w-full max-w-[460px]">
+            <div className="w-full max-w-[460px] lg:mt-6">
               <HeroSearch />
             </div>
           </div>
