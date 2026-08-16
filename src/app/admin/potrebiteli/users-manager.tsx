@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { setUserBanned } from "../actions";
+import { setUserBanned, verifyProducerUrn } from "../actions";
 
 export type UserRow = {
   id: string;
@@ -14,35 +14,100 @@ export type UserRow = {
   role: string;
   banned: boolean;
   createdAt: string;
+  producerId: string | null;
   producerSlug: string | null;
+  farmName: string | null;
+  urn: string | null;
+  urnVerified: boolean;
+  urnDocumentUrl: string | null;
 };
 
 export function UsersManager({ users }: { users: UserRow[] }) {
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"all" | "pending_urn" | "verified_urn">("all");
+
   const ql = q.trim().toLowerCase();
-  const shown = ql
+  let shown = ql
     ? users.filter(
         (u) =>
-          u.name.toLowerCase().includes(ql) || u.email.toLowerCase().includes(ql),
+          u.name.toLowerCase().includes(ql) ||
+          u.email.toLowerCase().includes(ql) ||
+          (u.farmName && u.farmName.toLowerCase().includes(ql)) ||
+          (u.urn && u.urn.includes(ql)),
       )
     : users;
 
+  if (filter === "pending_urn") {
+    shown = shown.filter((u) => u.producerId && u.urn && !u.urnVerified);
+  } else if (filter === "verified_urn") {
+    shown = shown.filter((u) => u.producerId && u.urnVerified);
+  }
+
+  const pendingUrnCount = users.filter((u) => u.producerId && u.urn && !u.urnVerified).length;
+
   return (
     <div>
-      <Input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Търсене по име или имейл…"
-        className="mb-4 max-w-sm"
-      />
-      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Търсене по име, стопанство, имейл или УРН…"
+          className="max-w-md"
+        />
+
+        <div className="flex items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={[
+              "rounded-full px-3 py-1 font-medium transition-colors",
+              filter === "all"
+                ? "bg-foreground text-background"
+                : "bg-surface-muted text-muted-foreground hover:text-foreground",
+            ].join(" ")}
+          >
+            Всички ({users.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("pending_urn")}
+            className={[
+              "rounded-full px-3 py-1 font-medium transition-colors flex items-center gap-1",
+              filter === "pending_urn"
+                ? "bg-amber-500 text-white"
+                : "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20",
+            ].join(" ")}
+          >
+            <span>Чакащи УРН</span>
+            {pendingUrnCount > 0 && (
+              <span className="rounded-full bg-white/30 px-1.5 py-0.2 text-[10px] font-bold">
+                {pendingUrnCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("verified_urn")}
+            className={[
+              "rounded-full px-3 py-1 font-medium transition-colors",
+              filter === "verified_urn"
+                ? "bg-success text-white"
+                : "bg-success/10 text-success hover:bg-success/20",
+            ].join(" ")}
+          >
+            Потвърдени ({users.filter((u) => u.urnVerified).length})
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-sm">
         <ul className="divide-y divide-border">
           {shown.map((u) => (
             <UserItem key={u.id} user={u} />
           ))}
           {shown.length === 0 ? (
             <li className="p-6 text-center text-sm text-muted-foreground">
-              Няма намерени потребители.
+              Няма намерени потребители по зададения критерий.
             </li>
           ) : null}
         </ul>
@@ -56,41 +121,127 @@ function UserItem({ user }: { user: UserRow }) {
   const [pending, startTransition] = useTransition();
 
   return (
-    <li className="flex flex-wrap items-center gap-4 p-4">
+    <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           {user.producerSlug ? (
-            <Link href={`/p/${user.producerSlug}`} className="font-semibold hover:text-primary">
-              {user.name}
+            <Link
+              href={`/p/${user.producerSlug}`}
+              className="font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              {user.farmName || user.name}
             </Link>
           ) : (
-            <span className="font-semibold">{user.name}</span>
+            <span className="font-semibold text-foreground">{user.name}</span>
           )}
-          <Badge tone={user.role === "producer" ? "primary" : user.role === "admin" ? "accent" : "neutral"}>
-            {user.role === "producer" ? "Производител" : user.role === "admin" ? "Админ" : "Купувач"}
+
+          <Badge
+            tone={
+              user.role === "producer"
+                ? "primary"
+                : user.role === "admin"
+                  ? "accent"
+                  : "neutral"
+            }
+          >
+            {user.role === "producer"
+              ? "Производител"
+              : user.role === "admin"
+                ? "Админ"
+                : "Купувач"}
           </Badge>
+
           {user.banned ? <Badge tone="danger">Блокиран</Badge> : null}
+
+          {/* УРН значка */}
+          {user.producerId && user.urn ? (
+            user.urnVerified ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success border border-success/30">
+                ✓ Потвърден УРН: {user.urn}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600 border border-amber-500/30">
+                ⏳ УРН: {user.urn} (Чака одобрение)
+              </span>
+            )
+          ) : null}
         </div>
-        <p className="mt-0.5 truncate text-sm text-muted-foreground">{user.email}</p>
+
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>{user.email}</span>
+          {user.farmName && user.farmName !== user.name && (
+            <span>Собственик: {user.name}</span>
+          )}
+
+          {/* Документ за верификация */}
+          {user.urnDocumentUrl && (
+            <a
+              href={user.urnDocumentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <span>📄 Преглед на регистрационна карта</span>
+            </a>
+          )}
+
+          {/* Бърза справка в публичен регистър */}
+          {user.urn && (
+            <a
+              href={`https://papagal.bg/search?q=${encodeURIComponent(user.urn)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground underline"
+              title="Проверка в публични фирмени регистри"
+            >
+              🔍 Справка в Търговски регистър / БУЛСТАТ
+            </a>
+          )}
+        </div>
       </div>
-      <button
-        type="button"
-        disabled={pending || user.role === "admin"}
-        onClick={() =>
-          startTransition(async () => {
-            await setUserBanned(user.id, !user.banned);
-            router.refresh();
-          })
-        }
-        className={[
-          "rounded-[var(--radius-sm)] px-3.5 py-2 text-sm font-semibold transition-colors disabled:opacity-40",
-          user.banned
-            ? "border border-border-strong text-foreground hover:border-primary"
-            : "bg-danger text-white hover:opacity-90",
-        ].join(" ")}
-      >
-        {user.banned ? "Отблокирай" : "Блокирай"}
-      </button>
+
+      <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 sm:pt-0">
+        {/* Бутони за верификация на УРН */}
+        {user.producerId && user.urn && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                await verifyProducerUrn(user.producerId!, !user.urnVerified);
+                router.refresh();
+              })
+            }
+            className={[
+              "rounded-[var(--radius-sm)] px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40",
+              user.urnVerified
+                ? "border border-border text-muted-foreground hover:text-danger hover:border-danger"
+                : "bg-success text-white hover:bg-success/90 shadow-sm",
+            ].join(" ")}
+          >
+            {user.urnVerified ? "Отмени УРН" : "✓ Одобри УРН"}
+          </button>
+        )}
+
+        <button
+          type="button"
+          disabled={pending || user.role === "admin"}
+          onClick={() =>
+            startTransition(async () => {
+              await setUserBanned(user.id, !user.banned);
+              router.refresh();
+            })
+          }
+          className={[
+            "rounded-[var(--radius-sm)] px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40",
+            user.banned
+              ? "border border-border-strong text-foreground hover:border-primary"
+              : "bg-danger text-white hover:opacity-90",
+          ].join(" ")}
+        >
+          {user.banned ? "Отблокирай" : "Блокирай"}
+        </button>
+      </div>
     </li>
   );
 }

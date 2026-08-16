@@ -36,6 +36,7 @@ export async function updateProfile(
         ownerName: d.ownerName,
         description: d.description || null,
         urn: d.urn || null,
+        urnDocumentUrl: d.urnDocumentUrl || null,
         region: d.region || null,
         town: d.town || null,
         phone: d.phone || null,

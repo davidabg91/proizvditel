@@ -57,6 +57,7 @@ export default async function Home() {
     coverPosition: p.coverPosition,
     coverPositionX: p.coverPositionX,
     coverScale: p.coverScale,
+    urnVerified: p.urnVerified,
     ratingAvg: p.ratingAvg,
     ratingCount: p.ratingCount,
     sharedDelivery: p.sharedDelivery,

@@ -52,9 +52,13 @@ model Producer {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Основни данни
-  urn         String? // Уникален регистрационен номер (зелен картон на ЗП)
-  farmName    String
-  slug        String  @unique
+  urn                 String?   // Уникален регистрационен номер (зелен картон на ЗП)
+  urnVerified         Boolean   @default(false) // Потвърден от администратор
+  urnDocumentUrl      String?   // Снимка или PDF на регистрационната карта
+  urnVerificationNote String?   // Бележка от администратора
+  urnVerifiedAt       DateTime? // Дата на потвърждение
+  farmName            String
+  slug                String    @unique
   ownerName   String
   description String? // Кратко представяне на стопанството
 

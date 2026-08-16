@@ -14,7 +14,16 @@ export default async function AdminUsersPage() {
       role: true,
       banned: true,
       createdAt: true,
-      producer: { select: { slug: true } },
+      producer: {
+        select: {
+          id: true,
+          slug: true,
+          farmName: true,
+          urn: true,
+          urnVerified: true,
+          urnDocumentUrl: true,
+        },
+      },
     },
   });
 
@@ -25,7 +34,12 @@ export default async function AdminUsersPage() {
     role: u.role,
     banned: u.banned,
     createdAt: u.createdAt.toISOString(),
+    producerId: u.producer?.id ?? null,
     producerSlug: u.producer?.slug ?? null,
+    farmName: u.producer?.farmName ?? null,
+    urn: u.producer?.urn ?? null,
+    urnVerified: u.producer?.urnVerified ?? false,
+    urnDocumentUrl: u.producer?.urnDocumentUrl ?? null,
   }));
 
   return (

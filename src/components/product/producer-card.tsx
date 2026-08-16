@@ -13,6 +13,7 @@ export type ProducerCardData = {
   coverPosition?: number | null;
   coverPositionX?: number | null;
   coverScale?: number | null;
+  urnVerified?: boolean;
   ratingAvg: number;
   ratingCount: number;
   sharedDelivery: boolean;
@@ -62,8 +63,16 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
           )}
         </div>
 
-        <h3 className="font-semibold leading-snug text-foreground group-hover:text-primary">
-          {producer.farmName}
+        <h3 className="font-semibold leading-snug text-foreground group-hover:text-primary flex items-center gap-1.5">
+          <span>{producer.farmName}</span>
+          {producer.urnVerified ? (
+            <span
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-success text-[10px] font-bold text-white shadow-xs"
+              title="✓ Потвърден земеделски производител"
+            >
+              ✓
+            </span>
+          ) : null}
         </h3>
         {location ? (
           <p className="mt-0.5 text-sm text-muted-foreground">{location}</p>

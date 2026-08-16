@@ -19,6 +19,18 @@ export const cropSchema = z.object({
   yieldUnit: z.enum(YIELD_UNITS).optional().or(z.literal("")),
 });
 
+export function validateUrnFormat(urn?: string | null): { valid: boolean; error?: string } {
+  if (!urn || !urn.trim()) return { valid: true };
+  const clean = urn.trim();
+  if (!/^\d+$/.test(clean)) {
+    return { valid: false, error: "УРН номерът трябва да съдържа само цифри." };
+  }
+  if (clean.length < 6 || clean.length > 7) {
+    return { valid: false, error: "УРН номерът по ДФЗ е с дължина 6 или 7 цифри." };
+  }
+  return { valid: true };
+}
+
 export const registerSchema = z.object({
   // Акаунт
   farmName: z.string().trim().min(2, "Въведете име на стопанството").max(120),
@@ -28,7 +40,16 @@ export const registerSchema = z.object({
   phone: z.string().trim().max(40).optional().or(z.literal("")),
 
   // Данни за ЗП
-  urn: z.string().trim().max(40).optional().or(z.literal("")),
+  urn: z
+    .string()
+    .trim()
+    .max(40)
+    .refine((val) => validateUrnFormat(val).valid, {
+      message: "УРН номерът трябва да е 6 или 7 цифри (от ДФЗ).",
+    })
+    .optional()
+    .or(z.literal("")),
+  urnDocumentUrl: z.string().trim().optional().or(z.literal("")),
   region: z.enum(REGIONS).optional().or(z.literal("")),
   town: z.string().trim().max(120).optional().or(z.literal("")),
 
@@ -47,7 +68,16 @@ export const profileSchema = z.object({
   farmName: z.string().trim().min(2, "Въведете име на стопанството").max(120),
   ownerName: z.string().trim().min(2, "Въведете име на собственика").max(120),
   description: z.string().trim().max(4000).optional().or(z.literal("")),
-  urn: z.string().trim().max(100).optional().or(z.literal("")),
+  urn: z
+    .string()
+    .trim()
+    .max(100)
+    .refine((val) => validateUrnFormat(val).valid, {
+      message: "УРН номерът трябва да е 6 или 7 цифри (от ДФЗ).",
+    })
+    .optional()
+    .or(z.literal("")),
+  urnDocumentUrl: z.string().trim().optional().or(z.literal("")),
   region: z.string().trim().optional().or(z.literal("")),
   town: z.string().trim().max(120).optional().or(z.literal("")),
   phone: z.string().trim().max(60).optional().or(z.literal("")),

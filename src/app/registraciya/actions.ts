@@ -55,6 +55,7 @@ export async function registerProducer(
           slug,
           ownerName: data.ownerName,
           urn: data.urn || null,
+          urnDocumentUrl: data.urnDocumentUrl || null,
           region: data.region || null,
           town: data.town || null,
           phone: data.phone || null,

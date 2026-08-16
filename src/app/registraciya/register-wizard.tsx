@@ -9,6 +9,9 @@ import { Field } from "@/components/ui/field";
 import { REGIONS, CATEGORIES, YIELD_UNITS } from "@/lib/constants";
 import { registerProducer } from "./actions";
 
+import { uploadFile } from "@/lib/upload";
+import { validateUrnFormat } from "@/lib/validators";
+
 type Crop = {
   name: string;
   category: string;
@@ -52,6 +55,8 @@ export function RegisterWizard() {
 
   // Данни за ЗП
   const [urn, setUrn] = useState("");
+  const [urnDocumentUrl, setUrnDocumentUrl] = useState("");
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [region, setRegion] = useState("");
   const [town, setTown] = useState("");
   const [startedYear, setStartedYear] = useState("");
@@ -75,6 +80,12 @@ export function RegisterWizard() {
         return "Въведете валиден имейл адрес.";
       if (password.length < 8) return "Паролата трябва да е поне 8 символа.";
     }
+    if (s === 1) {
+      if (urn.trim()) {
+        const urnCheck = validateUrnFormat(urn);
+        if (!urnCheck.valid) return urnCheck.error ?? "Невалиден УРН.";
+      }
+    }
     return null;
   }
 
@@ -93,6 +104,19 @@ export function RegisterWizard() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
+  async function handleDocUpload(file: File) {
+    setUploadingDoc(true);
+    setError(null);
+    try {
+      const url = await uploadFile(file);
+      setUrnDocumentUrl(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Грешка при качване на документа.");
+    } finally {
+      setUploadingDoc(false);
+    }
+  }
+
   function submit() {
     setError(null);
     startTransition(async () => {
@@ -103,6 +127,7 @@ export function RegisterWizard() {
         password,
         phone: phone.trim(),
         urn: urn.trim(),
+        urnDocumentUrl: urnDocumentUrl || undefined,
         region: (region as (typeof REGIONS)[number]) || "",
         town: town.trim(),
         startedYear: numOrNull(startedYear) as number | null,
@@ -251,15 +276,60 @@ export function RegisterWizard() {
           <Field
             label="УРН (Уникален регистрационен номер)"
             htmlFor="urn"
-            description="Номерът от зеления картон на регистриран земеделски стопанин. По избор."
+            description="6 или 7-цифреният номер от ДФЗ / МЗХ (Наредба №3). По избор."
           >
             <Input
               id="urn"
               value={urn}
-              onChange={(e) => setUrn(e.target.value)}
-              placeholder="напр. 1234567890"
+              onChange={(e) => setUrn(e.target.value.replace(/\D/g, "").slice(0, 7))}
+              placeholder="напр. 1234567"
+              inputMode="numeric"
+              maxLength={7}
             />
           </Field>
+
+          {/* Качване на регистрационна карта за значка "Потвърден производител" */}
+          <div className="rounded-[var(--radius-md)] border border-primary/20 bg-primary-soft/30 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <span className="text-primary font-bold">✓</span> Регистрационна карта от МЗХ / ДФЗ
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Качете снимка или PDF на вашата Регистрационна карта (зелен картон). След преглед от администратор получавате официална зелена значка <strong>„✓ Потвърден производител“</strong> в сайта.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {urnDocumentUrl ? (
+                <div className="flex items-center gap-2 rounded bg-surface px-3 py-1.5 text-xs font-medium text-success border border-success/30">
+                  <span>✓ Документът е качен успешно</span>
+                  <button
+                    type="button"
+                    onClick={() => setUrnDocumentUrl("")}
+                    className="text-danger hover:underline ml-2"
+                  >
+                    Премахни
+                  </button>
+                </div>
+              ) : (
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] border border-primary/40 bg-surface px-3.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary-soft transition-colors">
+                  <span>📄 {uploadingDoc ? "Качваме документа…" : "Качи регистрационна карта (JPG, PNG или PDF)"}</span>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf,.heic,.heif,.HEIC,.HEIF"
+                    hidden
+                    disabled={uploadingDoc}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleDocUpload(f);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Област" htmlFor="region">
               <Select

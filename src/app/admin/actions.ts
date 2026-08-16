@@ -52,3 +52,34 @@ export async function resolveReport(
   revalidatePath("/admin");
   return { ok: true };
 }
+
+export async function verifyProducerUrn(
+  producerId: string,
+  verified: boolean,
+  note?: string,
+): Promise<ActionResult> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "Няма достъп." };
+
+  const producer = await prisma.producer.findUnique({
+    where: { id: producerId },
+    select: { id: true, slug: true },
+  });
+  if (!producer) return { ok: false, error: "Производителят не е намерен." };
+
+  await prisma.producer.update({
+    where: { id: producerId },
+    data: {
+      urnVerified: verified,
+      urnVerifiedAt: verified ? new Date() : null,
+      urnVerificationNote: note ?? null,
+    },
+  });
+
+  revalidatePath("/admin/potrebiteli");
+  revalidatePath("/admin");
+  if (producer.slug) {
+    revalidatePath(`/p/${producer.slug}`);
+  }
+  return { ok: true };
+}

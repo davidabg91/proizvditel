@@ -14,6 +14,9 @@ type InitialProfile = {
   ownerName: string;
   description: string;
   urn: string;
+  urnVerified?: boolean;
+  urnDocumentUrl?: string;
+  urnVerificationNote?: string;
   region: string;
   town: string;
   phone: string;
@@ -40,10 +43,24 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | "saved" | string>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   const [f, setF] = useState(initial);
   const set = (patch: Partial<InitialProfile>) =>
     setF((prev) => ({ ...prev, ...patch }));
+
+  async function handleDocUpload(file: File) {
+    setUploadingDoc(true);
+    try {
+      const { uploadFile } = await import("@/lib/upload");
+      const url = await uploadFile(file);
+      set({ urnDocumentUrl: url });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Грешка при качване на документа.");
+    } finally {
+      setUploadingDoc(false);
+    }
+  }
 
   function save() {
     setStatus(null);
@@ -54,6 +71,7 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           ownerName: f.ownerName.trim(),
           description: f.description.trim(),
           urn: f.urn.trim(),
+          urnDocumentUrl: f.urnDocumentUrl || "",
           region: (f.region as (typeof REGIONS)[number]) || "",
           town: f.town.trim(),
           phone: f.phone.trim(),
@@ -240,15 +258,94 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
               placeholder="Разкажете за стопанството си, историята и това, което ви отличава."
             />
           </Field>
-          <div className="grid gap-5 sm:grid-cols-3">
-            <Field label="УРН (зелен картон)">
-              <Input value={f.urn} onChange={(e) => set({ urn: e.target.value })} />
-            </Field>
-            <Field label="От коя година">
+          {/* УРН и Верификация */}
+          <div className="rounded-[var(--radius-md)] border border-border bg-surface-muted/30 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span>УРН и Верификация на земеделски производител</span>
+                  {f.urnVerified ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
+                      ✓ Потвърден производител
+                    </span>
+                  ) : f.urnDocumentUrl ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-600">
+                      ⏳ Чака преглед от администратор
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground border border-border">
+                      Непотвърден
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Верифицираните производители получават официална зелена значка на профила и в каталога.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="УРН (Уникален регистрационен номер)"
+                hint="6 или 7 цифри от ДФЗ"
+              >
+                <Input
+                  value={f.urn}
+                  onChange={(e) => set({ urn: e.target.value.replace(/\D/g, "").slice(0, 7) })}
+                  placeholder="напр. 1234567"
+                  inputMode="numeric"
+                  maxLength={7}
+                />
+              </Field>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Регистрационна карта (зелен картон)
+                </label>
+                {f.urnDocumentUrl ? (
+                  <div className="flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-success/30 bg-success/5 p-2.5 text-xs text-foreground">
+                    <a
+                      href={f.urnDocumentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary hover:underline flex items-center gap-1.5 truncate"
+                    >
+                      <span>📄 Преглед на качената карта</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => set({ urnDocumentUrl: "" })}
+                      className="text-danger hover:underline shrink-0"
+                    >
+                      Смени
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-md)] border border-dashed border-primary/40 bg-surface p-2.5 text-xs font-semibold text-primary hover:bg-primary-soft transition-colors">
+                    <span>{uploadingDoc ? "Качваме документа…" : "📁 Качи регистрационна карта (JPG, PNG или PDF)"}</span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf,.heic,.heif,.HEIC,.HEIF"
+                      hidden
+                      disabled={uploadingDoc}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleDocUpload(file);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="От коя година се занимавате със земеделие">
               <Input
                 inputMode="numeric"
                 value={f.startedYear}
                 onChange={(e) => set({ startedYear: e.target.value })}
+                placeholder="напр. 2015"
               />
             </Field>
             <Field label="Обща площ (дка)">
@@ -256,6 +353,7 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
                 inputMode="decimal"
                 value={f.totalDecares}
                 onChange={(e) => set({ totalDecares: e.target.value })}
+                placeholder="напр. 50"
               />
             </Field>
           </div>

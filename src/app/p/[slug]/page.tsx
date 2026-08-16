@@ -164,9 +164,20 @@ export default async function ProducerProfilePage({
               )}
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-semibold sm:text-4xl">
-                {producer.farmName}
-              </h1>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="font-serif text-2xl font-semibold sm:text-4xl">
+                  {producer.farmName}
+                </h1>
+                {producer.urnVerified ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success border border-success/30 shadow-xs"
+                    title={`Потвърден земеделски производител с проверена регистрационна карта${producer.urn ? ` (УРН: ${producer.urn})` : ""}`}
+                  >
+                    <span className="font-bold">✓</span>
+                    <span>Потвърден производител</span>
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-1 text-muted-foreground">
                 {producer.ownerName}
                 {location ? ` · ${location}` : ""}
