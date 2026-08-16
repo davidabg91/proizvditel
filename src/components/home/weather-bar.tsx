@@ -56,16 +56,21 @@ const toneClass: Record<string, string> = {
   info: "bg-primary-soft text-primary",
 };
 
+// Резервно местоположение — центърът на България (близо до Казанлък),
+// за да покажем общи данни, ако потребителят не сподели локация.
+const BG_DEFAULT = { lat: 42.73, lon: 25.4, label: "България" };
+
 export function WeatherBar() {
-  const [state, setState] = useState<"loading" | "ready" | "denied" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [w, setW] = useState<Weather | null>(null);
+  const [isDefault, setIsDefault] = useState(false);
 
   const clipRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
   const [duration, setDuration] = useState(30);
 
-  async function load(lat: number, lon: number) {
+  async function load(lat: number, lon: number, forcedPlace?: string) {
     try {
       const url =
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
@@ -76,15 +81,17 @@ export function WeatherBar() {
       const j = await res.json();
       const c = j.current;
       const d = j.daily;
-      let place: string | undefined;
-      try {
-        const g = await (
-          await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=bg`,
-          )
-        ).json();
-        place = g.city || g.locality || g.principalSubdivision;
-      } catch {}
+      let place: string | undefined = forcedPlace;
+      if (!forcedPlace) {
+        try {
+          const g = await (
+            await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=bg`,
+            )
+          ).json();
+          place = g.city || g.locality || g.principalSubdivision;
+        } catch {}
+      }
       setW({
         temp: Math.round(c.temperature_2m),
         apparent: Math.round(c.apparent_temperature),
@@ -107,12 +114,20 @@ export function WeatherBar() {
     }
   }
 
+  function loadDefault() {
+    setIsDefault(true);
+    load(BG_DEFAULT.lat, BG_DEFAULT.lon, BG_DEFAULT.label);
+  }
+
   function requestLocation() {
-    if (!("geolocation" in navigator)) return setState("error");
+    if (!("geolocation" in navigator)) return loadDefault();
     setState("loading");
     navigator.geolocation.getCurrentPosition(
-      (p) => load(p.coords.latitude, p.coords.longitude),
-      () => setState("denied"),
+      (p) => {
+        setIsDefault(false);
+        load(p.coords.latitude, p.coords.longitude);
+      },
+      () => loadDefault(),
       { timeout: 10000, maximumAge: 30 * 60 * 1000 },
     );
   }
@@ -148,15 +163,15 @@ export function WeatherBar() {
         <div className="flex h-9 w-full items-center justify-between gap-3 px-4 text-xs text-muted-foreground sm:px-6">
           <span>
             {state === "loading"
-              ? "Зареждаме времето за вашия район…"
-              : "Времето и условията за работа във вашия район"}
+              ? "Зареждаме времето…"
+              : "Времето не може да бъде заредено в момента"}
           </span>
-          {state === "denied" || state === "error" ? (
+          {state === "error" ? (
             <button
               onClick={requestLocation}
               className="shrink-0 font-semibold text-primary hover:underline"
             >
-              Покажи времето
+              Опитай отново
             </button>
           ) : null}
         </div>
@@ -203,21 +218,33 @@ export function WeatherBar() {
 
   return (
     <div className="border-b border-border bg-surface">
-      <div
-        ref={clipRef}
-        className="ticker-clip w-full overflow-hidden px-4 py-2 sm:px-6"
-      >
-        {overflow ? (
-          <div
-            className="ticker-track flex w-max"
-            style={{ animationDuration: `${duration}s` }}
+      <div className="flex w-full items-center">
+        <div
+          ref={clipRef}
+          className="ticker-clip min-w-0 flex-1 overflow-hidden py-2 pl-4 sm:pl-6"
+        >
+          {overflow ? (
+            <div
+              className="ticker-track flex w-max"
+              style={{ animationDuration: `${duration}s` }}
+            >
+              {group(groupRef, false, true)}
+              {group(undefined, true, true)}
+            </div>
+          ) : (
+            <div className="flex justify-center">{group(groupRef, false, false)}</div>
+          )}
+        </div>
+
+        {isDefault ? (
+          <button
+            onClick={requestLocation}
+            className="shrink-0 whitespace-nowrap px-4 text-xs font-semibold text-primary hover:underline sm:px-6"
+            title="Покажи времето за моето местоположение"
           >
-            {group(groupRef, false, true)}
-            {group(undefined, true, true)}
-          </div>
-        ) : (
-          <div className="flex justify-center">{group(groupRef, false, false)}</div>
-        )}
+            Моят район →
+          </button>
+        ) : null}
       </div>
     </div>
   );
