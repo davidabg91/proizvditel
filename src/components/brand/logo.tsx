@@ -1,9 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Типографски wordmark на марката „Производител".
- * Съзнателно без иконка — само изчистена типография.
+ * Марката „производител.net" — икона (logo.png) + wordmark.
  */
 export function Logo({
   className,
@@ -17,18 +17,28 @@ export function Logo({
   return (
     <Link
       href={href}
-      className={cn("group inline-flex flex-col leading-none", className)}
-      aria-label="Производител — начало"
+      className={cn("group inline-flex items-center gap-2.5", className)}
+      aria-label="производител.net — начало"
     >
-      <span className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-        производител
-        <span className="text-accent">.net</span>
-      </span>
-      {withTagline ? (
-        <span className="mt-0.5 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Направо от нивата
+      <Image
+        src="/logo.png"
+        alt=""
+        width={40}
+        height={40}
+        className="h-9 w-9 shrink-0 object-contain sm:h-10 sm:w-10"
+        priority
+      />
+      <span className="flex flex-col leading-none">
+        <span className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          производител
+          <span className="text-accent">.net</span>
         </span>
-      ) : null}
+        {withTagline ? (
+          <span className="mt-1 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Направо от нивата
+          </span>
+        ) : null}
+      </span>
     </Link>
   );
 }

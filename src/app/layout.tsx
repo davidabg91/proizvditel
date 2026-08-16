@@ -19,10 +19,17 @@ const lora = Lora({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "Производител — Направо от нивата",
-    template: "%s · Производител",
+    default: "производител.net — Направо от нивата",
+    template: "%s · производител.net",
   },
   description:
     "Платформа за българските земеделски производители. Регистрирайте стопанството си, представете продукцията си и продавайте директно на клиентите.",
@@ -33,6 +40,20 @@ export const metadata: Metadata = {
     "фермерски пазар",
     "България",
   ],
+  openGraph: {
+    type: "website",
+    siteName: "производител.net",
+    title: "производител.net — Направо от нивата",
+    description:
+      "Прясна, местна продукция директно от българския производител.",
+    locale: "bg_BG",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "производител.net — Направо от нивата",
+    description:
+      "Прясна, местна продукция директно от българския производител.",
+  },
 };
 
 export default async function RootLayout({

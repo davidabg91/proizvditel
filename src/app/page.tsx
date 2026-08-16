@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { ListingCard } from "@/components/product/listing-card";
@@ -99,6 +100,14 @@ export default async function Home() {
           </div>
 
           <div className="lg:pl-6">
+            <Image
+              src="/logo2.png"
+              alt="производител.net — от производителя, директно за вас"
+              width={560}
+              height={560}
+              priority
+              className="mx-auto mb-6 h-auto w-full max-w-[280px] object-contain"
+            />
             <HeroSearch />
           </div>
         </div>
