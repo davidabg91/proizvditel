@@ -53,7 +53,7 @@ export function WeatherIcon({
       viewBox="0 0 24 24"
       width="20"
       height="20"
-      className={cn("shrink-0", warm ? "text-accent" : "text-muted-foreground", className)}
+      className={cn("shrink-0", warm ? "text-amber-600" : "text-muted-foreground", className)}
       aria-hidden
       {...S}
     >

@@ -421,11 +421,11 @@ export function WeatherBar() {
   const alert = w.highestAlert;
   const severity = alert?.severity ?? "none";
 
-  // Светещи стилове на лентата според нивото на опасност
+  // Светещи стилове на лентата според нивото на опасност (с висок контраст на текста)
   const barContainerStyles = {
-    danger: "bg-red-500/15 border-red-500/40 text-red-950 dark:text-red-100 shadow-[0_0_20px_rgba(239,68,68,0.20)]",
-    warning: "bg-amber-500/15 border-amber-500/40 text-amber-950 dark:text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.18)]",
-    notice: "bg-yellow-500/10 border-yellow-500/30 text-yellow-950 dark:text-yellow-100 shadow-[0_0_12px_rgba(234,179,8,0.15)]",
+    danger: "bg-red-500/15 border-red-500/40 text-foreground shadow-[0_0_20px_rgba(239,68,68,0.20)]",
+    warning: "bg-amber-500/15 border-amber-500/40 text-foreground shadow-[0_0_15px_rgba(245,158,11,0.18)]",
+    notice: "bg-amber-500/10 border-amber-500/30 text-foreground shadow-[0_0_12px_rgba(245,158,11,0.15)]",
     none: "bg-surface border-border text-foreground",
   }[severity];
 
@@ -437,14 +437,14 @@ export function WeatherBar() {
     <div
       ref={ref}
       aria-hidden={hidden}
-      className={cn("flex shrink-0 items-center gap-6 text-sm", spaced && "pr-6")}
+      className={cn("flex shrink-0 items-center gap-6 text-sm text-foreground", spaced && "pr-6")}
     >
-      <div className="flex items-center gap-2 font-semibold">
+      <div className="flex items-center gap-2 font-semibold text-foreground">
         <WeatherIcon code={w.code} isDay={w.isDay} />
         <span className="text-muted-foreground">{w.place ?? "Вашият район"}</span>
         <span className="text-border-strong">·</span>
         <span>{WMO[w.code] ?? "—"}</span>
-        <span className="font-serif text-base">{w.temp}°</span>
+        <span className="font-serif text-base font-bold">{w.temp}°</span>
       </div>
       <Metric label="усеща се" value={`${w.apparent}°`} />
       <Metric label="мин / макс" value={`${w.tMin}° / ${w.tMax}°`} />
@@ -459,12 +459,12 @@ export function WeatherBar() {
           type="button"
           onClick={() => setShowForecastModal(true)}
           className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-transform hover:scale-105 flex items-center gap-1.5 shadow-xs",
+            "shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-transform hover:scale-105 flex items-center gap-1.5 shadow-xs text-white",
             severity === "danger"
               ? "bg-red-600 text-white animate-pulse"
               : severity === "warning"
                 ? "bg-amber-600 text-white"
-                : "bg-yellow-500 text-black",
+                : "bg-amber-700 text-white",
           )}
         >
           <span>{alert.icon}</span>
@@ -488,21 +488,30 @@ export function WeatherBar() {
             <div className="flex-1 px-4 sm:px-6 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
               <div
                 onClick={() => setShowForecastModal(true)}
-                className="flex items-center gap-2.5 cursor-pointer hover:underline text-xs sm:text-sm font-semibold truncate"
+                className="flex items-center gap-2.5 cursor-pointer hover:underline text-xs sm:text-sm font-semibold truncate text-foreground"
               >
                 <span className="text-base shrink-0 animate-bounce">{alert.icon}</span>
-                <span className="uppercase tracking-wider text-[11px] font-black px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 shrink-0">
+                <span
+                  className={cn(
+                    "uppercase tracking-wider text-[11px] font-black px-2 py-0.5 rounded text-white shadow-xs shrink-0",
+                    severity === "danger"
+                      ? "bg-red-600"
+                      : severity === "warning"
+                        ? "bg-amber-600"
+                        : "bg-amber-700",
+                  )}
+                >
                   {severity === "danger" ? "Опасност" : "Внимание"}
                 </span>
-                <span className="font-bold shrink-0">{alert.dayName}:</span>
-                <span className="truncate">{alert.description}</span>
+                <span className="font-bold shrink-0 text-foreground">{alert.dayName}:</span>
+                <span className="truncate text-foreground font-semibold">{alert.description}</span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowWarningView(false)}
-                  className="text-[11px] text-muted-foreground hover:text-foreground font-medium px-2 py-0.5 rounded bg-black/5 hover:bg-black/10 transition-colors"
+                  className="text-[11px] text-muted-foreground hover:text-foreground font-medium px-2 py-0.5 rounded bg-surface/80 border border-border hover:bg-surface transition-colors"
                   title="Покажи температурата и метриките"
                 >
                   🌡️ Метрики
@@ -510,7 +519,7 @@ export function WeatherBar() {
                 <button
                   type="button"
                   onClick={() => setShowForecastModal(true)}
-                  className="text-[11px] font-bold underline px-2 py-0.5"
+                  className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5"
                 >
                   Виж 5-дневна прогноза →
                 </button>
@@ -658,12 +667,12 @@ export function WeatherBar() {
                         {dayWarning ? (
                           <div
                             className={cn(
-                              "mt-2.5 rounded p-2 text-[11px] font-medium leading-tight",
+                              "mt-2.5 rounded p-2 text-[11px] font-medium leading-tight shadow-xs text-white",
                               dayWarning.severity === "danger"
                                 ? "bg-red-600 text-white"
                                 : dayWarning.severity === "warning"
                                   ? "bg-amber-600 text-white"
-                                  : "bg-yellow-500 text-black",
+                                  : "bg-amber-700 text-white",
                             )}
                           >
                             <p className="font-bold flex items-center gap-1">
