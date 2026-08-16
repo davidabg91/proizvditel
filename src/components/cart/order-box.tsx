@@ -61,7 +61,7 @@ export function OrderBox({
 
   const methods: string[] = [];
   if (info?.card) methods.push("Карта");
-  if (info?.payment?.acceptsCod) methods.push("Наложен платеж");
+  if (info?.payment?.acceptsCod !== false) methods.push("Наложен платеж");
 
   const message = [
     "Здравейте!",
@@ -145,8 +145,6 @@ export function OrderBox({
     }
   }
 
-  const hasAnyPaymentMethod = info?.card || info?.payment?.acceptsCod;
-
   if (!isOpen) {
     return (
       <div className="flex flex-col gap-3">
@@ -157,15 +155,14 @@ export function OrderBox({
           </p>
         ) : null}
 
-        {hasAnyPaymentMethod ? (
-          <Button onClick={() => setIsOpen(true)} className="w-full" size="lg">
-            Поръчай
-          </Button>
-        ) : (
-          <Button href={chatHref} variant="primary" className="w-full">
-            Поръчай — пиши на производителя
-          </Button>
-        )}
+        <Button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="w-full"
+          size="lg"
+        >
+          Поръчай
+        </Button>
       </div>
     );
   }
@@ -276,7 +273,7 @@ export function OrderBox({
             </label>
           ) : null}
 
-          {info?.payment?.acceptsCod ? (
+          {info?.payment?.acceptsCod !== false ? (
             <label
               className={[
                 "flex cursor-pointer items-start gap-2.5 rounded-[var(--radius-md)] border p-3 transition-colors",
@@ -297,7 +294,7 @@ export function OrderBox({
                   📦 Наложен платеж
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {info.payment.codNote || "Плащане при доставка"}
+                  {info?.payment?.codNote || "Плащане при доставка"}
                 </p>
               </div>
             </label>

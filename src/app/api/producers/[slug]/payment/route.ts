@@ -33,7 +33,7 @@ export async function GET(
       bankHolder: p?.bankHolder ?? null,
       acceptsRevolut: p?.acceptsRevolut ?? false,
       revolutLink: p?.revolutLink ?? null,
-      acceptsCod: p?.acceptsCod ?? false,
+      acceptsCod: p ? p.acceptsCod : true,
       codNote: p?.codNote ?? null,
     },
   });
