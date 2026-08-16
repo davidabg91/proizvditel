@@ -79,6 +79,8 @@ export async function POST(req: Request) {
     const checkout = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
+      shipping_address_collection: { allowed_countries: ["BG"] },
+      phone_number_collection: { enabled: true },
       payment_intent_data: {
         application_fee_amount: fee,
         on_behalf_of: producer.stripeAccountId,
@@ -92,6 +94,7 @@ export async function POST(req: Request) {
       success_url: `${site}/plateno?session_id={CHECKOUT_SESSION_ID}&producer=${encodeURIComponent(producerSlug)}`,
       cancel_url: `${site}/koshnitsa`,
       metadata: {
+        kind: "single",
         producerId: producer.id,
         producerSlug,
         customerId: session?.user?.id ?? "",

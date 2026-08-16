@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentProducer } from "@/lib/session";
 import { getIncomingPartnerRequestCount } from "@/lib/partners";
+import { getNewOrdersCount } from "@/app/tablo/porachki/actions";
 import { Button } from "@/components/ui/button";
 
 function completeness(p: {
@@ -45,6 +46,7 @@ export default async function DashboardHome() {
   ];
 
   const partnerRequests = await getIncomingPartnerRequestCount(producer.id);
+  const newOrders = await getNewOrdersCount(producer.id);
 
   return (
     <div>
@@ -61,6 +63,25 @@ export default async function DashboardHome() {
           Виж публичния профил
         </Button>
       </div>
+
+      {/* Известие за нови поръчки */}
+      {newOrders > 0 ? (
+        <Link
+          href="/tablo/porachki"
+          className="mb-6 flex items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-primary/40 bg-primary-soft p-5 transition-colors hover:bg-primary-soft/70"
+        >
+          <div>
+            <p className="font-semibold text-primary">
+              {newOrders}{" "}
+              {newOrders === 1 ? "нова поръчка" : "нови поръчки"} за обработка
+            </p>
+            <p className="mt-0.5 text-sm text-foreground/80">
+              Вижте какво да изпратите, до кого и обновете статуса.
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold text-primary">Виж →</span>
+        </Link>
+      ) : null}
 
       {/* Известие за заявка за партньорство */}
       {partnerRequests > 0 ? (

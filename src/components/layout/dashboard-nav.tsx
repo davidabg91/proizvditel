@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/tablo", label: "Преглед", exact: true },
+  { href: "/tablo/porachki", label: "Поръчки" },
   { href: "/tablo/profil", label: "Профил на стопанството" },
   { href: "/tablo/produkciya", label: "Продукция" },
   { href: "/tablo/snimki", label: "Снимки" },
@@ -18,8 +19,10 @@ const ITEMS = [
 
 export function DashboardNav({
   partnerRequests = 0,
+  newOrders = 0,
 }: {
   partnerRequests?: number;
+  newOrders?: number;
 }) {
   const pathname = usePathname();
   return (
@@ -31,7 +34,9 @@ export function DashboardNav({
         const badge =
           item.href === "/tablo/partnyori" && partnerRequests > 0
             ? partnerRequests
-            : 0;
+            : item.href === "/tablo/porachki" && newOrders > 0
+              ? newOrders
+              : 0;
         return (
           <Link
             key={item.href}

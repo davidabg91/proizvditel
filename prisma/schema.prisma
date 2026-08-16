@@ -301,18 +301,38 @@ model Order {
 
   stripeSessionId String  @unique
   paymentIntentId String?
-  amountTotal     Int // в стотинки
-  applicationFee  Int     @default(0) // комисиона на платформата (стотинки)
-  currency        String  @default("bgn")
+  transferId      String? // при съвместно плащане — трансфер към производителя
+  groupId         String? // общ идентификатор при съвместна поръчка
+  combined        Boolean @default(false)
+
+  amountTotal    Int // в стотинки
+  applicationFee Int     @default(0) // комисиона на платформата (стотинки)
+  currency       String  @default("bgn")
+
+  // Платежен статус
+  paymentMethod String @default("card") // card | cod | bank | revolut
+  paymentStatus String @default("paid") // paid | pending
+  status        String @default("paid")
+
+  // Данни за клиента и доставката
+  customerName    String?
   email           String?
-  status          String  @default("paid")
+  phone           String?
+  shippingAddress String?
+
+  // Изпълнение (проследяване от производителя)
+  fulfillmentStatus String  @default("new") // new | processing | shipped | delivered | cancelled
+  courier           String?
+  trackingNote      String?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   items OrderItem[]
 
   @@index([producerId])
   @@index([customerId])
+  @@index([producerId, fulfillmentStatus])
 }
 
 model OrderItem {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCart, type CartItem } from "@/components/cart/cart-context";
 import { OrderBox } from "@/components/cart/order-box";
 import { PartnerSuggestions } from "@/components/cart/partner-suggestions";
+import { CombinedPay } from "@/components/cart/combined-pay";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 
@@ -62,6 +63,15 @@ export default function CartPage() {
           Продуктите са групирани по стопанство. Плащането и доставката се
           уговарят директно с всеки производител.
         </p>
+
+        {groupList.length >= 2 ? (
+          <div className="mt-6">
+            <CombinedPay
+              producerCount={groupList.length}
+              items={items.map((i) => ({ listingId: i.listingId, qty: i.qty }))}
+            />
+          </div>
+        ) : null}
 
         <div className="mt-8 flex flex-col gap-6">
           {groupList.map(([slug, group]) => {

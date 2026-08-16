@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/layout/dashboard-nav";
 import { Button } from "@/components/ui/button";
 import { doSignOut } from "@/lib/auth-actions";
 import { getIncomingPartnerRequestCount } from "@/lib/partners";
+import { getNewOrdersCount } from "@/app/tablo/porachki/actions";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default async function DashboardLayout({
   const partnerRequests = producer
     ? await getIncomingPartnerRequestCount(producer.id)
     : 0;
+  const newOrders = producer ? await getNewOrdersCount(producer.id) : 0;
 
   return (
     <div className="container-page py-10">
@@ -29,7 +31,7 @@ export default async function DashboardLayout({
           <p className="mb-3 px-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Управление
           </p>
-          <DashboardNav partnerRequests={partnerRequests} />
+          <DashboardNav partnerRequests={partnerRequests} newOrders={newOrders} />
           <div className="mt-4 border-t border-border pt-4">
             <form action={doSignOut}>
               <Button variant="ghost" size="sm" type="submit" className="w-full justify-start">
