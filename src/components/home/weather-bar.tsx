@@ -398,12 +398,12 @@ export function WeatherBar() {
 
   if (state !== "ready" || !w) {
     return (
-      <div className="border-b border-border bg-surface">
-        <div className="flex h-9 w-full items-center justify-between gap-3 px-4 text-xs text-muted-foreground sm:px-6">
-          <span>
+      <div className="w-full max-w-full overflow-hidden border-b border-border bg-surface">
+        <div className="flex h-9 w-full max-w-full items-center justify-between gap-2 px-3 text-xs text-muted-foreground sm:px-6">
+          <span className="truncate">
             {state === "loading"
-              ? "Зареждаме агро метеорологичната прогноза…"
-              : "Времето не може да бъде заредено в момента"}
+              ? "Зареждаме агро прогнозата…"
+              : "Времето не може да бъде заредено"}
           </span>
           {state === "error" ? (
             <button
@@ -437,14 +437,14 @@ export function WeatherBar() {
     <div
       ref={ref}
       aria-hidden={hidden}
-      className={cn("flex shrink-0 items-center gap-6 text-sm text-foreground", spaced && "pr-6")}
+      className={cn("flex shrink-0 items-center gap-4 sm:gap-6 text-xs sm:text-sm text-foreground", spaced && "pr-4 sm:pr-6")}
     >
-      <div className="flex items-center gap-2 font-semibold text-foreground">
+      <div className="flex items-center gap-1.5 sm:gap-2 font-semibold text-foreground">
         <WeatherIcon code={w.code} isDay={w.isDay} />
         <span className="text-muted-foreground">{w.place ?? "Вашият район"}</span>
         <span className="text-border-strong">·</span>
         <span>{WMO[w.code] ?? "—"}</span>
-        <span className="font-serif text-base font-bold">{w.temp}°</span>
+        <span className="font-serif text-sm sm:text-base font-bold">{w.temp}°</span>
       </div>
       <Metric label="усеща се" value={`${w.apparent}°`} />
       <Metric label="мин / макс" value={`${w.tMin}° / ${w.tMax}°`} />
@@ -459,7 +459,7 @@ export function WeatherBar() {
           type="button"
           onClick={() => setShowForecastModal(true)}
           className={cn(
-            "shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-transform hover:scale-105 flex items-center gap-1.5 shadow-xs text-white",
+            "shrink-0 rounded-full px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold transition-transform hover:scale-105 flex items-center gap-1.5 shadow-xs text-white",
             severity === "danger"
               ? "bg-red-600 text-white animate-pulse"
               : severity === "warning"
@@ -478,22 +478,22 @@ export function WeatherBar() {
     <>
       <div
         className={cn(
-          "border-b transition-colors duration-500 relative",
+          "w-full max-w-full overflow-hidden border-b transition-colors duration-500 relative",
           barContainerStyles,
         )}
       >
-        <div className="flex w-full items-center justify-between min-h-[38px] py-1.5">
+        <div className="flex w-full max-w-full items-center justify-between min-h-[36px] sm:min-h-[38px] py-1">
           {/* Режим 1: Предупредително съобщение за опасност */}
           {alert && showWarningView ? (
-            <div className="flex-1 px-4 sm:px-6 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+            <div className="flex-1 min-w-0 max-w-full overflow-hidden px-2.5 sm:px-6 flex items-center justify-between gap-1.5 sm:gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
               <div
                 onClick={() => setShowForecastModal(true)}
-                className="flex items-center gap-2.5 cursor-pointer hover:underline text-xs sm:text-sm font-semibold truncate text-foreground"
+                className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer hover:underline text-xs sm:text-sm font-semibold min-w-0 flex-1 overflow-hidden text-foreground"
               >
                 <span className="text-base shrink-0 animate-bounce">{alert.icon}</span>
                 <span
                   className={cn(
-                    "uppercase tracking-wider text-[11px] font-black px-2 py-0.5 rounded text-white shadow-xs shrink-0",
+                    "uppercase tracking-wider text-[10px] sm:text-[11px] font-black px-1.5 py-0.5 rounded text-white shadow-xs shrink-0",
                     severity === "danger"
                       ? "bg-red-600"
                       : severity === "warning"
@@ -503,34 +503,35 @@ export function WeatherBar() {
                 >
                   {severity === "danger" ? "Опасност" : "Внимание"}
                 </span>
-                <span className="font-bold shrink-0 text-foreground">{alert.dayName}:</span>
-                <span className="truncate text-foreground font-semibold">{alert.description}</span>
+                <span className="font-bold shrink-0 text-foreground hidden xs:inline">{alert.dayName}:</span>
+                <span className="truncate text-foreground font-semibold min-w-0">{alert.description}</span>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowWarningView(false)}
-                  className="text-[11px] text-muted-foreground hover:text-foreground font-medium px-2 py-0.5 rounded bg-surface/80 border border-border hover:bg-surface transition-colors"
+                  className="text-[10px] sm:text-[11px] text-muted-foreground hover:text-foreground font-medium px-1.5 sm:px-2 py-0.5 rounded bg-surface/80 border border-border hover:bg-surface transition-colors shrink-0"
                   title="Покажи температурата и метриките"
                 >
-                  🌡️ Метрики
+                  🌡️ <span className="hidden sm:inline">Метрики</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForecastModal(true)}
-                  className="text-[11px] font-bold text-primary hover:underline px-2 py-0.5"
+                  className="text-[10px] sm:text-[11px] font-bold text-primary hover:underline px-1 sm:px-2 py-0.5 shrink-0 whitespace-nowrap"
                 >
-                  Виж 5-дневна прогноза →
+                  <span className="hidden sm:inline">Виж 5-дневна прогноза →</span>
+                  <span className="sm:hidden">Прогноза →</span>
                 </button>
               </div>
             </div>
           ) : (
             /* Режим 2: Пълна метеорологична лента с тикер */
-            <div className="flex-1 flex items-center min-w-0 animate-in fade-in duration-300">
+            <div className="flex-1 min-w-0 max-w-full overflow-hidden flex items-center animate-in fade-in duration-300">
               <div
                 ref={clipRef}
-                className="ticker-clip min-w-0 flex-1 overflow-hidden pl-4 sm:pl-6"
+                className="ticker-clip min-w-0 flex-1 overflow-hidden pl-2.5 sm:pl-6 max-w-full"
               >
                 {overflow ? (
                   <div
@@ -541,17 +542,18 @@ export function WeatherBar() {
                     {group(undefined, true, true)}
                   </div>
                 ) : (
-                  <div className="flex justify-center">{group(groupRef, false, false)}</div>
+                  <div className="flex justify-center min-w-0">{group(groupRef, false, false)}</div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 px-3 sm:px-5 text-xs">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 px-2 sm:px-5 text-xs">
                 <button
                   type="button"
                   onClick={() => setShowForecastModal(true)}
-                  className="font-semibold text-primary hover:underline whitespace-nowrap"
+                  className="font-semibold text-primary hover:underline whitespace-nowrap text-[11px] sm:text-xs"
                 >
-                  📅 5-дневна агро прогноза
+                  <span className="hidden sm:inline">📅 5-дневна агро прогноза</span>
+                  <span className="sm:hidden">📅 Прогноза</span>
                 </button>
 
                 {isDefault ? (
