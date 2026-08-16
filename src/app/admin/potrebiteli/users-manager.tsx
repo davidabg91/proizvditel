@@ -185,18 +185,26 @@ function UserItem({ user }: { user: UserRow }) {
             </a>
           )}
 
-          {/* Бърза справка в публичен регистър */}
-          {user.urn && (
-            <a
-              href={`https://papagal.bg/search?q=${encodeURIComponent(user.urn)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground underline"
-              title="Проверка в публични фирмени регистри"
-            >
-              🔍 Справка в Търговски регистър / БУЛСТАТ
-            </a>
-          )}
+          {/* Бърза справка в официален регистър */}
+          <a
+            href="https://portal.registryagency.bg/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground underline inline-flex items-center gap-1"
+            title="Официален портал на Търговския регистър и регистър БУЛСТАТ"
+          >
+            🏛️ Търговски регистър
+          </a>
+
+          <a
+            href={`https://www.google.com/search?q=${encodeURIComponent(`"земеделски производител" "${user.name}" ${user.farmName ? `"${user.farmName}"` : ""}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground underline inline-flex items-center gap-1"
+            title="Търсене в интернет за този земеделски производител"
+          >
+            🔍 Търсене в Google
+          </a>
         </div>
       </div>
 
