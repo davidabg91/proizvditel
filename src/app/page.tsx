@@ -6,6 +6,8 @@ import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
 import { HeroSearch } from "@/components/home/hero-search";
 
+export const revalidate = 60;
+
 export default async function Home() {
   const [listings, producers, producerCount] = await Promise.all([
     prisma.productListing.findMany({

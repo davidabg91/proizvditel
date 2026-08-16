@@ -52,9 +52,24 @@ export async function getUnreadCount(userId: string): Promise<number> {
 
 /** Удобен обект за header-а. */
 export async function getHeaderUser() {
-  const user = await getCurrentUser();
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const [user, unread] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        producer: { select: { slug: true } },
+      },
+    }),
+    getUnreadCount(session.user.id),
+  ]);
+
   if (!user) return null;
-  const unread = await getUnreadCount(user.id);
   const admins = (process.env.ADMIN_EMAIL ?? "")
     .toLowerCase()
     .split(",")

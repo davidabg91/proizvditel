@@ -12,6 +12,8 @@ export const metadata: Metadata = {
     "Поръчайте от няколко производителя от един град с една обща доставка.",
 };
 
+export const revalidate = 60;
+
 export default async function SharedDeliveryPage({
   searchParams,
 }: {
