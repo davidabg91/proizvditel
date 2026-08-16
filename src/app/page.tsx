@@ -73,7 +73,7 @@ export default async function Home() {
         />
         {/* Градиент за четимост на текста */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/30" />
-        <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-24">
+        <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:items-center lg:py-24">
           <div>
             <p className="eyebrow">Направо от нивата</p>
             <h1 className="mt-4 text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
@@ -99,16 +99,32 @@ export default async function Home() {
             </dl>
           </div>
 
-          <div className="lg:pl-6">
-            <Image
-              src="/logo2.png"
-              alt="производител.net — от производителя, директно за вас"
-              width={560}
-              height={560}
-              priority
-              className="mx-auto mb-6 h-auto w-full max-w-[280px] object-contain"
+          <div className="relative flex flex-col items-center lg:pl-6">
+            {/* Меки цветни ореоли за дълбочина */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-0 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
             />
-            <HeroSearch />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute bottom-8 right-4 -z-10 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
+            />
+
+            {/* Брандов панел с лого2 */}
+            <div className="w-full max-w-[460px] overflow-hidden rounded-[var(--radius-xl)] bg-surface shadow-lg ring-1 ring-border/70">
+              <Image
+                src="/logo2.png"
+                alt="производител.net — от производителя, директно за вас"
+                width={560}
+                height={560}
+                priority
+                className="h-auto w-full object-contain"
+              />
+            </div>
+
+            <div className="mt-6 w-full max-w-[460px]">
+              <HeroSearch />
+            </div>
           </div>
         </div>
       </section>
