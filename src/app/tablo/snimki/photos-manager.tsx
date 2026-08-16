@@ -72,7 +72,8 @@ function PhotoSection({
     try {
       for (const file of list) {
         const url = await uploadFile(file);
-        await addPhoto(url, type);
+        const res = await addPhoto(url, type);
+        if (!res.ok) throw new Error(res.error);
       }
       router.refresh();
     } catch (e) {

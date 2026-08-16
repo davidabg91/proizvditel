@@ -35,83 +35,129 @@ function baseData(d: ListingInput) {
 }
 
 export async function createListing(input: ListingInput): Promise<ActionResult> {
-  const producer = await currentProducer();
-  if (!producer) return { ok: false, error: "Изисква се вход." };
+  try {
+    const producer = await currentProducer();
+    if (!producer) return { ok: false, error: "Изисква се вход." };
 
-  const parsed = listingSchema.safeParse(input);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
-  const d = parsed.data;
+    const parsed = listingSchema.safeParse(input);
+    if (!parsed.success)
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
+    const d = parsed.data;
 
-  const slug = await uniqueListingSlug(producer.id, d.title);
+    const slug = await uniqueListingSlug(producer.id, d.title);
 
-  await prisma.productListing.create({
-    data: {
-      producerId: producer.id,
-      slug,
-      ...baseData(d),
-      photos: {
-        create: d.photos.map((url, i) => ({ url, sort: i })),
+    await prisma.productListing.create({
+      data: {
+        producerId: producer.id,
+        slug,
+        ...baseData(d),
+        photos: {
+          create: d.photos.map((url, i) => ({ url, sort: i })),
+        },
       },
-    },
-  });
+    });
 
-  revalidatePath("/tablo/produkti");
-  revalidatePath("/katalog");
-  revalidatePath(`/p/${producer.slug}`);
-  return { ok: true, slug };
+    try {
+      revalidatePath("/tablo/produkti");
+      revalidatePath("/katalog");
+      if (producer.slug) {
+        revalidatePath(`/p/${producer.slug}`);
+      }
+    } catch (revalErr) {
+      console.error("revalidatePath error:", revalErr);
+    }
+
+    return { ok: true, slug };
+  } catch (error) {
+    console.error("createListing error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при създаване на обявата.",
+    };
+  }
 }
 
 export async function updateListing(
   id: string,
   input: ListingInput,
 ): Promise<ActionResult> {
-  const producer = await currentProducer();
-  if (!producer) return { ok: false, error: "Изисква се вход." };
+  try {
+    const producer = await currentProducer();
+    if (!producer) return { ok: false, error: "Изисква се вход." };
 
-  const parsed = listingSchema.safeParse(input);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
-  const d = parsed.data;
+    const parsed = listingSchema.safeParse(input);
+    if (!parsed.success)
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
+    const d = parsed.data;
 
-  const listing = await prisma.productListing.findUnique({
-    where: { id },
-    select: { producerId: true },
-  });
-  if (!listing || listing.producerId !== producer.id)
-    return { ok: false, error: "Няма достъп." };
-
-  await prisma.$transaction([
-    prisma.listingPhoto.deleteMany({ where: { listingId: id } }),
-    prisma.productListing.update({
+    const listing = await prisma.productListing.findUnique({
       where: { id },
-      data: {
-        ...baseData(d),
-        photos: { create: d.photos.map((url, i) => ({ url, sort: i })) },
-      },
-    }),
-  ]);
+      select: { producerId: true },
+    });
+    if (!listing || listing.producerId !== producer.id)
+      return { ok: false, error: "Няма достъп." };
 
-  revalidatePath("/tablo/produkti");
-  revalidatePath("/katalog");
-  revalidatePath(`/p/${producer.slug}`);
-  return { ok: true };
+    await prisma.$transaction([
+      prisma.listingPhoto.deleteMany({ where: { listingId: id } }),
+      prisma.productListing.update({
+        where: { id },
+        data: {
+          ...baseData(d),
+          photos: { create: d.photos.map((url, i) => ({ url, sort: i })) },
+        },
+      }),
+    ]);
+
+    try {
+      revalidatePath("/tablo/produkti");
+      revalidatePath("/katalog");
+      if (producer.slug) {
+        revalidatePath(`/p/${producer.slug}`);
+      }
+    } catch (revalErr) {
+      console.error("revalidatePath error:", revalErr);
+    }
+
+    return { ok: true };
+  } catch (error) {
+    console.error("updateListing error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при редакция на обявата.",
+    };
+  }
 }
 
 export async function deleteListing(id: string): Promise<ActionResult> {
-  const producer = await currentProducer();
-  if (!producer) return { ok: false, error: "Изисва се вход." };
+  try {
+    const producer = await currentProducer();
+    if (!producer) return { ok: false, error: "Изисква се вход." };
 
-  const listing = await prisma.productListing.findUnique({
-    where: { id },
-    select: { producerId: true },
-  });
-  if (!listing || listing.producerId !== producer.id)
-    return { ok: false, error: "Няма достъп." };
+    const listing = await prisma.productListing.findUnique({
+      where: { id },
+      select: { producerId: true },
+    });
+    if (!listing || listing.producerId !== producer.id)
+      return { ok: false, error: "Няма достъп." };
 
-  await prisma.productListing.delete({ where: { id } });
-  revalidatePath("/tablo/produkti");
-  revalidatePath("/katalog");
-  revalidatePath(`/p/${producer.slug}`);
-  return { ok: true };
+    await prisma.productListing.delete({ where: { id } });
+
+    try {
+      revalidatePath("/tablo/produkti");
+      revalidatePath("/katalog");
+      if (producer.slug) {
+        revalidatePath(`/p/${producer.slug}`);
+      }
+    } catch (revalErr) {
+      console.error("revalidatePath error:", revalErr);
+    }
+
+    return { ok: true };
+  } catch (error) {
+    console.error("deleteListing error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при изтриване на обявата.",
+    };
+  }
 }
