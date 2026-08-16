@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { put } from "@vercel/blob";
 import { auth } from "@/auth";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
@@ -38,10 +39,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   const ext = EXT[file.type] ?? "jpg";
   const name = `${randomUUID()}.${ext}`;
 
+  // В облака (Vercel) → Blob storage; локално → файлова система.
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(`uploads/${name}`, file, {
+      access: "public",
+      contentType: file.type,
+    });
+    return NextResponse.json({ url: blob.url });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
   const uploadDir = path.join(process.cwd(), "public", "uploads");
   await mkdir(uploadDir, { recursive: true });
   await writeFile(path.join(uploadDir, name), buffer);

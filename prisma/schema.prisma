@@ -1,13 +1,15 @@
-// Нива — схема на базата данни
-// Локална разработка: SQLite. Структурата е портируема към PostgreSQL.
+// производител.net — схема на базата данни
+// PostgreSQL (Neon в облака). За Neon: DATABASE_URL = pooled връзка,
+// DIRECT_URL = директна връзка (за миграции / db push).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────
