@@ -281,7 +281,7 @@ function ListingEditor({
           <input
             ref={inputRef}
             type="file"
-            accept="image/*,.heic,.heif,.HEIC,.HEIF"
+            accept="image/jpeg,image/png,image/webp,image/*,.heic,.heif,.HEIC,.HEIF"
             multiple
             hidden
             onChange={(e) => onFiles(e.target.files)}

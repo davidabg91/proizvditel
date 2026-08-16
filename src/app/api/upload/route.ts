@@ -19,6 +19,7 @@ const ALLOWED = new Set([
   "image/heic-sequence",
   "image/heif-sequence",
   "image/x-heic",
+  "application/pdf",
   "application/octet-stream",
 ]);
 
@@ -38,6 +39,7 @@ const EXT: Record<string, string> = {
   "image/heic-sequence": "jpg",
   "image/heif-sequence": "jpg",
   "image/x-heic": "jpg",
+  "application/pdf": "pdf",
 };
 
 export async function POST(req: Request) {

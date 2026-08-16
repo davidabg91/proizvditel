@@ -64,7 +64,9 @@ function PhotoSection({
         const res = await addPhoto(url, type);
         if (!res.ok) throw new Error(res.error);
       }
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (e) {
       console.error("Грешка при качване на снимка:", e);
       setError(
@@ -142,7 +144,7 @@ function PhotoSection({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,.heic,.heif,.HEIC,.HEIF"
+        accept="image/jpeg,image/png,image/webp,image/*,.heic,.heif,.HEIC,.HEIF"
         multiple
         hidden
         onChange={(e) => onFiles(e.target.files)}

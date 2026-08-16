@@ -318,7 +318,7 @@ export function RegisterWizard() {
                   <span>📄 {uploadingDoc ? "Качваме документа…" : "Качи регистрационна карта (JPG, PNG или PDF)"}</span>
                   <input
                     type="file"
-                    accept="image/*,.pdf,.heic,.heif,.HEIC,.HEIF"
+                    accept="image/jpeg,image/png,image/webp,image/*,.pdf,.heic,.heif,.HEIC,.HEIF"
                     hidden
                     disabled={uploadingDoc}
                     onChange={(e) => {
