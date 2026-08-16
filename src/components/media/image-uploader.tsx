@@ -11,6 +11,7 @@ export function ImageUploader({
   shape = "rect",
   label = "Качи изображение",
   className,
+  imageStyle,
 }: {
   value?: string | null;
   onChange: (url: string | null) => void;
@@ -18,6 +19,7 @@ export function ImageUploader({
   shape?: "rect" | "circle";
   label?: string;
   className?: string;
+  imageStyle?: React.CSSProperties;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -59,7 +61,8 @@ export function ImageUploader({
           <img
             src={value}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-all duration-75"
+            style={imageStyle}
           />
         ) : (
           <span className="px-4 text-center text-sm text-muted-foreground">

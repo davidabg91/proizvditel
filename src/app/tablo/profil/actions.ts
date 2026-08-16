@@ -50,6 +50,8 @@ export async function updateProfile(
         logoUrl: d.logoUrl || null,
         coverUrl: d.coverUrl || null,
         coverPosition: d.coverPosition ?? undefined,
+        coverPositionX: d.coverPositionX ?? undefined,
+        coverScale: d.coverScale ?? undefined,
       },
     });
 
@@ -76,13 +78,17 @@ export async function updateProfile(
 }
 
 export async function updateCoverPosition(
-  position: number,
+  positionY: number,
+  positionX = 50,
+  scale = 100,
 ): Promise<ActionResult> {
   try {
     const session = await auth();
     if (!session?.user?.id) return { ok: false, error: "Изисква се вход." };
 
-    const pos = Math.max(0, Math.min(100, Math.round(position)));
+    const posY = Math.max(0, Math.min(100, Math.round(positionY)));
+    const posX = Math.max(0, Math.min(100, Math.round(positionX)));
+    const sc = Math.max(100, Math.min(300, Math.round(scale)));
 
     const producer = await prisma.producer.findUnique({
       where: { userId: session.user.id },
@@ -92,7 +98,11 @@ export async function updateCoverPosition(
 
     await prisma.producer.update({
       where: { id: producer.id },
-      data: { coverPosition: pos },
+      data: {
+        coverPosition: posY,
+        coverPositionX: posX,
+        coverScale: sc,
+      },
     });
 
     try {

@@ -40,6 +40,8 @@ export default async function EditProfilePage() {
           logoUrl: producer.logoUrl,
           coverUrl: producer.coverUrl,
           coverPosition: producer.coverPosition ?? 50,
+          coverPositionX: producer.coverPositionX ?? 50,
+          coverScale: producer.coverScale ?? 100,
         }}
       />
     </div>

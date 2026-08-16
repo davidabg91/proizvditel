@@ -60,6 +60,8 @@ export const profileSchema = z.object({
   logoUrl: z.string().trim().optional().or(z.literal("")),
   coverUrl: z.string().trim().optional().or(z.literal("")),
   coverPosition: z.number().min(0).max(100).optional().nullable(),
+  coverPositionX: z.number().min(0).max(100).optional().nullable(),
+  coverScale: z.number().min(100).max(300).optional().nullable(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

@@ -26,6 +26,8 @@ type InitialProfile = {
   logoUrl: string | null;
   coverUrl: string | null;
   coverPosition?: number | null;
+  coverPositionX?: number | null;
+  coverScale?: number | null;
 };
 
 function numOrNull(v: string): number | null {
@@ -64,6 +66,8 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           logoUrl: f.logoUrl ?? "",
           coverUrl: f.coverUrl ?? "",
           coverPosition: f.coverPosition ?? 50,
+          coverPositionX: f.coverPositionX ?? 50,
+          coverScale: f.coverScale ?? 100,
         });
         if (res.ok) {
           setStatus("saved");
@@ -104,27 +108,106 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
               onChange={(url) => set({ coverUrl: url })}
               aspect="wide"
               label="Снимка на градината / площта"
+              imageStyle={{
+                objectPosition: `${f.coverPositionX ?? 50}% ${f.coverPosition ?? 50}%`,
+                transform: `scale(${(f.coverScale ?? 100) / 100})`,
+                transformOrigin: `${f.coverPositionX ?? 50}% ${f.coverPosition ?? 50}%`,
+              }}
             />
             {f.coverUrl && (
-              <div className="mt-3 flex flex-col gap-1.5 rounded-[var(--radius-md)] border border-border bg-surface-muted/50 p-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground">
-                    Позиция на корицата: {f.coverPosition ?? 50}%
+              <div className="mt-3 flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface-muted/50 p-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">
+                    Настройка на изгледа (наместване и мащаб)
                   </span>
-                  <span className="text-muted-foreground">
-                    (0% горна част — 100% долна част)
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      set({
+                        coverPosition: 50,
+                        coverPositionX: 50,
+                        coverScale: 100,
+                      })
+                    }
+                    className="text-[11px] font-medium text-primary hover:underline"
+                  >
+                    Възстанови по подразбиране
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={f.coverPosition ?? 50}
-                  onChange={(e) => set({ coverPosition: Number(e.target.value) })}
-                  className="w-full accent-[var(--color-primary)] cursor-pointer"
-                />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {/* Мащаб */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">🔍 Мащаб:</span>
+                      <span className="font-mono font-medium">{f.coverScale ?? 100}%</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          set({ coverScale: Math.max(100, (f.coverScale ?? 100) - 10) })
+                        }
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-surface text-xs font-bold hover:border-primary"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="range"
+                        min="100"
+                        max="250"
+                        step="5"
+                        value={f.coverScale ?? 100}
+                        onChange={(e) => set({ coverScale: Number(e.target.value) })}
+                        className="w-full accent-[var(--color-primary)] cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          set({ coverScale: Math.min(250, (f.coverScale ?? 100) + 10) })
+                        }
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-surface text-xs font-bold hover:border-primary"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Вертикално */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">↕️ Вертикално:</span>
+                      <span className="font-mono font-medium">{f.coverPosition ?? 50}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={f.coverPosition ?? 50}
+                      onChange={(e) => set({ coverPosition: Number(e.target.value) })}
+                      className="w-full accent-[var(--color-primary)] cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Хоризонтално */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">↔️ Хоризонтално:</span>
+                      <span className="font-mono font-medium">{f.coverPositionX ?? 50}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={f.coverPositionX ?? 50}
+                      onChange={(e) => set({ coverPositionX: Number(e.target.value) })}
+                      className="w-full accent-[var(--color-primary)] cursor-pointer"
+                    />
+                  </div>
+                </div>
+
                 <p className="text-[11px] text-muted-foreground">
-                  💡 Можете да намествате корицата и интерактивно с плъзгане директно през публичния си профил.
+                  💡 Можете да намествате и плъзгате корицата свободно с мишката директно през публичния си профил.
                 </p>
               </div>
             )}

@@ -55,6 +55,8 @@ export default async function Home() {
     logoUrl: p.logoUrl,
     coverUrl: p.coverUrl,
     coverPosition: p.coverPosition,
+    coverPositionX: p.coverPositionX,
+    coverScale: p.coverScale,
     ratingAvg: p.ratingAvg,
     ratingCount: p.ratingCount,
     sharedDelivery: p.sharedDelivery,

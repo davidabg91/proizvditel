@@ -134,10 +134,12 @@ export default async function ProducerProfilePage({
 
   return (
     <main className="pb-20">
-      {/* Корица с възможност за наместване */}
+      {/* Корица с възможност за наместване и мащабиране */}
       <ProfileCover
         coverUrl={producer.coverUrl}
-        initialPosition={producer.coverPosition ?? 50}
+        initialPositionY={producer.coverPosition ?? 50}
+        initialPositionX={producer.coverPositionX ?? 50}
+        initialScale={producer.coverScale ?? 100}
         isOwner={isOwner}
       />
 

@@ -11,6 +11,8 @@ export type ProducerCardData = {
   logoUrl: string | null;
   coverUrl: string | null;
   coverPosition?: number | null;
+  coverPositionX?: number | null;
+  coverScale?: number | null;
   ratingAvg: number;
   ratingCount: number;
   sharedDelivery: boolean;
@@ -32,7 +34,11 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
             src={producer.coverUrl}
             alt=""
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            style={{ objectPosition: `50% ${producer.coverPosition ?? 50}%` }}
+            style={{
+              objectPosition: `${producer.coverPositionX ?? 50}% ${producer.coverPosition ?? 50}%`,
+              transform: `scale(${(producer.coverScale ?? 100) / 100})`,
+              transformOrigin: `${producer.coverPositionX ?? 50}% ${producer.coverPosition ?? 50}%`,
+            }}
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/15 via-accent/10 to-transparent" />
