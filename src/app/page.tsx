@@ -73,7 +73,7 @@ export default async function Home() {
         />
         {/* Градиент за четимост на текста */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/30" />
-        <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:items-center lg:py-24">
+        <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:items-start lg:py-24">
           <div>
             <p className="eyebrow">Направо от нивата</p>
             <h1 className="mt-4 text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
