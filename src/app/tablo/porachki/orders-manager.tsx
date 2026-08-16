@@ -13,6 +13,7 @@ export type OrderRow = {
   createdAt: string;
   amountTotal: number;
   currency: string;
+  paymentMethod?: string;
   combined: boolean;
   customerName: string | null;
   email: string | null;
@@ -132,7 +133,11 @@ function OrderCard({ order }: { order: OrderRow }) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-muted/50 px-5 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={st.tone}>{st.label}</Badge>
-          <Badge tone="success">Платено с карта</Badge>
+          {order.paymentMethod === "cod" ? (
+            <Badge tone="accent">Наложен платеж</Badge>
+          ) : (
+            <Badge tone="success">Платено с карта</Badge>
+          )}
           {order.combined ? <Badge tone="neutral">Съвместна доставка</Badge> : null}
           <span className="text-sm text-muted-foreground">
             № {order.id.slice(-6).toUpperCase()} · {formatRelative(order.createdAt)}

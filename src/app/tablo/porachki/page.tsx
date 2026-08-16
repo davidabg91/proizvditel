@@ -26,6 +26,7 @@ export default async function OrdersPage() {
     createdAt: o.createdAt.toISOString(),
     amountTotal: o.amountTotal,
     currency: o.currency,
+    paymentMethod: o.paymentMethod ?? "card",
     combined: o.combined,
     customerName: o.customerName,
     email: o.email,
@@ -46,7 +47,7 @@ export default async function OrdersPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold sm:text-3xl">Поръчки</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Всички плащания с карта — какво да изпратите, до кого и с кой куриер.
+          Всички поръчки (с карта и наложен платеж) — какво да изпратите, до кого и с кой куриер.
           Обновявайте статуса, за да следите изпълнението.
         </p>
       </div>
@@ -55,7 +56,7 @@ export default async function OrdersPage() {
         <div className="rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-surface p-12 text-center">
           <p className="text-lg font-medium">Все още няма поръчки</p>
           <p className="mt-1 text-muted-foreground">
-            Тук ще се появяват поръчките, платени с карта през сайта.
+            Тук ще се появяват поръчките от клиенти, направени през сайта.
           </p>
         </div>
       ) : (

@@ -10,14 +10,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Stripe не е конфигуриран." }, { status: 500 });
   }
 
-  let body: { producerSlug?: string; items?: IncomingItem[] };
+  let body: {
+    producerSlug?: string;
+    items?: IncomingItem[];
+    customerName?: string;
+    phone?: string;
+    email?: string;
+    shippingAddress?: string;
+    note?: string;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Невалидни данни." }, { status: 400 });
   }
 
-  const { producerSlug, items } = body;
+  const { producerSlug, items, customerName, phone, email, shippingAddress, note } = body;
   if (!producerSlug || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "Липсват продукти." }, { status: 400 });
   }
@@ -90,7 +98,7 @@ export async function POST(req: Request) {
           customerId: session?.user?.id ?? "",
         },
       },
-      customer_email: session?.user?.email ?? undefined,
+      customer_email: email?.trim() || session?.user?.email || undefined,
       success_url: `${site}/plateno?session_id={CHECKOUT_SESSION_ID}&producer=${encodeURIComponent(producerSlug)}`,
       cancel_url: `${site}/koshnitsa`,
       metadata: {
@@ -98,6 +106,10 @@ export async function POST(req: Request) {
         producerId: producer.id,
         producerSlug,
         customerId: session?.user?.id ?? "",
+        customerName: customerName?.trim() ?? "",
+        phone: phone?.trim() ?? "",
+        shippingAddress: shippingAddress?.trim() ?? "",
+        note: note?.trim() ?? "",
       },
     });
 

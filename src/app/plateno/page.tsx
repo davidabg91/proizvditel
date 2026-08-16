@@ -8,10 +8,12 @@ import { useCart } from "@/components/cart/cart-context";
 function SuccessInner() {
   const params = useSearchParams();
   const producer = params.get("producer");
+  const isCod = params.get("cod") === "1";
+  const orderId = params.get("order_id");
   const { removeByProducer, ready } = useCart();
   const done = useRef(false);
 
-  // След успешно плащане премахваме продуктите на този производител от кошницата
+  // След успешна поръчка премахваме продуктите на този производител от кошницата
   useEffect(() => {
     if (ready && producer && !done.current) {
       done.current = true;
@@ -24,10 +26,18 @@ function SuccessInner() {
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-soft">
         <span className="text-3xl text-success">✓</span>
       </div>
-      <h1 className="mt-6 text-3xl">Благодарим за поръчката!</h1>
-      <p className="mt-3 text-muted-foreground">
-        Плащането е успешно. Производителят ще получи поръчката и ще се свърже с
-        вас за доставката. Разписка ще получите по имейл от Stripe.
+      <h1 className="mt-6 text-3xl font-semibold">
+        {isCod ? "Поръчката е приета успешно!" : "Благодарим за поръчката!"}
+      </h1>
+      {orderId ? (
+        <p className="mt-2 text-sm font-semibold text-primary">
+          Номер на поръчка: #{orderId.slice(-6).toUpperCase()}
+        </p>
+      ) : null}
+      <p className="mt-3 text-muted-foreground leading-relaxed">
+        {isCod
+          ? "Вашата поръчка с наложен платеж е изпратена към производителя. Той ще подготви пратката и ще се свърже с вас за потвърждение и доставка."
+          : "Плащането с карта е успешно. Производителят ще получи поръчката и ще се свърже с вас за доставката. Разписка ще получите по имейл от Stripe."}
       </p>
       <div className="mt-8 flex justify-center gap-3">
         <Button href="/katalog">Продължи пазаруването</Button>
