@@ -39,6 +39,7 @@ export default async function EditProfilePage() {
           deliveryProviders: parseProviders(producer.deliveryProviders),
           logoUrl: producer.logoUrl,
           coverUrl: producer.coverUrl,
+          coverPosition: producer.coverPosition ?? 50,
         }}
       />
     </div>

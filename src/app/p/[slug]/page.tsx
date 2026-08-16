@@ -13,6 +13,7 @@ import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
 import { getMutualPartners } from "@/lib/partners";
 import { ReportButton } from "@/components/report/report-button";
+import { ProfileCover } from "@/components/profile/profile-cover";
 
 export async function generateMetadata({
   params,
@@ -133,19 +134,12 @@ export default async function ProducerProfilePage({
 
   return (
     <main className="pb-20">
-      {/* Корица */}
-      <div className="relative h-56 w-full overflow-hidden bg-primary-soft sm:h-72">
-        {producer.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={producer.coverUrl}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/15 via-accent/10 to-transparent" />
-        )}
-      </div>
+      {/* Корица с възможност за наместване */}
+      <ProfileCover
+        coverUrl={producer.coverUrl}
+        initialPosition={producer.coverPosition ?? 50}
+        isOwner={isOwner}
+      />
 
       <div className="container-page">
         {/* Заглавна част — под корицата, без застъпване */}

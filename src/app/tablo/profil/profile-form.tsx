@@ -25,6 +25,7 @@ type InitialProfile = {
   deliveryProviders: string[];
   logoUrl: string | null;
   coverUrl: string | null;
+  coverPosition?: number | null;
 };
 
 function numOrNull(v: string): number | null {
@@ -62,6 +63,7 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           deliveryProviders: f.deliveryProviders,
           logoUrl: f.logoUrl ?? "",
           coverUrl: f.coverUrl ?? "",
+          coverPosition: f.coverPosition ?? 50,
         });
         if (res.ok) {
           setStatus("saved");
@@ -103,6 +105,29 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
               aspect="wide"
               label="Снимка на градината / площта"
             />
+            {f.coverUrl && (
+              <div className="mt-3 flex flex-col gap-1.5 rounded-[var(--radius-md)] border border-border bg-surface-muted/50 p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-foreground">
+                    Позиция на корицата: {f.coverPosition ?? 50}%
+                  </span>
+                  <span className="text-muted-foreground">
+                    (0% горна част — 100% долна част)
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={f.coverPosition ?? 50}
+                  onChange={(e) => set({ coverPosition: Number(e.target.value) })}
+                  className="w-full accent-[var(--color-primary)] cursor-pointer"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  💡 Можете да намествате корицата и интерактивно с плъзгане директно през публичния си профил.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>

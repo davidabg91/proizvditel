@@ -59,6 +59,7 @@ export const profileSchema = z.object({
   deliveryProviders: z.array(z.string()).default([]),
   logoUrl: z.string().trim().optional().or(z.literal("")),
   coverUrl: z.string().trim().optional().or(z.literal("")),
+  coverPosition: z.number().min(0).max(100).optional().nullable(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

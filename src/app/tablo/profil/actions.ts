@@ -49,6 +49,7 @@ export async function updateProfile(
           : null,
         logoUrl: d.logoUrl || null,
         coverUrl: d.coverUrl || null,
+        coverPosition: d.coverPosition ?? undefined,
       },
     });
 
@@ -70,6 +71,43 @@ export async function updateProfile(
         error instanceof Error
           ? error.message
           : "Възникна сървърна грешка при запазване на профила.",
+    };
+  }
+}
+
+export async function updateCoverPosition(
+  position: number,
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { ok: false, error: "Изисква се вход." };
+
+    const pos = Math.max(0, Math.min(100, Math.round(position)));
+
+    const producer = await prisma.producer.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true, slug: true },
+    });
+    if (!producer) return { ok: false, error: "Профилът не е намерен." };
+
+    await prisma.producer.update({
+      where: { id: producer.id },
+      data: { coverPosition: pos },
+    });
+
+    try {
+      revalidatePath("/tablo/profil");
+      if (producer.slug) {
+        revalidatePath(`/p/${producer.slug}`);
+      }
+    } catch {}
+
+    return { ok: true };
+  } catch (error) {
+    console.error("updateCoverPosition error:", error);
+    return {
+      ok: false,
+      error: "Грешка при запазване на позицията на корицата.",
     };
   }
 }

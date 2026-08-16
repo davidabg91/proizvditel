@@ -72,8 +72,9 @@ model Producer {
   totalDecares Float? // Обща обработваема площ (декари)
 
   // Визуална идентичност
-  logoUrl  String?
-  coverUrl String? // Снимка на площта (напр. градина) за корица
+  logoUrl       String?
+  coverUrl      String? // Снимка на площта (напр. градина) за корица
+  coverPosition Int?    @default(50) // Позиция по вертикала в проценти (0-100)
 
   // Съвместно пазаруване / доставка
   sharedDelivery Boolean @default(false)
