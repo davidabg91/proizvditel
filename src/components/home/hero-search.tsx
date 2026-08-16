@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const POPULAR = [
   "Плодове",
@@ -14,7 +15,7 @@ const POPULAR = [
   "Билки и подправки",
 ];
 
-export function HeroSearch() {
+export function HeroSearch({ bare = false }: { bare?: boolean }) {
   const router = useRouter();
   const [q, setQ] = useState("");
 
@@ -25,7 +26,13 @@ export function HeroSearch() {
   }
 
   return (
-    <div className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-sm sm:p-7">
+    <div
+      className={cn(
+        bare
+          ? "p-6 sm:p-7"
+          : "rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-sm sm:p-7",
+      )}
+    >
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
         Открийте продукция
       </p>

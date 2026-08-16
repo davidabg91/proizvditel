@@ -110,20 +110,17 @@ export default async function Home() {
               className="pointer-events-none absolute bottom-8 right-4 -z-10 hidden h-56 w-56 rounded-full bg-accent/20 blur-3xl lg:block"
             />
 
-            {/* Лого2 — вградено, без фон; скрито на мобилни устройства */}
-            <div className="hidden w-full max-w-[500px] lg:block">
+            {/* Единен брандов панел: банер (лого3) + търсачка */}
+            <div className="w-full max-w-[520px] overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface shadow-lg ring-1 ring-border/50">
               <Image
-                src="/logo2-transparent.png"
+                src="/logo3.png"
                 alt="производител.net — от производителя, директно за вас"
-                width={600}
-                height={600}
+                width={1536}
+                height={1024}
                 priority
-                className="h-auto w-full object-contain"
+                className="hidden h-auto w-full object-cover lg:block"
               />
-            </div>
-
-            <div className="w-full max-w-[460px] lg:mt-6">
-              <HeroSearch />
+              <HeroSearch bare />
             </div>
           </div>
         </div>
