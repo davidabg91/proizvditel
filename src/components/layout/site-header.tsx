@@ -66,6 +66,7 @@ export type HeaderUser = {
   slug: string;
   role: string;
   unread: number;
+  isAdmin: boolean;
 } | null;
 
 function MessagesLink({
@@ -141,6 +142,11 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
           {user ? (
             <>
               <MessagesLink unread={user.unread} />
+              {user.isAdmin ? (
+                <Button href="/admin" variant="ghost" size="sm">
+                  Админ
+                </Button>
+              ) : null}
               {user.role === "producer" ? (
                 <Button href="/tablo" variant="outline" size="sm">
                   Табло
@@ -214,6 +220,11 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
               {user ? (
                 <>
                   <MessagesLink unread={user.unread} full onClick={() => setOpen(false)} />
+                  {user.isAdmin ? (
+                    <Button href="/admin" variant="outline" onClick={() => setOpen(false)}>
+                      Админ панел
+                    </Button>
+                  ) : null}
                   {user.role === "producer" ? (
                     <Button href="/tablo" variant="outline" onClick={() => setOpen(false)}>
                       Табло

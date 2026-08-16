@@ -23,10 +23,12 @@ model User {
   name         String
   // "producer" — земеделски производител | "customer" — купувач | "admin"
   role         String   @default("producer")
+  banned       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   producer Producer?
+  reports  Report[] @relation("ReportAuthor")
   reviews  Review[]  @relation("ReviewAuthor")
 
   conversations Conversation[] @relation("CustomerConversations")
@@ -343,6 +345,29 @@ model OrderItem {
   title     String
   unitPrice Int // стотинки
   qty       Int
+}
+
+// ─────────────────────────────────────────────
+//  Доклади (сигнали от потребители)
+// ─────────────────────────────────────────────
+
+model Report {
+  id          String  @id @default(cuid())
+  reporterId  String?
+  reporter    User?   @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: SetNull)
+
+  targetType  String // producer | user | listing | topic
+  targetId    String
+  targetLabel String? // за показване в админ (напр. име на стопанство)
+  reason      String
+  note        String?
+
+  status     String    @default("open") // open | resolved
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([targetType, targetId])
 }
 
 // ─────────────────────────────────────────────

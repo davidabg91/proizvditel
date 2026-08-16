@@ -12,6 +12,7 @@ import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
 import { getMutualPartners } from "@/lib/partners";
+import { ReportButton } from "@/components/report/report-button";
 
 export async function generateMetadata({
   params,
@@ -421,13 +422,21 @@ export default async function ProducerProfilePage({
           </aside>
         </div>
 
-        <div className="mt-14 border-t border-border pt-6">
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
           <Link
             href="/proizvoditeli"
             className="text-sm font-medium text-primary hover:underline"
           >
             ← Всички производители
           </Link>
+          {!isOwner ? (
+            <ReportButton
+              targetType="producer"
+              targetId={producer.id}
+              targetLabel={producer.farmName}
+              loggedIn={!!currentUserId}
+            />
+          ) : null}
         </div>
       </div>
     </main>

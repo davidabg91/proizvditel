@@ -55,10 +55,17 @@ export async function getHeaderUser() {
   const user = await getCurrentUser();
   if (!user) return null;
   const unread = await getUnreadCount(user.id);
+  const admins = (process.env.ADMIN_EMAIL ?? "")
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const isAdmin = !!user.email && admins.includes(user.email.toLowerCase());
   return {
     name: user.name,
     slug: user.producer?.slug ?? "",
     role: user.role,
     unread,
+    isAdmin,
   };
 }
