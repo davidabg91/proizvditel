@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -61,19 +62,20 @@ export default async function ProducerProfilePage({
 
   if (!producer || !producer.published) notFound();
 
-  // Брояч на посещения — не броим собственика
+  // Брояч на посещения — не броим собственика.
+  // userId вече е в producer (без допълнителна заявка); записът се прави
+  // след отговора чрез after(), за да не бави зареждането.
   const session = await auth();
-  const isOwner = session?.user?.id
-    ? (await prisma.producer.findUnique({
-        where: { slug },
-        select: { userId: true },
-      }))?.userId === session.user.id
-    : false;
+  const isOwner = !!session?.user?.id && producer.userId === session.user.id;
 
   if (!isOwner) {
-    await prisma.producer.update({
-      where: { id: producer.id },
-      data: { visits: { increment: 1 } },
+    after(async () => {
+      await prisma.producer
+        .update({
+          where: { id: producer.id },
+          data: { visits: { increment: 1 } },
+        })
+        .catch(() => {});
     });
   }
 
