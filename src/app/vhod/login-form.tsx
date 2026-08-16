@@ -59,12 +59,18 @@ export function LoginForm({ next }: { next?: string }) {
       <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Влизаме…" : "Вход"}
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
-        Нямате акаунт?{" "}
-        <Link href="/registraciya" className="font-medium text-primary hover:underline">
-          Регистрирайте стопанство
-        </Link>
-      </p>
+      <div className="border-t border-border pt-4 text-center text-sm text-muted-foreground">
+        <p>Нямате акаунт?</p>
+        <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:justify-center sm:gap-3">
+          <Link href="/registraciya/kupuvach" className="font-medium text-primary hover:underline">
+            Регистрирайте се като купувач
+          </Link>
+          <span className="hidden text-border-strong sm:inline">·</span>
+          <Link href="/registraciya" className="font-medium text-primary hover:underline">
+            Регистрирайте стопанство
+          </Link>
+        </div>
+      </div>
     </form>
   );
 }
