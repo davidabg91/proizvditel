@@ -80,6 +80,36 @@ const WMO: Record<number, string> = {
 
 const BG_DAYS = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
 
+export const BG_CITIES: Array<{ id: string; label: string; lat: number; lon: number }> = [
+  { id: "sofia", label: "София", lat: 42.6977, lon: 23.3219 },
+  { id: "plovdiv", label: "Пловдив", lat: 42.1354, lon: 24.7453 },
+  { id: "varna", label: "Варна", lat: 43.2141, lon: 27.9147 },
+  { id: "burgas", label: "Бургас", lat: 42.5048, lon: 27.4626 },
+  { id: "ruse", label: "Русе", lat: 43.8356, lon: 25.9657 },
+  { id: "stara_zagora", label: "Стара Загора", lat: 42.4258, lon: 25.6345 },
+  { id: "pleven", label: "Плевен", lat: 43.417, lon: 24.6067 },
+  { id: "veliko_tarnovo", label: "Велико Търново", lat: 43.0757, lon: 25.6172 },
+  { id: "dobrich", label: "Добрич", lat: 43.5726, lon: 27.8273 },
+  { id: "sliven", label: "Сливен", lat: 42.6817, lon: 26.3229 },
+  { id: "pazardzhik", label: "Пазарджик", lat: 42.1928, lon: 24.3336 },
+  { id: "blagoevgrad", label: "Благоевград", lat: 42.0209, lon: 23.0943 },
+  { id: "haskovo", label: "Хасково", lat: 41.9344, lon: 25.5556 },
+  { id: "shumen", label: "Шумен", lat: 43.2712, lon: 26.9361 },
+  { id: "vratsa", label: "Враца", lat: 43.2102, lon: 23.5529 },
+  { id: "yambol", label: "Ямбол", lat: 42.4842, lon: 26.5035 },
+  { id: "gabrovo", label: "Габрово", lat: 42.8742, lon: 25.3187 },
+  { id: "vidin", label: "Видин", lat: 43.9962, lon: 22.8779 },
+  { id: "montana", label: "Монтана", lat: 43.4125, lon: 23.225 },
+  { id: "lovech", label: "Ловеч", lat: 43.137, lon: 24.7142 },
+  { id: "kyustendil", label: "Кюстендил", lat: 42.2869, lon: 22.6914 },
+  { id: "kardzhali", label: "Кърджали", lat: 41.6435, lon: 25.3689 },
+  { id: "smolyan", label: "Смолян", lat: 41.5774, lon: 24.7011 },
+  { id: "silistra", label: "Силистра", lat: 44.1147, lon: 27.2606 },
+  { id: "razgrad", label: "Разград", lat: 43.5262, lon: 26.5256 },
+  { id: "targovishte", label: "Търговище", lat: 43.2512, lon: 26.5722 },
+  { id: "pernik", label: "Перник", lat: 42.6052, lon: 23.0378 },
+];
+
 function getDayName(isoDate: string, index: number): string {
   if (index === 0) return "Днес";
   if (index === 1) return "Утре";
@@ -218,6 +248,7 @@ export function WeatherBar() {
   const [isDefault, setIsDefault] = useState(false);
   const [showWarningView, setShowWarningView] = useState(false);
   const [showForecastModal, setShowForecastModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const clipRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
@@ -345,21 +376,56 @@ export function WeatherBar() {
     load(BG_DEFAULT.lat, BG_DEFAULT.lon, BG_DEFAULT.label);
   }
 
-  function requestLocation() {
-    if (!("geolocation" in navigator)) return loadDefault();
+  function selectCity(city: (typeof BG_CITIES)[0]) {
+    try {
+      localStorage.setItem("proizvoditel_weather_city", JSON.stringify(city));
+    } catch {}
+    setIsDefault(false);
+    setShowLocationModal(false);
+    load(city.lat, city.lon, city.label);
+  }
+
+  function requestLocation(isExplicitClick = false) {
+    // Проверка за предварително избран град в localStorage
+    try {
+      const saved = localStorage.getItem("proizvoditel_weather_city");
+      if (saved && !isExplicitClick) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.lat && parsed?.lon) {
+          setIsDefault(false);
+          load(parsed.lat, parsed.lon, parsed.label);
+          return;
+        }
+      }
+    } catch {}
+
+    if (!("geolocation" in navigator)) {
+      if (isExplicitClick) setShowLocationModal(true);
+      return loadDefault();
+    }
+
     setState("loading");
     navigator.geolocation.getCurrentPosition(
       (p) => {
         setIsDefault(false);
+        try {
+          localStorage.removeItem("proizvoditel_weather_city");
+        } catch {}
         load(p.coords.latitude, p.coords.longitude);
       },
-      () => loadDefault(),
+      (err) => {
+        loadDefault();
+        if (isExplicitClick) {
+          // Потребителят изрично натисна "Моят район", но локацията в браузъра е спряна/забранена
+          setShowLocationModal(true);
+        }
+      },
       { timeout: 10000, maximumAge: 30 * 60 * 1000 },
     );
   }
 
   useEffect(() => {
-    requestLocation();
+    requestLocation(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -407,7 +473,7 @@ export function WeatherBar() {
           </span>
           {state === "error" ? (
             <button
-              onClick={requestLocation}
+              onClick={() => requestLocation(true)}
               className="shrink-0 font-semibold text-primary hover:underline"
             >
               Опитай отново
@@ -556,20 +622,94 @@ export function WeatherBar() {
                   <span className="sm:hidden">📅 Прогноза</span>
                 </button>
 
-                {isDefault ? (
-                  <button
-                    onClick={requestLocation}
-                    className="font-semibold text-muted-foreground hover:text-primary hover:underline whitespace-nowrap hidden md:inline-block border-l border-border pl-2"
-                    title="Покажи времето за моето точно местоположение"
-                  >
-                    Моят район 📍
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => requestLocation(true)}
+                  className="font-semibold text-muted-foreground hover:text-primary hover:underline whitespace-nowrap border-l border-border pl-2 text-[11px] sm:text-xs"
+                  title="Изберете район или пуснете локация"
+                >
+                  {isDefault ? "Моят район 📍" : "Смени район 📍"}
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Модален прозорец при забранена локация + Избор на град */}
+      {showLocationModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setShowLocationModal(false)}
+        >
+          <div
+            className="relative flex flex-col w-full max-w-lg rounded-[var(--radius-xl)] bg-surface border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-surface-muted/50">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">📍</span>
+                <h3 className="text-base font-semibold text-foreground">
+                  Локацията не е пусната в браузъра
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationModal(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground transition-colors font-bold text-base"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="rounded-[var(--radius-md)] border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-foreground leading-relaxed">
+                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                  ⚠️ Браузърът няма достъп до местоположението ви.
+                </p>
+                <p className="text-muted-foreground">
+                  Затова в момента ви показваме общото време за страната. За да включите автоматичната локация:
+                </p>
+                <ul className="mt-2 list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>Кликнете върху <strong>катинарчето 🔒</strong> или иконата за настройки в адресната лента горе.</li>
+                  <li>Разрешете <strong>„Местоположение / Location“</strong> за Производител.net.</li>
+                  <li>Презаредете страницата.</li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+                  Или изберете вашия град / област ръчно:
+                </p>
+
+                <div className="max-h-48 overflow-y-auto rounded-[var(--radius-md)] border border-border divide-y divide-border/60 bg-surface">
+                  {BG_CITIES.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => selectCity(c)}
+                      className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium text-foreground hover:bg-primary-soft hover:text-primary transition-colors text-left"
+                    >
+                      <span>{c.label}</span>
+                      <span className="text-[11px] text-muted-foreground">Избери →</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLocationModal(false)}
+                  className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface-muted transition-colors"
+                >
+                  Затвори
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 5-дневна детайлна агро прогноза (Modal) */}
       {showForecastModal && (
