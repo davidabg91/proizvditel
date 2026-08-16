@@ -20,8 +20,8 @@ export default async function PaymentPage({
         <h1 className="text-2xl font-semibold sm:text-3xl">Начини на плащане</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Изберете как клиентите да ви плащат. Плащането с карта минава през Stripe
-          и постъпва директно при вас; останалите методи се уговарят директно с
-          клиента.
+          и постъпва директно във вашата сметка; наложеният платеж се заплаща при
+          доставка на пратката.
         </p>
       </div>
 

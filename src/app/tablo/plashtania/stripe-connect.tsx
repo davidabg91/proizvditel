@@ -58,6 +58,8 @@ export function StripeConnect({
     });
   }
 
+  const [showInfo, setShowInfo] = useState(false);
+
   return (
     <section className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -69,11 +71,78 @@ export function StripeConnect({
         ) : null}
       </div>
 
-      <p className="mt-2 text-sm text-muted-foreground">
-        Клиентите плащат с карта, а парите постъпват{" "}
-        <strong>директно във вашата Stripe сметка</strong>. Платформата удържа{" "}
-        <strong>5% комисиона</strong>, а таксите на Stripe са за ваша сметка.
-      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <p className="text-sm text-muted-foreground">
+          Приемайте директни плащания с банкови карти от вашите клиенти.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowInfo((v) => !v)}
+          className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] border border-primary/20 bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:border-primary/40 hover:bg-primary/15"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+            />
+          </svg>
+          Информация за таксите и начина на работа
+          <span className="ml-0.5 text-[10px]">{showInfo ? "▲" : "▼"}</span>
+        </button>
+      </div>
+
+      {showInfo && (
+        <div className="mt-4 rounded-[var(--radius-md)] border border-border bg-surface-muted/70 p-4 sm:p-5 text-sm animate-in fade-in duration-200">
+          <h4 className="font-semibold text-foreground flex items-center gap-2">
+            <span>ℹ️</span> Как работи плащането с карта и как се разпределят средствата?
+          </h4>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[var(--radius-md)] border border-border/80 bg-surface p-3.5 shadow-sm">
+              <p className="font-semibold text-xs uppercase tracking-wider text-primary">
+                1. Директни плащания
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Купувачите плащат онлайн с банкова карта. Всички плащания се обработват през сигурната платежна система на <strong>Stripe</strong>. Парите постъпват директно във вашата свързана Stripe сметка и се превеждат автоматично по банковата ви сметка.
+              </p>
+            </div>
+
+            <div className="rounded-[var(--radius-md)] border border-border/80 bg-surface p-3.5 shadow-sm">
+              <p className="font-semibold text-xs uppercase tracking-wider text-primary">
+                2. Комисиона на платформата (5%)
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Платформата „Производител“ удържа фиксирана комисиона от <strong>5%</strong> от стойността на всяка успешна поръчка, платена онлайн с карта. Комисионата обезпечава техническата поддръжка, рекламата и привличането на нови купувачи.
+              </p>
+            </div>
+
+            <div className="rounded-[var(--radius-md)] border border-border/80 bg-surface p-3.5 shadow-sm">
+              <p className="font-semibold text-xs uppercase tracking-wider text-primary">
+                3. Такси за обработка на Stripe
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Стандартните банкови такси за картови транзакции се определят от Stripe съгласно техните официални тарифи за ЕС (обикновено ~1.5% + 0.50 лв. на транзакция за стандартни европейски карти). Таксите на Stripe се удържат автоматично при обработка на плащането.
+              </p>
+            </div>
+
+            <div className="rounded-[var(--radius-md)] border border-border/80 bg-surface p-3.5 shadow-sm">
+              <p className="font-semibold text-xs uppercase tracking-wider text-primary">
+                4. Пълна прозрачност и контрол
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Няма месечни абонаменти или фиксирани разходи, ако нямате продажби. Всяко плащане, удържана такса и трансфер към банковата ви сметка са видими в реално време във вашето лично Stripe табло.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error ? (
         <p className="mt-3 text-sm font-medium text-danger">{error}</p>
