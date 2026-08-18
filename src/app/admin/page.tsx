@@ -15,6 +15,7 @@ export default async function AdminOverviewPage() {
     reviews,
     openReports,
     orderAgg,
+    codAgg,
     visitsAgg,
     recentOrders,
     recentUsers,
@@ -29,8 +30,14 @@ export default async function AdminOverviewPage() {
     prisma.review.count(),
     prisma.report.count({ where: { status: "open" } }),
     prisma.order.aggregate({
+      where: { paymentMethod: "card" },
       _count: true,
       _sum: { amountTotal: true, applicationFee: true },
+    }),
+    prisma.order.aggregate({
+      where: { paymentMethod: "cod" },
+      _count: true,
+      _sum: { amountTotal: true, notionalFee: true },
     }),
     prisma.producer.aggregate({ _sum: { visits: true } }),
     prisma.order.findMany({
@@ -47,6 +54,14 @@ export default async function AdminOverviewPage() {
 
   const revenue = (orderAgg._sum.amountTotal ?? 0) / 100;
   const fees = (orderAgg._sum.applicationFee ?? 0) / 100;
+
+  // Наложен платеж — парите минават през куриера, платформата не ги вижда.
+  // Показваме каква комисиона би се дължала, за да се вижда изпуснатият приход.
+  const codRevenue = (codAgg._sum.amountTotal ?? 0) / 100;
+  const codNotional = (codAgg._sum.notionalFee ?? 0) / 100;
+  const totalTurnover = revenue + codRevenue;
+  const codShare =
+    totalTurnover > 0 ? Math.round((codRevenue / totalTurnover) * 100) : 0;
 
   const stats = [
     { label: "Потребители", value: users, sub: `${customers} купувачи` },
@@ -99,6 +114,44 @@ export default async function AdminOverviewPage() {
             {s.sub ? <p className="mt-0.5 text-xs text-muted-foreground">{s.sub}</p> : null}
           </div>
         ))}
+      </div>
+
+      {/* Наложен платеж — оборот, който минава извън платформата */}
+      <div className="mt-4 rounded-[var(--radius-lg)] border border-accent/30 bg-accent-soft/40 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold">Наложен платеж — справка</h2>
+          <span className="text-xs text-muted-foreground">
+            не се събира комисиона
+          </span>
+        </div>
+        <div className="mt-3 grid gap-4 sm:grid-cols-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Поръчки</p>
+            <p className="mt-0.5 font-serif text-xl font-semibold">{codAgg._count}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Оборот</p>
+            <p className="mt-0.5 font-serif text-xl font-semibold">
+              {formatPrice(codRevenue)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Дял от целия оборот</p>
+            <p className="mt-0.5 font-serif text-xl font-semibold">{codShare}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Пропуснато при 5%</p>
+            <p className="mt-0.5 font-serif text-xl font-semibold text-accent">
+              {formatPrice(codNotional)}
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          При наложен платеж парите минават от клиента през куриера направо при
+          производителя — платформата няма допир до тях и не удържа комисиона.
+          Числата тук показват каква би била тя, за да се вижда колко оборот
+          остава извън приходите.
+        </p>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

@@ -269,6 +269,9 @@ export function OrderBox({
                 <p className="text-xs text-muted-foreground">
                   Сигурно онлайн плащане
                 </p>
+                <p className="mt-1 text-xs font-medium text-success">
+                  Без такса за наложен платеж от куриера
+                </p>
               </div>
             </label>
           ) : null}
@@ -295,6 +298,10 @@ export function OrderBox({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {info?.payment?.codNote || "Плащане при доставка"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Куриерът начислява допълнителна такса за услугата „наложен
+                  платеж“, която плащате вие при получаване.
                 </p>
               </div>
             </label>

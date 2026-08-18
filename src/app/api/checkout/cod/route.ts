@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { SITE_CURRENCY } from "@/lib/stripe";
+import { SITE_CURRENCY, platformFee } from "@/lib/stripe";
 
 type IncomingItem = { listingId: string; qty: number };
 
@@ -110,6 +110,8 @@ export async function POST(req: Request) {
         stripeSessionId: `cod_${randomUUID()}`,
         amountTotal,
         applicationFee: 0,
+        // Не се събира — записва се само за да се вижда изпуснатият приход.
+        notionalFee: platformFee(amountTotal),
         currency,
         paymentMethod: "cod",
         paymentStatus: "pending",

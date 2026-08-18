@@ -356,7 +356,11 @@ model Order {
   combined        Boolean @default(false)
 
   amountTotal    Int // в евроцентове
-  applicationFee Int     @default(0) // комисиона на платформата (евроцентове)
+  applicationFee Int     @default(0) // реално удържана комисиона (евроцентове)
+  // Комисиона, която БИ се дължала, но не се събира — при наложен платеж
+  // парите минават през куриера и платформата няма допир до тях. Служи само
+  // за отчет: колко оборот минава извън картовите плащания.
+  notionalFee    Int     @default(0)
   currency       String  @default("eur")
 
   // Платежен статус
