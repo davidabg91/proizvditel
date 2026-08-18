@@ -6,9 +6,13 @@ import { CatalogFilters } from "./catalog-filters";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
-  title: "Каталог",
+  title: "Каталог с прясна продукция от български производители",
   description:
-    "Разгледайте прясна продукция директно от българските земеделски производители.",
+    "Плодове, зеленчуци, мед, млечни и месни продукти директно от българските земеделски стопанства. Поръчайте без посредник, с доставка до вас.",
+  // Филтрите (?category=, ?region=, ?q=) създават стотици адреси с почти
+  // еднакво съдържание — сочим ги към чистия каталог, за да не се
+  // конкурират помежду си в резултатите.
+  alternates: { canonical: "/katalog" },
 };
 
 export default async function CatalogPage({

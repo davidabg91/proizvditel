@@ -7,6 +7,7 @@ import { WeatherBar } from "@/components/home/weather-bar";
 import { CartProvider } from "@/components/cart/cart-context";
 import { getHeaderUser } from "@/lib/session";
 import { getSiteUrl } from "@/lib/site";
+import { SiteJsonLd } from "@/components/seo/json-ld";
 import { CookieConsent } from "@/components/legal/cookie-consent";
 
 const manrope = Manrope({
@@ -25,6 +26,7 @@ const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  alternates: { canonical: "/" },
   title: {
     default: "Производител.net — Направо от нивата",
     template: "%s · Производител.net",
@@ -40,6 +42,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
+    url: siteUrl,
     siteName: "Производител.net",
     title: "Производител.net — Направо от нивата",
     description:
@@ -71,6 +74,7 @@ export default async function RootLayout({
       }}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <SiteJsonLd />
         <CartProvider>
           <SiteHeader user={user} />
           <WeatherBar />

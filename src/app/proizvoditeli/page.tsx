@@ -6,8 +6,10 @@ import { ProducerFilters } from "./producer-filters";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
-  title: "Производители",
-  description: "Всички земеделски производители в платформата Производител.",
+  title: "Български земеделски производители",
+  description:
+    "Разгледайте регистрираните земеделски стопанства по област и продукция. Вижте кой отглежда храната ви и поръчайте директно от него.",
+  alternates: { canonical: "/proizvoditeli" },
 };
 
 export default async function ProducersPage({

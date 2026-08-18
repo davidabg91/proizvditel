@@ -8,6 +8,7 @@ import { ProductGallery } from "@/components/product/product-gallery";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { formatPrice } from "@/lib/utils";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
   params,
@@ -17,12 +18,32 @@ export async function generateMetadata({
   const { slug, listingSlug } = await params;
   const listing = await prisma.productListing.findFirst({
     where: { slug: listingSlug, producer: { slug } },
-    select: { title: true, description: true },
+    select: {
+      title: true,
+      description: true,
+      price: true,
+      unit: true,
+      producer: { select: { farmName: true, town: true } },
+      photos: { orderBy: { sort: "asc" }, take: 1, select: { url: true } },
+    },
   });
   if (!listing) return { title: "Обявата не е намерена" };
+
+  const where = listing.producer.town ? ` от ${listing.producer.town}` : "";
+  const description =
+    listing.description?.slice(0, 160) ??
+    `${listing.title} — ${listing.price.toFixed(2)} € / ${listing.unit}, директно от ${listing.producer.farmName}${where}. Поръчайте без посредник.`;
+
   return {
     title: listing.title,
-    description: listing.description ?? listing.title,
+    description,
+    alternates: { canonical: `/p/${slug}/oferta/${listingSlug}` },
+    openGraph: {
+      title: `${listing.title} — ${listing.producer.farmName}`,
+      description,
+      type: "article",
+      images: listing.photos[0]?.url ? [listing.photos[0].url] : undefined,
+    },
   };
 }
 
@@ -47,8 +68,28 @@ export default async function ListingDetailPage({
   const p = listing.producer;
   const location = [p.town, p.region].filter(Boolean).join(", ");
 
+  const path = `/p/${p.slug}/oferta/${listing.slug}`;
+
   return (
     <main className="container-page py-10">
+      <ProductJsonLd
+        title={listing.title}
+        description={listing.description}
+        images={listing.photos.map((ph) => ph.url)}
+        price={listing.price}
+        unit={listing.unit}
+        inStock={listing.available && !listing.soldOut}
+        producerName={p.farmName}
+        producerPath={`/p/${p.slug}`}
+        url={path}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Каталог", path: "/katalog" },
+          { name: p.farmName, path: `/p/${p.slug}` },
+          { name: listing.title, path },
+        ]}
+      />
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/katalog" className="hover:text-primary">
           Каталог

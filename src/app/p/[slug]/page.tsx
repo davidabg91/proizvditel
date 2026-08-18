@@ -15,6 +15,7 @@ import { ReviewForm } from "@/components/product/review-form";
 import { getMutualPartners } from "@/lib/partners";
 import { ReportButton } from "@/components/report/report-button";
 import { ProfileCover } from "@/components/profile/profile-cover";
+import { ProducerJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
   params,
@@ -24,14 +25,34 @@ export async function generateMetadata({
   const { slug } = await params;
   const producer = await prisma.producer.findUnique({
     where: { slug },
-    select: { farmName: true, description: true },
+    select: {
+      farmName: true,
+      description: true,
+      town: true,
+      region: true,
+      logoUrl: true,
+      coverUrl: true,
+      crops: { select: { name: true }, take: 5 },
+    },
   });
   if (!producer) return { title: "Профилът не е намерен" };
+
+  const location = [producer.town, producer.region].filter(Boolean).join(", ");
+  const crops = producer.crops.map((c) => c.name).join(", ");
+  const description =
+    producer.description?.slice(0, 160) ??
+    `${producer.farmName}${location ? ` — ${location}` : ""}. ${crops ? `Отглеждаме: ${crops}. ` : ""}Поръчайте прясна продукция директно от стопанството.`;
+
   return {
     title: producer.farmName,
-    description:
-      producer.description ??
-      `${producer.farmName} — земеделски производител в платформата Производител.`,
+    description,
+    alternates: { canonical: `/p/${slug}` },
+    openGraph: {
+      title: `${producer.farmName}${location ? ` — ${location}` : ""}`,
+      description,
+      type: "profile",
+      images: producer.coverUrl ?? producer.logoUrl ?? undefined,
+    },
   };
 }
 
@@ -141,6 +162,24 @@ export default async function ProducerProfilePage({
 
   return (
     <main className="pb-20">
+      <ProducerJsonLd
+        farmName={producer.farmName}
+        description={producer.description}
+        slug={producer.slug}
+        logoUrl={producer.logoUrl}
+        town={producer.town}
+        region={producer.region}
+        phone={producer.phone}
+        email={producer.contactEmail}
+        ratingAvg={producer.ratingAvg}
+        ratingCount={producer.ratingCount}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Производители", path: "/proizvoditeli" },
+          { name: producer.farmName, path: `/p/${producer.slug}` },
+        ]}
+      />
       {/* Корица с възможност за наместване и мащабиране */}
       <ProfileCover
         coverUrl={producer.coverUrl}
