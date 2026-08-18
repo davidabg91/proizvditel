@@ -6,15 +6,21 @@ import { prisma } from "@/lib/prisma";
 import { stripe, getSiteUrl } from "@/lib/stripe";
 
 /**
- * Акаунт, създаден в другия режим (тестов ↔ жив), не съществува за текущия
- * ключ. Разпознаваме точно този случай, за да не изтрием валиден акаунт при
- * временна мрежова грешка.
+ * Записаният акаунт е негоден за текущия ключ. Stripe връща различни грешки
+ * за двата случая: 404 „No such account" когато акаунтът липсва, и 403
+ * „does not have access to account" когато е създаден в другия режим
+ * (тестов ↔ жив). Ловим и двете, но не и мрежови грешки, за да не изтрием
+ * валиден акаунт при временен проблем.
  */
-function isMissingAccount(e: unknown): boolean {
-  const err = e as { code?: string; statusCode?: number; type?: string };
+function isUnusableAccount(e: unknown): boolean {
+  const err = e as { code?: string; statusCode?: number; message?: string };
+  if (err?.code === "resource_missing" || err?.code === "account_invalid")
+    return true;
+  if (err?.statusCode === 403 || err?.statusCode === 404) return true;
+  const msg = err?.message ?? "";
   return (
-    err?.code === "resource_missing" ||
-    (err?.statusCode === 404 && err?.type === "invalid_request_error")
+    msg.includes("does not have access to account") ||
+    msg.includes("No such account")
   );
 }
 
@@ -55,7 +61,7 @@ export async function startStripeOnboarding(): Promise<StripeActionResult> {
       try {
         await stripe.accounts.retrieve(accountId);
       } catch (e) {
-        if (!isMissingAccount(e)) throw e;
+        if (!isUnusableAccount(e)) throw e;
         accountId = null;
         await prisma.producer.update({
           where: { id: producer.id },
@@ -118,7 +124,7 @@ export async function refreshStripeStatus(): Promise<StripeActionResult> {
     revalidatePath(`/p/${producer.slug}`);
     return { ok: true };
   } catch (e) {
-    if (isMissingAccount(e)) {
+    if (isUnusableAccount(e)) {
       await prisma.producer.update({
         where: { id: producer.id },
         data: { stripeAccountId: null, stripeChargesEnabled: false },

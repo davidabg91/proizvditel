@@ -44,8 +44,10 @@ export function StripeConnect({
     setError(null);
     startTransition(async () => {
       const res = await refreshStripeStatus();
-      if (res.ok) router.refresh();
-      else setError(res.error);
+      if (!res.ok) setError(res.error);
+      // Опресняваме и при грешка — ако връзката е била изчистена,
+      // секцията трябва да се върне в изходно състояние.
+      router.refresh();
     });
   }
 
