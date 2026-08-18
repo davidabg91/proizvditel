@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { COMPANY } from "@/lib/company";
 
 const COLUMNS = [
   {
@@ -26,6 +27,7 @@ const COLUMNS = [
       { href: "/za-nas", label: "За нас" },
       { href: "/kak-raboti", label: "Как работи" },
       { href: "/kontakti", label: "Контакти" },
+      { href: "/otkaz-ot-dogovor", label: "Отказ и рекламации" },
     ],
   },
 ];
@@ -62,15 +64,26 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Производител.net. Всички права запазени.</p>
-          <div className="flex gap-6">
-            <Link href="/usloviya" className="hover:text-foreground">
-              Общи условия
-            </Link>
-            <Link href="/poveritelnost" className="hover:text-foreground">
-              Поверителност
-            </Link>
+        <div className="mt-12 border-t border-border pt-6 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            {COMPANY.name} · ЕИК {COMPANY.eik} · {COMPANY.addressLines.join(", ")}
+          </p>
+          <p className="mt-1 leading-relaxed">
+            {COMPANY.email} · {COMPANY.phone} · Дружеството не е регистрирано по ЗДДС
+          </p>
+          <div className="mt-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+            <p>© {new Date().getFullYear()} Производител.net. Всички права запазени.</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <Link href="/usloviya" className="hover:text-foreground">
+                Общи условия
+              </Link>
+              <Link href="/poveritelnost" className="hover:text-foreground">
+                Поверителност
+              </Link>
+              <Link href="/biskvitki" className="hover:text-foreground">
+                Бисквитки
+              </Link>
+            </div>
           </div>
         </div>
       </div>

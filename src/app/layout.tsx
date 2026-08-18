@@ -7,6 +7,7 @@ import { WeatherBar } from "@/components/home/weather-bar";
 import { CartProvider } from "@/components/cart/cart-context";
 import { getHeaderUser } from "@/lib/session";
 import { getSiteUrl } from "@/lib/site";
+import { CookieConsent } from "@/components/legal/cookie-consent";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -75,6 +76,7 @@ export default async function RootLayout({
           <WeatherBar />
           <div className="flex flex-1 flex-col">{children}</div>
           <SiteFooter />
+          <CookieConsent />
         </CartProvider>
       </body>
     </html>
