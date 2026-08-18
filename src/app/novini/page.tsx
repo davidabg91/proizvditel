@@ -1,6 +1,11 @@
 import { ComingSoon } from "@/components/layout/coming-soon";
 
-export const metadata = { title: "Новини и събития" };
+export const metadata = {
+  title: "Новини и събития",
+  // Страницата още няма съдържание. Индексирана празна страница вреди на
+  // оценката за качество на целия сайт — пускаме я, щом има новини.
+  robots: { index: false, follow: true },
+};
 
 export default function NewsPage() {
   return (

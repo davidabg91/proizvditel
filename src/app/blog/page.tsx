@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/blog" },
   title: "Блог",
   description:
     "Полезното за продуктите — ползи, качества, съвети, сезонност и рецепти от българските производители.",

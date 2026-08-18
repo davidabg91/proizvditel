@@ -9,6 +9,7 @@ import { formatRelative } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/forum" },
   title: "Форум",
   description:
     "Общност на българските земеделски производители — въпроси, съвети и обмяна на опит.",

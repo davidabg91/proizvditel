@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/utils";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/savmestno" },
   title: "Съвместно пазаруване",
   description:
     "Поръчайте от няколко производителя от един град с една обща доставка.",
@@ -49,7 +50,7 @@ export default async function SharedDeliveryPage({
 
       {q ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          Резултати за „{q}" · {groups.length}{" "}
+          Резултати за „{q}“ · {groups.length}{" "}
           {groups.length === 1 ? "група" : "групи"} за съвместна доставка
         </p>
       ) : null}

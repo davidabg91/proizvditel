@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
   params,
@@ -13,10 +14,21 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await prisma.blogPost.findUnique({
     where: { slug },
-    select: { title: true, excerpt: true },
+    select: { title: true, excerpt: true, coverUrl: true, category: true },
   });
   if (!post) return { title: "Статия" };
-  return { title: post.title, description: post.excerpt ?? post.title };
+  const description = post.excerpt ?? `${post.title} — ${post.category} от Производител.net.`;
+  return {
+    title: post.title,
+    description,
+    alternates: { canonical: `/blog/${slug}` },
+    openGraph: {
+      title: post.title,
+      description,
+      type: "article",
+      images: post.coverUrl ?? undefined,
+    },
+  };
 }
 
 export default async function BlogArticlePage({
@@ -41,6 +53,21 @@ export default async function BlogArticlePage({
 
   return (
     <main className="pb-20">
+      <ArticleJsonLd
+        title={post.title}
+        description={post.excerpt}
+        image={post.coverUrl}
+        authorName={authorName}
+        publishedAt={post.createdAt}
+        updatedAt={post.updatedAt}
+        path={`/blog/${post.slug}`}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Блог", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ]}
+      />
       {post.coverUrl ? (
         <div className="h-64 w-full overflow-hidden bg-surface-muted sm:h-80">
           {/* eslint-disable-next-line @next/next/no-img-element */}
