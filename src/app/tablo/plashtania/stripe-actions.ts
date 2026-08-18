@@ -5,6 +5,19 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe, getSiteUrl } from "@/lib/stripe";
 
+/**
+ * Акаунт, създаден в другия режим (тестов ↔ жив), не съществува за текущия
+ * ключ. Разпознаваме точно този случай, за да не изтрием валиден акаунт при
+ * временна мрежова грешка.
+ */
+function isMissingAccount(e: unknown): boolean {
+  const err = e as { code?: string; statusCode?: number; type?: string };
+  return (
+    err?.code === "resource_missing" ||
+    (err?.statusCode === 404 && err?.type === "invalid_request_error")
+  );
+}
+
 export type StripeActionResult =
   | { ok: true; url?: string }
   | { ok: false; error: string };
@@ -35,6 +48,22 @@ export async function startStripeOnboarding(): Promise<StripeActionResult> {
 
   try {
     let accountId = producer.stripeAccountId;
+
+    // При смяна на режима (тестов → жив) старият акаунт е невалиден —
+    // забравяме го, за да се създаде нов вместо да гърми при account link.
+    if (accountId) {
+      try {
+        await stripe.accounts.retrieve(accountId);
+      } catch (e) {
+        if (!isMissingAccount(e)) throw e;
+        accountId = null;
+        await prisma.producer.update({
+          where: { id: producer.id },
+          data: { stripeAccountId: null, stripeChargesEnabled: false },
+        });
+      }
+    }
+
     if (!accountId) {
       const account = await stripe.accounts.create({
         type: "express",
@@ -89,6 +118,18 @@ export async function refreshStripeStatus(): Promise<StripeActionResult> {
     revalidatePath(`/p/${producer.slug}`);
     return { ok: true };
   } catch (e) {
+    if (isMissingAccount(e)) {
+      await prisma.producer.update({
+        where: { id: producer.id },
+        data: { stripeAccountId: null, stripeChargesEnabled: false },
+      });
+      revalidatePath("/tablo/plashtania");
+      return {
+        ok: false,
+        error:
+          "Предишната връзка със Stripe вече не е валидна (създадена е в друг режим). Свържете Stripe наново.",
+      };
+    }
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Грешка при връзка със Stripe.",
