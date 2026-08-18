@@ -48,6 +48,16 @@ export async function updateProfile(
         deliveryProviders: d.deliveryProviders.length
           ? d.deliveryProviders.join(",")
           : null,
+        hasShop: d.hasShop,
+        shopName: d.shopName || null,
+        shopAddress: d.shopAddress || null,
+        shopTown: d.shopTown || null,
+        shopRegion: d.shopRegion || null,
+        shopHours: d.shopHours || null,
+        shopPhone: d.shopPhone || null,
+        shopMapUrl: d.shopMapUrl || null,
+        shopNote: d.shopNote || null,
+        shopPhotoUrl: d.shopPhotoUrl || null,
         logoUrl: d.logoUrl || null,
         coverUrl: d.coverUrl || null,
         coverPosition: d.coverPosition ?? undefined,

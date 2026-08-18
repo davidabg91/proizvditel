@@ -15,6 +15,7 @@ import { ReviewForm } from "@/components/product/review-form";
 import { getMutualPartners } from "@/lib/partners";
 import { ReportButton } from "@/components/report/report-button";
 import { ProfileCover } from "@/components/profile/profile-cover";
+import { ShopCard, hasShopInfo } from "@/components/profile/shop-card";
 import { ProducerJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
@@ -160,6 +161,9 @@ export default async function ProducerProfilePage({
 
   const soldOutCount = listingCards.filter((l) => l.soldOut).length;
 
+  // Обект на място — показва се само с попълнен адрес.
+  const showShop = hasShopInfo(producer);
+
   return (
     <main className="pb-20">
       <ProducerJsonLd
@@ -173,6 +177,7 @@ export default async function ProducerProfilePage({
         email={producer.contactEmail}
         ratingAvg={producer.ratingAvg}
         ratingCount={producer.ratingCount}
+        shop={showShop ? producer : null}
       />
       <BreadcrumbJsonLd
         items={[
@@ -235,6 +240,7 @@ export default async function ProducerProfilePage({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {showShop ? <Badge tone="accent">Магазин на място</Badge> : null}
             {producer.sharedDelivery ? (
               <Badge tone="success">Съвместна доставка</Badge>
             ) : null}
@@ -440,6 +446,8 @@ export default async function ProducerProfilePage({
                 Изпрати съобщение
               </Button>
             </div>
+
+            <ShopCard shop={producer} farmName={producer.farmName} />
 
             <PaymentMethodsDisplay payment={producer.payment} />
 

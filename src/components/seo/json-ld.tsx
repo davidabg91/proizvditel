@@ -145,6 +145,16 @@ export function ProductJsonLd({
   );
 }
 
+/** Данни за физическия обект, ако производителят е попълнил такъв. */
+type ShopForSchema = {
+  shopAddress: string | null;
+  shopTown: string | null;
+  shopRegion: string | null;
+  shopPhone: string | null;
+  shopMapUrl: string | null;
+  shopPhotoUrl: string | null;
+};
+
 /** Профил на стопанство. */
 export function ProducerJsonLd({
   farmName,
@@ -157,6 +167,7 @@ export function ProducerJsonLd({
   email,
   ratingAvg,
   ratingCount,
+  shop,
 }: {
   farmName: string;
   description: string | null;
@@ -168,8 +179,18 @@ export function ProducerJsonLd({
   email: string | null;
   ratingAvg: number;
   ratingCount: number;
+  /** Подава се само когато обектът е публикуван и има адрес. */
+  shop?: ShopForSchema | null;
 }) {
   const site = getSiteUrl();
+
+  // Когато има обект на място, адресът в структурираните данни е неговият —
+  // това е точката, на която клиентът наистина може да отиде. Работното
+  // време умишлено не се подава: Schema.org иска строг формат („Mo-Sa
+  // 08:00-18:00“), а полето в профила е свободен текст на български.
+  const images = [logoUrl, shop?.shopPhotoUrl].filter(Boolean) as string[];
+  const mapUrl = shop?.shopMapUrl?.trim();
+
   return (
     <JsonLd
       data={{
@@ -179,13 +200,15 @@ export function ProducerJsonLd({
         name: farmName,
         description: description ?? `${farmName} — земеделско стопанство в България.`,
         url: `${site}/p/${slug}`,
-        image: logoUrl ?? undefined,
-        telephone: phone ?? undefined,
+        image: images.length > 0 ? images : undefined,
+        telephone: shop?.shopPhone ?? phone ?? undefined,
         email: email ?? undefined,
+        hasMap: mapUrl && /^https?:\/\//i.test(mapUrl) ? mapUrl : undefined,
         address: {
           "@type": "PostalAddress",
-          addressLocality: town ?? undefined,
-          addressRegion: region ?? undefined,
+          streetAddress: shop?.shopAddress ?? undefined,
+          addressLocality: shop?.shopTown ?? town ?? undefined,
+          addressRegion: shop?.shopRegion ?? region ?? undefined,
           addressCountry: "BG",
         },
         // Оценките се подават само ако наистина има такива.

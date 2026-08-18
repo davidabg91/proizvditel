@@ -27,6 +27,16 @@ type InitialProfile = {
   totalDecares: string;
   sharedDelivery: boolean;
   deliveryProviders: string[];
+  hasShop: boolean;
+  shopName: string;
+  shopAddress: string;
+  shopTown: string;
+  shopRegion: string;
+  shopHours: string;
+  shopPhone: string;
+  shopMapUrl: string;
+  shopNote: string;
+  shopPhotoUrl: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   coverPosition?: number | null;
@@ -83,6 +93,16 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           totalDecares: numOrNull(f.totalDecares) as number | null,
           sharedDelivery: f.sharedDelivery,
           deliveryProviders: f.deliveryProviders,
+          hasShop: f.hasShop,
+          shopName: f.shopName.trim(),
+          shopAddress: f.shopAddress.trim(),
+          shopTown: f.shopTown.trim(),
+          shopRegion: f.shopRegion,
+          shopHours: f.shopHours.trim(),
+          shopPhone: f.shopPhone.trim(),
+          shopMapUrl: f.shopMapUrl.trim(),
+          shopNote: f.shopNote.trim(),
+          shopPhotoUrl: f.shopPhotoUrl ?? "",
           logoUrl: f.logoUrl ?? "",
           coverUrl: f.coverUrl ?? "",
           coverPosition: f.coverPosition ?? 50,
@@ -402,6 +422,136 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
             </Field>
           </div>
         </div>
+      </section>
+
+      {/* Магазин / обект на място */}
+      <section className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
+        <h2 className="text-lg font-semibold">Магазин или обект на място</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Ако клиентите могат да дойдат при вас и да купят на място — магазин,
+          склад, сергия на пазара или направо от двора на стопанството — попълнете
+          адреса тук. В профила ви ще се появи карта „Заповядайте на място“ с
+          адреса, работното време и снимка на обекта.
+        </p>
+
+        <label className="mt-4 flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={f.hasShop}
+            onChange={(e) => set({ hasShop: e.target.checked })}
+            className="mt-0.5 h-5 w-5 shrink-0 rounded border-border-strong text-primary accent-[var(--color-primary)]"
+          />
+          <span className="text-sm leading-relaxed text-foreground">
+            Имам обект, където клиентите могат да ме намерят и да купят на място.
+          </span>
+        </label>
+
+        {f.hasShop ? (
+          <div className="mt-6 flex flex-col gap-5 border-t border-border pt-6">
+            <div className="grid gap-5 sm:grid-cols-[1fr_260px]">
+              <div className="flex flex-col gap-5">
+                <Field
+                  label="Име на обекта"
+                  hint="по избор — ако е различно от името на стопанството"
+                >
+                  <Input
+                    value={f.shopName}
+                    onChange={(e) => set({ shopName: e.target.value })}
+                    placeholder={f.farmName || "напр. Магазин „От нивата“"}
+                  />
+                </Field>
+
+                <Field label="Адрес" hint="улица и номер">
+                  <Input
+                    value={f.shopAddress}
+                    onChange={(e) => set({ shopAddress: e.target.value })}
+                    placeholder="напр. ул. Христо Ботев 12"
+                  />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field label="Град / село на обекта">
+                    <Input
+                      value={f.shopTown}
+                      onChange={(e) => set({ shopTown: e.target.value })}
+                      placeholder={f.town || "напр. Ловеч"}
+                    />
+                  </Field>
+                  <Field label="Област">
+                    <Select
+                      value={f.shopRegion}
+                      onChange={(e) => set({ shopRegion: e.target.value })}
+                    >
+                      <option value="">Изберете област</option>
+                      {REGIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold">Снимка на обекта</p>
+                <ImageUploader
+                  value={f.shopPhotoUrl}
+                  onChange={(url) => set({ shopPhotoUrl: url ?? "" })}
+                  aspect="video"
+                  label="Снимка на магазина"
+                />
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  Снимка отвън помага на хората да разпознаят входа, когато
+                  пристигнат.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Работно време" hint="свободен текст">
+                <Input
+                  value={f.shopHours}
+                  onChange={(e) => set({ shopHours: e.target.value })}
+                  placeholder="напр. понеделник – събота, 8:00 – 18:00"
+                />
+              </Field>
+              <Field
+                label="Телефон на обекта"
+                hint="по избор — ако е различен от основния"
+              >
+                <Input
+                  value={f.shopPhone}
+                  onChange={(e) => set({ shopPhone: e.target.value })}
+                  placeholder={f.phone || "напр. 0888 123 456"}
+                />
+              </Field>
+            </div>
+
+            <Field
+              label="Връзка към картата"
+              hint="отворете мястото в Google Maps и поставете връзката от „Сподели“"
+            >
+              <Input
+                value={f.shopMapUrl}
+                onChange={(e) => set({ shopMapUrl: e.target.value })}
+                placeholder="https://maps.app.goo.gl/..."
+              />
+            </Field>
+
+            <Field
+              label="Как да ви намерят"
+              hint="по избор — ориентири, вход, паркинг"
+            >
+              <Textarea
+                value={f.shopNote}
+                onChange={(e) => set({ shopNote: e.target.value })}
+                placeholder="напр. Срещу автогарата, зелена порта вдясно от фурната. Има място за паркиране в двора."
+                rows={3}
+              />
+            </Field>
+          </div>
+        ) : null}
       </section>
 
       {/* Съвместна доставка */}

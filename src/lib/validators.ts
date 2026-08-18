@@ -92,6 +92,25 @@ export const profileSchema = z.object({
   totalDecares: z.number().min(0).max(1_000_000).optional().nullable(),
   sharedDelivery: z.boolean().default(false),
   deliveryProviders: z.array(z.string()).default([]),
+  // Физически обект
+  hasShop: z.boolean().default(false),
+  shopName: z.string().trim().max(120).optional().or(z.literal("")),
+  shopAddress: z.string().trim().max(200).optional().or(z.literal("")),
+  shopTown: z.string().trim().max(120).optional().or(z.literal("")),
+  shopRegion: z.string().trim().optional().or(z.literal("")),
+  shopHours: z.string().trim().max(300).optional().or(z.literal("")),
+  shopPhone: z.string().trim().max(60).optional().or(z.literal("")),
+  shopMapUrl: z
+    .string()
+    .trim()
+    .max(600)
+    .refine((v) => v === "" || /^https?:\/\//i.test(v), {
+      message: "Връзката към картата трябва да започва с http:// или https://",
+    })
+    .optional()
+    .or(z.literal("")),
+  shopNote: z.string().trim().max(500).optional().or(z.literal("")),
+  shopPhotoUrl: z.string().trim().optional().or(z.literal("")),
   logoUrl: z.string().trim().optional().or(z.literal("")),
   coverUrl: z.string().trim().optional().or(z.literal("")),
   coverPosition: z.number().min(0).max(100).optional().nullable(),

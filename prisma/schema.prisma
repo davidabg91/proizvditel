@@ -86,6 +86,20 @@ model Producer {
   coverPositionX Int?    @default(50) // Позиция по хоризонтала (X) в проценти (0-100)
   coverScale     Int?    @default(100) // Мащаб / приближаване в проценти (100-300)
 
+  // Физически обект — магазин, склад или двор, където клиентите могат да
+  // купят на място. Показва се в профила само когато hasShop е включено, за
+  // да не се появява празна карта при стопанства без обект.
+  hasShop      Boolean @default(false)
+  shopName     String? // Име на обекта, ако е различно от стопанството
+  shopAddress  String? // Улица и номер
+  shopTown     String? // Град / село на обекта (може да е различно от стопанството)
+  shopRegion   String? // Област на обекта
+  shopHours    String? // Работно време — свободен текст
+  shopPhone    String? // Телефон на обекта, ако е различен от основния
+  shopMapUrl   String? // Връзка към картата (Google Maps и подобни)
+  shopNote     String? // Ориентири, вход, паркинг — как да ви намерят
+  shopPhotoUrl String? // Снимка на обекта
+
   // Съвместно пазаруване / доставка
   sharedDelivery Boolean @default(false)
 
@@ -123,6 +137,7 @@ model Producer {
   @@index([region])
   @@index([town])
   @@index([sharedDelivery])
+  @@index([hasShop])
 }
 
 // Култура / продукция (какво, от кога, сортове, декари, годишна продукция)
