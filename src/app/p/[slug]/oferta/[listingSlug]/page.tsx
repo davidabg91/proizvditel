@@ -7,8 +7,53 @@ import { Button } from "@/components/ui/button";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { DeliveryBadges } from "@/components/product/delivery-badges";
+import { ListingCard, type ListingCardData } from "@/components/product/listing-card";
+import { getMutualPartners } from "@/lib/partners";
 import { formatPrice } from "@/lib/utils";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+
+/** Полетата, които картата на обявата чете от заявката. */
+type ListingRow = {
+  id: string;
+  slug: string;
+  title: string;
+  price: number;
+  oldPrice: number | null;
+  unit: string;
+  currency: string;
+  isOffer: boolean;
+  available: boolean;
+  soldOut: boolean;
+  boostedUntil: Date | null;
+  category: string | null;
+  photos: { url: string }[];
+};
+
+type CardProducer = {
+  slug: string;
+  farmName: string;
+  town: string | null;
+  region: string | null;
+};
+
+function toCard(l: ListingRow, producer: CardProducer): ListingCardData {
+  return {
+    id: l.id,
+    slug: l.slug,
+    title: l.title,
+    price: l.price,
+    oldPrice: l.oldPrice,
+    unit: l.unit,
+    currency: l.currency,
+    isOffer: l.isOffer,
+    available: l.available,
+    soldOut: l.soldOut,
+    boostedUntil: l.boostedUntil,
+    category: l.category,
+    imageUrl: l.photos[0]?.url ?? null,
+    producer,
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -69,6 +114,46 @@ export default async function ListingDetailPage({
   const location = [p.town, p.region].filter(Boolean).join(", ");
 
   const path = `/p/${p.slug}/oferta/${listing.slug}`;
+
+  const cardProducer: CardProducer = {
+    slug: p.slug,
+    farmName: p.farmName,
+    town: p.town,
+    region: p.region,
+  };
+
+  // Останалите продукти на същото стопанство и — ако прави съвместна
+  // доставка — продуктите на партньорите му. Изчерпаните и неналичните
+  // отпадат: смисълът на тези редове е покупка с един клик.
+  const [otherListings, partners] = await Promise.all([
+    prisma.productListing.findMany({
+      where: {
+        producerId: p.id,
+        id: { not: listing.id },
+        available: true,
+        soldOut: false,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: { photos: { orderBy: { sort: "asc" }, take: 1 } },
+    }),
+    p.sharedDelivery ? getMutualPartners(p.id) : Promise.resolve([]),
+  ]);
+
+  const otherCards = otherListings.map((l) => toCard(l, cardProducer));
+
+  const partnerCards = partners
+    .flatMap((partner) =>
+      partner.listings.map((l) =>
+        toCard(l, {
+          slug: partner.slug,
+          farmName: partner.farmName,
+          town: partner.town,
+          region: partner.region,
+        }),
+      ),
+    )
+    .slice(0, 8);
 
   return (
     <main className="container-page py-10">
@@ -232,6 +317,61 @@ export default async function ListingDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Още от същото стопанство */}
+      {otherCards.length > 0 ? (
+        <section className="mt-16 border-t border-border pt-10">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-serif text-2xl font-semibold">
+              Още от {p.farmName}
+            </h2>
+            <Link
+              href={`/p/${p.slug}#produkti`}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Всички обяви на стопанството →
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Добавете ги в кошницата заедно с този продукт — една поръчка, една
+            доставка от същото стопанство.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {otherCards.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Продукти на партньорите по съвместна доставка */}
+      {partnerCards.length > 0 ? (
+        <section className="mt-16 rounded-[var(--radius-lg)] border border-success/30 bg-success-soft/40 p-6 sm:p-8">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-serif text-2xl font-semibold text-success">
+              Може да дойде с една доставка
+            </h2>
+            {p.town ? (
+              <Link
+                href={`/savmestno/${encodeURIComponent(p.town)}`}
+                className="text-sm font-semibold text-success hover:underline"
+              >
+                Виж цялата група за {p.town} →
+              </Link>
+            ) : null}
+          </div>
+          <p className="mt-1 max-w-3xl text-sm text-foreground/80">
+            {p.farmName} прави съвместни доставки с тези стопанства. Поръчате ли
+            и от тях, продукцията пътува заедно и плащате една доставка вместо
+            няколко.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {partnerCards.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
