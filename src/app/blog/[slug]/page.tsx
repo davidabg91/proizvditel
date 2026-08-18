@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { ArticleBody } from "@/components/blog/article-body";
+import { ArticleAuthorCard } from "@/components/blog/author-card";
 
 export async function generateMetadata({
   params,
@@ -43,14 +44,47 @@ export default async function BlogArticlePage({
     where: { slug },
     include: {
       author: {
-        select: { name: true, producer: { select: { slug: true, farmName: true } } },
+        select: {
+          name: true,
+          producer: {
+            select: {
+              slug: true,
+              farmName: true,
+              ownerName: true,
+              description: true,
+              logoUrl: true,
+              town: true,
+              region: true,
+              startedYear: true,
+              urnVerified: true,
+              ratingAvg: true,
+              ratingCount: true,
+              published: true,
+              crops: { select: { name: true }, take: 6 },
+              listings: {
+                where: { available: true, soldOut: false },
+                orderBy: [{ boostedUntil: "desc" }, { createdAt: "desc" }],
+                take: 3,
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  price: true,
+                  unit: true,
+                  photos: { orderBy: { sort: "asc" }, take: 1, select: { url: true } },
+                },
+              },
+            },
+          },
+        },
       },
     },
   });
 
   if (!post || !post.published) notFound();
 
-  const authorName = post.author.producer?.farmName ?? post.author.name;
+  const producer = post.author.producer;
+  const authorName = producer?.farmName ?? post.author.name;
 
   return (
     <main className="pb-20">
@@ -113,16 +147,31 @@ export default async function BlogArticlePage({
 
           <ArticleBody body={post.body} />
 
-          {post.author.producer ? (
-            <div className="mt-10 rounded-[var(--radius-lg)] border border-border bg-surface p-5">
-              <p className="text-sm text-muted-foreground">Статия от</p>
-              <Link
-                href={`/p/${post.author.producer.slug}`}
-                className="mt-1 inline-block font-semibold hover:text-primary"
-              >
-                {post.author.producer.farmName}
-              </Link>
-            </div>
+          {producer && producer.published ? (
+            <ArticleAuthorCard
+              author={{
+                farmName: producer.farmName,
+                slug: producer.slug,
+                ownerName: producer.ownerName,
+                description: producer.description,
+                logoUrl: producer.logoUrl,
+                town: producer.town,
+                region: producer.region,
+                startedYear: producer.startedYear,
+                urnVerified: producer.urnVerified,
+                ratingAvg: producer.ratingAvg,
+                ratingCount: producer.ratingCount,
+                crops: producer.crops.map((c) => c.name),
+                listings: producer.listings.map((l) => ({
+                  id: l.id,
+                  slug: l.slug,
+                  title: l.title,
+                  price: l.price,
+                  unit: l.unit,
+                  imageUrl: l.photos[0]?.url ?? null,
+                })),
+              }}
+            />
           ) : null}
         </div>
       </article>
