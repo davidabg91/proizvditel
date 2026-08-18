@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { stripe, platformFee, canReceiveTransfers } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { activateBoost } from "@/lib/boost";
+import { createDeliveryChat } from "@/lib/delivery-chat";
 
 export const runtime = "nodejs";
 
@@ -164,6 +165,15 @@ export async function POST(req: Request) {
               })
               .catch(() => {});
           }
+        }
+
+        // Две или повече стопанства в една доставка — отваря се общ чат, за да
+        // се уговорят кой какво праща. Грешка тук не бива да вали webhook-а:
+        // поръчките вече са записани, а Stripe би започнал да го повтаря.
+        if (byProducer.size >= 2) {
+          await createDeliveryChat(session.id).catch((e) =>
+            console.error("createDeliveryChat error:", e),
+          );
         }
       } else {
         // Единична поръчка (destination charge)

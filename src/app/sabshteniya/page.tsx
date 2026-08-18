@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { getUserConversations } from "@/lib/chat";
+import { getUserDeliveryChats } from "@/lib/delivery-chat";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export const metadata = { title: "Съобщения" };
 
@@ -25,7 +27,10 @@ export default async function InboxPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/vhod?next=/sabshteniya");
 
-  const conversations = await getUserConversations(session.user.id);
+  const [conversations, deliveryChats] = await Promise.all([
+    getUserConversations(session.user.id),
+    getUserDeliveryChats(session.user.id),
+  ]);
 
   return (
     <main className="container-page py-10">
@@ -35,7 +40,53 @@ export default async function InboxPage() {
           Разговори с производители и купувачи.
         </p>
 
-        {conversations.length === 0 ? (
+        {/* Съвместни доставки — най-отгоре, защото чакат уговорка */}
+        {deliveryChats.length > 0 ? (
+          <ul className="mt-6 flex flex-col gap-2">
+            {deliveryChats.map((c) => (
+              <li key={c.id}>
+                <Link
+                  href={`/sabshteniya/grupa/${c.id}`}
+                  className="flex items-center gap-4 rounded-[var(--radius-lg)] border border-success/30 bg-success-soft/40 p-4 transition-colors hover:border-success/60"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-success/15 text-xl">
+                    📦
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate font-semibold text-foreground">
+                        Съвместна доставка № {c.groupCode}
+                      </p>
+                      <Badge tone="success">
+                        {c.partners.length + 1} стопанства
+                      </Badge>
+                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                        {relativeTime(c.lastMessageAt)}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {c.partners.length > 0
+                        ? `Заедно с ${c.partners.join(", ")}`
+                        : "Обща поръчка"}
+                    </p>
+                    {c.lastMessage ? (
+                      <p className="mt-0.5 truncate text-sm text-foreground/70">
+                        {c.lastMessage}
+                      </p>
+                    ) : null}
+                  </div>
+                  {c.unread > 0 ? (
+                    <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">
+                      {c.unread}
+                    </span>
+                  ) : null}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {conversations.length === 0 && deliveryChats.length === 0 ? (
           <div className="mt-8 rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-surface p-16 text-center">
             <p className="text-lg font-medium">Все още нямате съобщения</p>
             <p className="mt-1 text-muted-foreground">
@@ -45,7 +96,7 @@ export default async function InboxPage() {
               Към каталога
             </Button>
           </div>
-        ) : (
+        ) : conversations.length > 0 ? (
           <ul className="mt-6 divide-y divide-border overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface">
             {conversations.map((c) => (
               <li key={c.id}>
@@ -83,7 +134,7 @@ export default async function InboxPage() {
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
       </div>
     </main>
   );

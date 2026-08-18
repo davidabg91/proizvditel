@@ -43,6 +43,9 @@ model User {
   newsItems     NewsItem[]     @relation("NewsAuthor")
   orders        Order[]        @relation("CustomerOrders")
 
+  deliveryChats        DeliveryChat[]        @relation("CustomerDeliveryChats")
+  deliveryChatMessages DeliveryChatMessage[] @relation("SentDeliveryMessages")
+
   @@index([role])
 }
 
@@ -133,6 +136,9 @@ model Producer {
   partnersSelected ProducerPartner[] @relation("PartnerFrom")
   partneredBy      ProducerPartner[] @relation("PartnerTo")
   orders          Order[]
+
+  deliveryChats        DeliveryChatParticipant[]
+  deliveryChatMessages DeliveryChatMessage[]
 
   @@index([region])
   @@index([town])
@@ -560,4 +566,65 @@ model NewsItem {
   @@index([published])
   @@index([eventDate])
   @@index([category])
+}
+
+/// Общ чат между производителите по една съвместна поръчка.
+///
+/// Conversation е строго двойка производител ↔ купувач (@@unique), затова
+/// групата не може да мине през него. Купувачът НЕ участва тук — той си има
+/// отделен разговор с всяко стопанство; тази нишка е за уговорката между
+/// производителите кой какво праща и кога.
+model DeliveryChat {
+  id      String @id @default(cuid())
+  /// Order.groupId на поръчката, която го е породила.
+  groupId String @unique
+
+  customerId      String?
+  customer        User?   @relation("CustomerDeliveryChats", fields: [customerId], references: [id], onDelete: SetNull)
+  customerName    String?
+  phone           String?
+  shippingAddress String?
+
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+
+  participants DeliveryChatParticipant[]
+  messages     DeliveryChatMessage[]
+
+  @@index([lastMessageAt])
+}
+
+model DeliveryChatParticipant {
+  id     String       @id @default(cuid())
+  chatId String
+  chat   DeliveryChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  /// Докъде е чел този производител — оттук се смятат непрочетените.
+  lastReadAt DateTime?
+
+  @@unique([chatId, producerId])
+  @@index([producerId])
+}
+
+model DeliveryChatMessage {
+  id     String       @id @default(cuid())
+  chatId String
+  chat   DeliveryChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  /// Празно при системните съобщения.
+  senderId String?
+  sender   User?   @relation("SentDeliveryMessages", fields: [senderId], references: [id], onDelete: SetNull)
+  /// Кое стопанство стои зад съобщението — за име и лого в нишката.
+  producerId String?
+  producer   Producer? @relation(fields: [producerId], references: [id], onDelete: SetNull)
+
+  body   String
+  system Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([chatId, createdAt])
 }

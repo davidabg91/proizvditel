@@ -37,17 +37,26 @@ export async function getCurrentProducer() {
   });
 }
 
-/** Брой непрочетени съобщения за потребител (клиент или производител). */
+/**
+ * Брой непрочетени съобщения за потребител (клиент или производител).
+ * Включва и груповите чатове по съвместна доставка — иначе известието за
+ * нова обща поръчка не би стигнало до звънчето в хедъра.
+ */
 export async function getUnreadCount(userId: string): Promise<number> {
-  return prisma.message.count({
-    where: {
-      readAt: null,
-      senderId: { not: userId },
-      conversation: {
-        OR: [{ customerId: userId }, { producer: { userId } }],
+  const { countUnreadDeliveryMessages } = await import("@/lib/delivery-chat");
+  const [direct, group] = await Promise.all([
+    prisma.message.count({
+      where: {
+        readAt: null,
+        senderId: { not: userId },
+        conversation: {
+          OR: [{ customerId: userId }, { producer: { userId } }],
+        },
       },
-    },
-  });
+    }),
+    countUnreadDeliveryMessages(userId).catch(() => 0),
+  ]);
+  return direct + group;
 }
 
 /** Удобен обект за header-а. */
