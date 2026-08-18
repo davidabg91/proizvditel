@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { ArticleBody } from "@/components/blog/article-body";
 
 export async function generateMetadata({
   params,
@@ -110,9 +111,7 @@ export default async function BlogArticlePage({
             </p>
           ) : null}
 
-          <div className="mt-6 whitespace-pre-line text-base leading-relaxed text-foreground/90">
-            {post.body}
-          </div>
+          <ArticleBody body={post.body} />
 
           {post.author.producer ? (
             <div className="mt-10 rounded-[var(--radius-lg)] border border-border bg-surface p-5">

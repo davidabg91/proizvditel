@@ -234,7 +234,10 @@ function Editor({
             placeholder="Едно-две изречения, които се показват в списъка."
           />
         </Field>
-        <Field label="Съдържание">
+        <Field
+          label="Съдържание"
+          hint="## подзаглавие · - списък · **удебелено** · [текст](/katalog)"
+        >
           <Textarea
             value={d.body}
             onChange={(e) => set({ body: e.target.value })}
