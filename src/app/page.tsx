@@ -74,7 +74,7 @@ export default async function Home() {
         {/* Декоративен фон със земеделски мотиви */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/c563ec48-f188-401a-ba38-b3406dc1bff3.png"
+          src="/hero-pattern.webp"
           alt=""
           aria-hidden
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
