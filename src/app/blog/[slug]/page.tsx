@@ -63,7 +63,10 @@ export default async function BlogArticlePage({
               crops: { select: { name: true }, take: 6 },
               listings: {
                 where: { available: true, soldOut: false },
-                orderBy: [{ boostedUntil: "desc" }, { createdAt: "desc" }],
+                // Само по дата: `boostedUntil desc` в базата вдига и изтекли
+                // подсилвания над новите обяви, защото стара дата пак е
+                // по-голяма от NULL.
+                orderBy: { createdAt: "desc" },
                 take: 3,
                 select: {
                   id: true,

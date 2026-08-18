@@ -16,6 +16,7 @@ import { getMutualPartners } from "@/lib/partners";
 import { ReportButton } from "@/components/report/report-button";
 import { ProfileCover } from "@/components/profile/profile-cover";
 import { ShopCard, hasShopInfo } from "@/components/profile/shop-card";
+import { isBoosted } from "@/lib/boost-plans";
 import { ProducerJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
@@ -72,8 +73,9 @@ export default async function ProducerProfilePage({
       payment: true,
       listings: {
         where: { available: true },
-        // Изчерпаните остават видими, но най-отдолу.
-        orderBy: [{ soldOut: "asc" }, { boostedUntil: "desc" }, { createdAt: "desc" }],
+        // Изчерпаните остават видими, но най-отдолу. Подсилването се нарежда
+        // после, в паметта — виж orderedListings по-долу.
+        orderBy: [{ soldOut: "asc" }, { createdAt: "desc" }],
         include: { photos: { orderBy: { sort: "asc" }, take: 1 } },
       },
       reviews: {
@@ -137,7 +139,16 @@ export default async function ProducerProfilePage({
 
   const location = [producer.town, producer.region].filter(Boolean).join(", ");
 
-  const listingCards = producer.listings.map((l) => ({
+  // Налични преди изчерпани, а сред тях активно подсилените най-отпред.
+  // Не се прави в базата: там `boostedUntil desc` вдига и изтеклите
+  // подсилвания над новите обяви, защото стара дата пак е по-голяма от NULL.
+  const orderedListings = [...producer.listings].sort(
+    (a, b) =>
+      Number(a.soldOut) - Number(b.soldOut) ||
+      Number(isBoosted(b.boostedUntil)) - Number(isBoosted(a.boostedUntil)),
+  );
+
+  const listingCards = orderedListings.map((l) => ({
     id: l.id,
     slug: l.slug,
     title: l.title,
