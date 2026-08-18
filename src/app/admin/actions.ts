@@ -119,3 +119,39 @@ export async function publishSeedBlogPosts(): Promise<SeedActionResult> {
     };
   }
 }
+
+/**
+ * Пренася старите снимки от базата (data: URL) към Vercel Blob.
+ * Работи на порции — при остатък бутонът се натиска отново.
+ */
+export async function migrateLegacyPhotos(): Promise<SeedActionResult> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "Няма достъп." };
+
+  try {
+    const { migratePhotosToBlob } = await import("@/lib/photo-migration");
+    const { moved, failed, remaining, errors } = await migratePhotosToBlob();
+
+    revalidatePath("/admin");
+    revalidatePath("/");
+
+    if (failed > 0 && moved === 0) {
+      return {
+        ok: false,
+        error: `Нито една снимка не мина. ${errors.join(" · ")}`,
+      };
+    }
+
+    const parts = [`пренесени ${moved}`];
+    if (failed > 0) parts.push(`неуспешни ${failed}`);
+    parts.push(remaining > 0 ? `остават ${remaining}` : "остатък няма");
+
+    return { ok: true, message: `Готово: ${parts.join(", ")}.` };
+  } catch (error) {
+    console.error("migrateLegacyPhotos error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при пренасянето.",
+    };
+  }
+}

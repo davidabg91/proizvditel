@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatRelative } from "@/lib/utils";
 import { SeedBlogButton } from "./seed-blog-button";
+import { MigratePhotosButton } from "./migrate-photos-button";
 import { SEED_POSTS } from "@/lib/blog-seed";
+import { countPendingPhotos } from "@/lib/photo-migration";
 
 export default async function AdminOverviewPage() {
   const [
@@ -20,6 +22,7 @@ export default async function AdminOverviewPage() {
     codAgg,
     visitsAgg,
     seedPostCount,
+    pendingPhotos,
     recentOrders,
     recentUsers,
   ] = await Promise.all([
@@ -46,6 +49,7 @@ export default async function AdminOverviewPage() {
     prisma.blogPost.count({
       where: { slug: { in: SEED_POSTS.map((p) => p.slug) } },
     }),
+    countPendingPhotos(),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -161,6 +165,8 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="mt-4">
+        <MigratePhotosButton pending={pendingPhotos} />
+
         <SeedBlogButton existing={seedPostCount} />
       </div>
 
