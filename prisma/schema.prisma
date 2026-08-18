@@ -93,7 +93,9 @@ model Producer {
 
   // Stripe Connect — плащане с карта директно към производителя
   stripeAccountId      String? // acct_... на свързания акаунт
-  stripeChargesEnabled Boolean @default(false) // може ли да приема плащания
+  // Готов ли е акаунтът да получава преводи от платформата (capability
+  // "transfers" е active). Името е историческо — виж canReceiveTransfers().
+  stripeChargesEnabled Boolean @default(false)
 
   // Статистика
   visits      Int   @default(0)

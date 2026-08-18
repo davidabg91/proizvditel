@@ -17,6 +17,19 @@ export function platformFee(amountInCents: number): number {
 /** Базовият URL на сайта (за return/redirect адреси) — виж `@/lib/site`. */
 export { getSiteUrl } from "@/lib/site";
 
+/**
+ * Готов ли е свързаният акаунт да получава пари от нас.
+ *
+ * Производителите са получатели (recipient), а не търговци — плащането се
+ * събира от платформата и се превежда към тях. Затова важна е способността
+ * "transfers", а НЕ charges_enabled, която при такива акаунти остава false.
+ */
+export function canReceiveTransfers(acct: {
+  capabilities?: { transfers?: string | null } | null;
+}): boolean {
+  return acct.capabilities?.transfers === "active";
+}
+
 /** Валутата на платформата. От 2026 г. всичко на сайта е в евро. */
 export const SITE_CURRENCY = "eur";
 

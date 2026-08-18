@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe, getSiteUrl } from "@/lib/stripe";
+import { stripe, getSiteUrl, canReceiveTransfers } from "@/lib/stripe";
 
 /**
  * Записаният акаунт е негоден за текущия ключ. Stripe връща различни грешки
@@ -76,7 +76,9 @@ export async function startStripeOnboarding(): Promise<StripeActionResult> {
         country: "BG",
         email: producer.contactEmail ?? undefined,
         capabilities: {
-          card_payments: { requested: true },
+          // Само получаване на преводи. Плащането се събира от платформата,
+          // затова card_payments не е нужна — и онбордингът иска по-малко
+          // документи от стопанството.
           transfers: { requested: true },
         },
         business_profile: {
@@ -118,7 +120,7 @@ export async function refreshStripeStatus(): Promise<StripeActionResult> {
     const acct = await stripe.accounts.retrieve(producer.stripeAccountId);
     await prisma.producer.update({
       where: { id: producer.id },
-      data: { stripeChargesEnabled: acct.charges_enabled ?? false },
+      data: { stripeChargesEnabled: canReceiveTransfers(acct) },
     });
     revalidatePath("/tablo/plashtania");
     revalidatePath(`/p/${producer.slug}`);

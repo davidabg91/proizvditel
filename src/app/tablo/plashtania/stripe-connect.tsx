@@ -109,10 +109,10 @@ export function StripeConnect({
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-[var(--radius-md)] border border-border/80 bg-surface p-3.5 shadow-sm">
               <p className="font-semibold text-xs uppercase tracking-wider text-primary">
-                1. Директни плащания
+                1. Как пътуват парите
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Купувачите плащат онлайн с банкова карта. Всички плащания се обработват през сигурната платежна система на <strong>Stripe</strong>. Парите постъпват директно във вашата свързана Stripe сметка и се превеждат автоматично по банковата ви сметка.
+                Купувачите плащат онлайн с банкова карта през сигурната система на <strong>Stripe</strong>. Сумата постъпва при платформата и се превежда по вашата Stripe сметка, <strong>щом отбележите поръчката като „Доставена“</strong>. Оттам Stripe я изплаща по банковата ви сметка. Така, ако клиент оспори плащане, докато пратката пътува, парите още не са тръгнали към вас.
               </p>
             </div>
 
@@ -158,8 +158,9 @@ export function StripeConnect({
         ) : chargesEnabled ? (
           <div className="flex flex-col gap-3">
             <p className="rounded-[var(--radius-md)] bg-success-soft px-4 py-3 text-sm text-success">
-              Приемате плащания с карта. Клиентите вече могат да плащат онлайн, а
-              средствата отиват директно при вас.
+              Клиентите вече могат да плащат с карта. Сумата постъпва при
+              платформата и се превежда по вашата Stripe сметка, щом отбележите
+              поръчката като „Доставена“.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={openDashboard} disabled={pending}>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { stripe, platformFee } from "@/lib/stripe";
+import { stripe, platformFee, canReceiveTransfers } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { activateBoost } from "@/lib/boost";
 
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
       const acct = event.data.object as Stripe.Account;
       await prisma.producer.updateMany({
         where: { stripeAccountId: acct.id },
-        data: { stripeChargesEnabled: acct.charges_enabled ?? false },
+        data: { stripeChargesEnabled: canReceiveTransfers(acct) },
       });
     } else if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
