@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${site}/savmestno`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${site}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${site}/forum`, changeFrequency: "daily", priority: 0.6 },
+    { url: `${site}/novini`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${site}/kak-raboti`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${site}/za-nas`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${site}/kontakti`, changeFrequency: "monthly", priority: 0.4 },
@@ -29,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [producers, listings, posts, topics, towns] = await Promise.all([
+    const [producers, listings, posts, topics, towns, news] = await Promise.all([
       prisma.producer.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
@@ -53,6 +54,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         where: { published: true, sharedDelivery: true, town: { not: null } },
         select: { town: true },
         distinct: ["town"],
+      }),
+      prisma.newsItem.findMany({
+        where: { published: true },
+        select: { slug: true, updatedAt: true },
       }),
     ]);
 
@@ -80,6 +85,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${site}/forum/${t.slug}`,
         lastModified: t.lastReplyAt,
         changeFrequency: "weekly" as const,
+        priority: 0.5,
+      })),
+      ...news.map((n) => ({
+        url: `${site}/novini/${n.slug}`,
+        lastModified: n.updatedAt,
+        changeFrequency: "monthly" as const,
         priority: 0.5,
       })),
       ...towns

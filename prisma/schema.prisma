@@ -40,6 +40,7 @@ model User {
   forumTopics   ForumTopic[]   @relation("ForumTopics")
   forumPosts    ForumPost[]    @relation("ForumPosts")
   blogPosts     BlogPost[]     @relation("BlogPosts")
+  newsItems     NewsItem[]     @relation("NewsAuthor")
   orders        Order[]        @relation("CustomerOrders")
 
   @@index([role])
@@ -505,4 +506,40 @@ model Review {
 
   @@unique([producerId, authorId])
   @@index([producerId])
+}
+
+// ─────────────────────────────────────────────
+//  Новини и събития за земеделски производители
+// ─────────────────────────────────────────────
+
+model NewsItem {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  title   String
+  summary String // кратко описание за списъка
+  body    String? // пълен текст (по избор — някои са само препратка)
+
+  category String // Събития | Субсидии и програми | Пазар и цени | Друго
+
+  // Ако е събитие с дата — показва се в „Предстоящи"
+  eventDate    DateTime?
+  eventEndDate DateTime?
+  location     String? // населено място
+
+  // Външен източник, ако новината сочи навън
+  sourceUrl  String?
+  sourceName String?
+
+  coverUrl String?
+
+  authorId String
+  author   User   @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published])
+  @@index([eventDate])
+  @@index([category])
 }

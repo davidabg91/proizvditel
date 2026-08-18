@@ -101,6 +101,16 @@ export const BLOG_CATEGORIES = [
   "Друго",
 ] as const;
 
+/** Категории в „Новини и събития" */
+export const NEWS_CATEGORIES = [
+  "Събития",
+  "Субсидии и програми",
+  "Пазар и цени",
+  "Друго",
+] as const;
+
+export type NewsCategory = (typeof NEWS_CATEGORIES)[number];
+
 export type Region = (typeof REGIONS)[number];
 export type Category = (typeof CATEGORIES)[number];
 export type ForumCategory = (typeof FORUM_CATEGORIES)[number];

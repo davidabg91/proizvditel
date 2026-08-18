@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { REGIONS, CATEGORIES, YIELD_UNITS, UNITS, FORUM_CATEGORIES, BLOG_CATEGORIES } from "@/lib/constants";
+import { REGIONS, CATEGORIES, YIELD_UNITS, UNITS, FORUM_CATEGORIES, BLOG_CATEGORIES, NEWS_CATEGORIES } from "@/lib/constants";
 
 const currentYear = new Date().getFullYear();
 
@@ -178,3 +178,19 @@ export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Невалиден имейл"),
   password: z.string().min(1, "Въведете парола"),
 });
+
+export const newsItemSchema = z.object({
+  title: z.string().trim().min(5, "Заглавието е твърде кратко").max(180),
+  summary: z.string().trim().min(10, "Добавете кратко описание").max(400),
+  body: z.string().trim().max(20000).optional().or(z.literal("")),
+  category: z.enum(NEWS_CATEGORIES),
+  eventDate: z.string().trim().optional().or(z.literal("")),
+  eventEndDate: z.string().trim().optional().or(z.literal("")),
+  location: z.string().trim().max(120).optional().or(z.literal("")),
+  sourceUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  sourceName: z.string().trim().max(120).optional().or(z.literal("")),
+  coverUrl: z.string().trim().optional().or(z.literal("")),
+  published: z.boolean().default(true),
+});
+
+export type NewsItemInput = z.infer<typeof newsItemSchema>;
