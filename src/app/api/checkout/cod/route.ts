@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { SITE_CURRENCY } from "@/lib/stripe";
 
 type IncomingItem = { listingId: string; qty: number };
 
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
         id: { in: [...qtyById.keys()] },
         producerId: producer.id,
         available: true,
+        soldOut: false,
       },
       select: { id: true, title: true, price: true, unit: true, currency: true },
     });
@@ -84,7 +86,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const currency = (listings[0].currency || "BGN").toLowerCase();
+    const currency = SITE_CURRENCY;
     const itemsData = listings.map((l) => ({
       title: `${l.title} (${l.unit})`,
       unitPrice: Math.round(l.price * 100),
@@ -147,7 +149,7 @@ export async function POST(req: Request) {
           data: {
             conversationId: conv.id,
             senderId: session.user.id,
-            body: `🛒 Нова поръчка с наложен платеж (№ ${order.id.slice(-6).toUpperCase()}):\n${itemsText}\n\nОбща сума: ${(amountTotal / 100).toFixed(2)} лв.\nДоставка до: ${shippingAddress.trim()}${note?.trim() ? `\nБележка: ${note.trim()}` : ""}\nТелефон: ${phone.trim()}`,
+            body: `🛒 Нова поръчка с наложен платеж (№ ${order.id.slice(-6).toUpperCase()}):\n${itemsText}\n\nОбща сума: ${(amountTotal / 100).toFixed(2)} €\nДоставка до: ${shippingAddress.trim()}${note?.trim() ? `\nБележка: ${note.trim()}` : ""}\nТелефон: ${phone.trim()}`,
           },
         });
       } catch (convErr) {

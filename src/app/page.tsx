@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { findListingsBoostedFirst } from "@/lib/boost";
 import { Button } from "@/components/ui/button";
 import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
@@ -10,22 +11,18 @@ export const revalidate = 60;
 
 export default async function Home() {
   const [listings, producers, producerCount] = await Promise.all([
-    prisma.productListing.findMany({
-      where: { available: true, producer: { published: true } },
-      orderBy: [{ isOffer: "desc" }, { createdAt: "desc" }],
-      take: 8,
-      include: {
-        photos: { orderBy: { sort: "asc" }, take: 1 },
-        producer: { select: { slug: true, farmName: true, town: true, region: true } },
-      },
-    }),
+    // Първо платените (подсилени) обяви, след тях — най-новите.
+    findListingsBoostedFirst(
+      { available: true, soldOut: false, producer: { published: true } },
+      8,
+    ),
     prisma.producer.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
       take: 6,
       include: {
         crops: { select: { name: true }, take: 4 },
-        _count: { select: { listings: { where: { available: true } } } },
+        _count: { select: { listings: { where: { available: true, soldOut: false } } } },
       },
     }),
     prisma.producer.count({ where: { published: true } }),
@@ -41,6 +38,8 @@ export default async function Home() {
     currency: l.currency,
     isOffer: l.isOffer,
     available: l.available,
+    soldOut: l.soldOut,
+    boostedUntil: l.boostedUntil,
     category: l.category,
     imageUrl: l.photos[0]?.url ?? null,
     producer: l.producer,

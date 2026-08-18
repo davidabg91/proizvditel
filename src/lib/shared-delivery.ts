@@ -49,7 +49,7 @@ export async function getDeliveryGroups(q?: string): Promise<DeliveryGroup[]> {
       logoUrl: true,
       crops: { select: { name: true } },
       listings: {
-        where: { available: true },
+        where: { available: true, soldOut: false },
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -123,7 +123,7 @@ export async function getTownGroup(town: string): Promise<DeliveryGroup | null> 
       logoUrl: true,
       crops: { select: { name: true } },
       listings: {
-        where: { available: true },
+        where: { available: true, soldOut: false },
         orderBy: { createdAt: "desc" },
         include: { photos: { orderBy: { sort: "asc" }, take: 1 } },
       },

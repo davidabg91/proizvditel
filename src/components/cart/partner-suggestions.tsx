@@ -87,7 +87,7 @@ export function PartnerSuggestions({
                         {l.title}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {formatPrice(l.price, l.currency as "BGN" | "EUR")} / {l.unit}
+                        {formatPrice(l.price)} / {l.unit}
                       </span>
                     </span>
                   </Link>

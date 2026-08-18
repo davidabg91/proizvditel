@@ -50,7 +50,8 @@ export default async function ProducerProfilePage({
       payment: true,
       listings: {
         where: { available: true },
-        orderBy: { createdAt: "desc" },
+        // Изчерпаните остават видими, но най-отдолу.
+        orderBy: [{ soldOut: "asc" }, { boostedUntil: "desc" }, { createdAt: "desc" }],
         include: { photos: { orderBy: { sort: "asc" }, take: 1 } },
       },
       reviews: {
@@ -124,6 +125,8 @@ export default async function ProducerProfilePage({
     currency: l.currency,
     isOffer: l.isOffer,
     available: l.available,
+    soldOut: l.soldOut,
+    boostedUntil: l.boostedUntil,
     category: l.category,
     imageUrl: l.photos[0]?.url ?? null,
     producer: {
@@ -133,6 +136,8 @@ export default async function ProducerProfilePage({
       region: producer.region,
     },
   }));
+
+  const soldOutCount = listingCards.filter((l) => l.soldOut).length;
 
   return (
     <main className="pb-20">
@@ -223,9 +228,18 @@ export default async function ProducerProfilePage({
                 {listingCards.length > 0 ? (
                   <span className="text-sm text-muted-foreground">
                     {listingCards.length} обяви
+                    {soldOutCount > 0 ? ` · ${soldOutCount} изчерпани` : ""}
                   </span>
                 ) : null}
               </div>
+              {soldOutCount > 0 ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Продуктите с етикет{" "}
+                  <span className="font-semibold text-danger">„Изчерпан“</span> ги няма
+                  в момента и не могат да бъдат поръчани. Производителят ще ги върне в
+                  наличност, когато има отново количества.
+                </p>
+              ) : null}
               {listingCards.length > 0 ? (
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {listingCards.map((l) => (

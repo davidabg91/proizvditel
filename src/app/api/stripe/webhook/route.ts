@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { stripe, platformFee } from "@/lib/stripe";
+import { stripe, platformFee, estimatedStripeFee, totalDeduction } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { activateBoost } from "@/lib/boost";
 
 export const runtime = "nodejs";
 
@@ -42,20 +43,33 @@ async function chargeIdForSession(
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) {
+  // Stripe изисква отделен endpoint (и отделен подпис) за събитията от
+  // свързаните акаунти. И двата сочат насам, затова пробваме всеки подпис.
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_WEBHOOK_SECRET_CONNECT,
+  ].filter((s): s is string => !!s?.trim());
+
+  if (secrets.length === 0) {
     return NextResponse.json({ error: "Webhook не е конфигуриран." }, { status: 500 });
   }
 
   const sig = req.headers.get("stripe-signature");
   const raw = await req.text();
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(raw, sig ?? "", secret);
-  } catch (e) {
+  let event: Stripe.Event | null = null;
+  let lastError = "";
+  for (const secret of secrets) {
+    try {
+      event = stripe.webhooks.constructEvent(raw, sig ?? "", secret);
+      break;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : "";
+    }
+  }
+  if (!event) {
     return NextResponse.json(
-      { error: `Невалиден подпис: ${e instanceof Error ? e.message : ""}` },
+      { error: `Невалиден подпис: ${lastError}` },
       { status: 400 },
     );
   }
@@ -70,9 +84,19 @@ export async function POST(req: Request) {
     } else if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const kind = session.metadata?.kind ?? "single";
+
+      // Подсилване на обява — таксата е към платформата, няма поръчка.
+      if (kind === "boost") {
+        await activateBoost(
+          session.id,
+          typeof session.payment_intent === "string" ? session.payment_intent : null,
+        );
+        return NextResponse.json({ received: true });
+      }
+
       const customerId = session.metadata?.customerId || null;
       const ship = extractShipping(session);
-      const currency = session.currency ?? "bgn";
+      const currency = session.currency ?? "eur";
       const paymentIntentId =
         typeof session.payment_intent === "string" ? session.payment_intent : null;
 
@@ -121,9 +145,25 @@ export async function POST(req: Request) {
 
         const chargeId = await chargeIdForSession(session);
 
+        // Таксата на Stripe е ЕДНА за цялото плащане, затова я разпределяме
+        // пропорционално — иначе фиксираните 0,25 € биха се удържали от всеки.
+        const grandTotal = [...byProducer.values()].reduce(
+          (s, g) => s + g.subtotal,
+          0,
+        );
+        const totalStripeFee = estimatedStripeFee(grandTotal);
+
         for (const [producerId, g] of byProducer) {
           const fee = platformFee(g.subtotal);
-          const transferAmount = g.subtotal - fee; // платформата задържа 5%
+          const stripeShare =
+            grandTotal > 0
+              ? Math.round((totalStripeFee * g.subtotal) / grandTotal)
+              : 0;
+          // Платформата задържа 5% + дела от таксата на Stripe.
+          const transferAmount = Math.max(
+            0,
+            g.subtotal - totalDeduction(g.subtotal, stripeShare),
+          );
           let transferId: string | null = null;
           if (g.accountId && transferAmount > 0) {
             try {

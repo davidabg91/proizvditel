@@ -144,7 +144,7 @@ function OrderCard({ order }: { order: OrderRow }) {
           </span>
         </div>
         <span className="font-serif text-lg font-semibold">
-          {formatPrice(order.amountTotal / 100, order.currency.toUpperCase() as "BGN" | "EUR")}
+          {formatPrice(order.amountTotal / 100)}
         </span>
       </div>
 
@@ -161,7 +161,7 @@ function OrderCard({ order }: { order: OrderRow }) {
                   {it.title} × {it.qty}
                 </span>
                 <span className="text-muted-foreground">
-                  {formatPrice((it.unitPrice * it.qty) / 100, order.currency.toUpperCase() as "BGN" | "EUR")}
+                  {formatPrice((it.unitPrice * it.qty) / 100)}
                 </span>
               </li>
             ))}

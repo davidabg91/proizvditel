@@ -122,7 +122,7 @@ export default async function SharedDeliveryPage({
                                 {l.title}
                               </Link>
                               <span className="shrink-0 font-medium text-muted-foreground">
-                                {formatPrice(l.price, l.currency as "BGN" | "EUR")}/{l.unit}
+                                {formatPrice(l.price)}/{l.unit}
                               </span>
                             </li>
                           ))}

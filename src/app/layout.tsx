@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { WeatherBar } from "@/components/home/weather-bar";
 import { CartProvider } from "@/components/cart/cart-context";
 import { getHeaderUser } from "@/lib/session";
+import { getSiteUrl } from "@/lib/site";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -19,11 +20,7 @@ const lora = Lora({
   display: "swap",
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:3000");
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

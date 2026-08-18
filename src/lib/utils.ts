@@ -6,14 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Форматира цена в български лева. */
-export function formatPrice(
-  amount: number,
-  currency: "BGN" | "EUR" = "BGN",
-): string {
+/** Форматира цена в евро — единствената валута на сайта. */
+export function formatPrice(amount: number): string {
   return new Intl.NumberFormat("bg-BG", {
     style: "currency",
-    currency,
+    currency: "EUR",
     minimumFractionDigits: 2,
   }).format(amount);
 }

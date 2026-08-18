@@ -32,7 +32,7 @@ export async function getMutualPartners(producerId: string) {
       region: true,
       logoUrl: true,
       listings: {
-        where: { available: true },
+        where: { available: true, soldOut: false },
         orderBy: { createdAt: "desc" },
         take: 4,
         include: { photos: { orderBy: { sort: "asc" }, take: 1 } },

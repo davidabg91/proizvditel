@@ -35,7 +35,7 @@ export default async function ProducersPage({
     take: 60,
     include: {
       crops: { select: { name: true }, take: 4 },
-      _count: { select: { listings: { where: { available: true } } } },
+      _count: { select: { listings: { where: { available: true, soldOut: false } } } },
     },
   });
 

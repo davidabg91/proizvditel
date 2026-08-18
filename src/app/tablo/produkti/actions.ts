@@ -27,11 +27,27 @@ function baseData(d: ListingInput) {
     price: d.price,
     oldPrice: d.oldPrice ?? null,
     unit: d.unit,
-    currency: d.currency,
+    currency: "EUR", // сайтът работи само в евро
+
     available: d.available,
     isOffer: d.isOffer,
+    soldOut: d.soldOut,
     stockNote: d.stockNote || null,
   };
+}
+
+/** Опреснява страниците, на които се показва обявата. */
+function revalidateListingPages(producerSlug: string | null) {
+  try {
+    revalidatePath("/tablo/produkti");
+    revalidatePath("/katalog");
+    revalidatePath("/");
+    if (producerSlug) {
+      revalidatePath(`/p/${producerSlug}`);
+    }
+  } catch (revalErr) {
+    console.error("revalidatePath error:", revalErr);
+  }
 }
 
 export async function createListing(input: ListingInput): Promise<ActionResult> {
@@ -57,15 +73,7 @@ export async function createListing(input: ListingInput): Promise<ActionResult> 
       },
     });
 
-    try {
-      revalidatePath("/tablo/produkti");
-      revalidatePath("/katalog");
-      if (producer.slug) {
-        revalidatePath(`/p/${producer.slug}`);
-      }
-    } catch (revalErr) {
-      console.error("revalidatePath error:", revalErr);
-    }
+    revalidateListingPages(producer.slug);
 
     return { ok: true, slug };
   } catch (error) {
@@ -108,15 +116,7 @@ export async function updateListing(
       }),
     ]);
 
-    try {
-      revalidatePath("/tablo/produkti");
-      revalidatePath("/katalog");
-      if (producer.slug) {
-        revalidatePath(`/p/${producer.slug}`);
-      }
-    } catch (revalErr) {
-      console.error("revalidatePath error:", revalErr);
-    }
+    revalidateListingPages(producer.slug);
 
     return { ok: true };
   } catch (error) {
@@ -142,15 +142,7 @@ export async function deleteListing(id: string): Promise<ActionResult> {
 
     await prisma.productListing.delete({ where: { id } });
 
-    try {
-      revalidatePath("/tablo/produkti");
-      revalidatePath("/katalog");
-      if (producer.slug) {
-        revalidatePath(`/p/${producer.slug}`);
-      }
-    } catch (revalErr) {
-      console.error("revalidatePath error:", revalErr);
-    }
+    revalidateListingPages(producer.slug);
 
     return { ok: true };
   } catch (error) {
@@ -158,6 +150,39 @@ export async function deleteListing(id: string): Promise<ActionResult> {
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Грешка при изтриване на обявата.",
+    };
+  }
+}
+
+/**
+ * Отбелязва обявата като изчерпана (или я връща в наличност).
+ * Изчерпаните обяви остават видими в профила, но не могат да се купуват.
+ */
+export async function setListingSoldOut(
+  id: string,
+  soldOut: boolean,
+): Promise<ActionResult> {
+  try {
+    const producer = await currentProducer();
+    if (!producer) return { ok: false, error: "Изисква се вход." };
+
+    const listing = await prisma.productListing.findUnique({
+      where: { id },
+      select: { producerId: true },
+    });
+    if (!listing || listing.producerId !== producer.id)
+      return { ok: false, error: "Няма достъп." };
+
+    await prisma.productListing.update({ where: { id }, data: { soldOut } });
+
+    revalidateListingPages(producer.slug);
+
+    return { ok: true };
+  } catch (error) {
+    console.error("setListingSoldOut error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при промяна на наличността.",
     };
   }
 }

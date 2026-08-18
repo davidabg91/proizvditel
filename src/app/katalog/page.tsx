@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma";
+import { findListingsBoostedFirst } from "@/lib/boost";
 import { ListingCard } from "@/components/product/listing-card";
 import { CatalogFilters } from "./catalog-filters";
 import type { Prisma } from "@prisma/client";
@@ -44,17 +44,12 @@ export default async function CatalogPage({
     ];
   }
 
-  const listings = await prisma.productListing.findMany({
-    where,
-    orderBy: [{ isOffer: "desc" }, { createdAt: "desc" }],
-    take: 60,
-    include: {
-      photos: { orderBy: { sort: "asc" }, take: 1 },
-      producer: {
-        select: { slug: true, farmName: true, town: true, region: true },
-      },
-    },
-  });
+  // Платените (подсилени) обяви излизат пред всички останали.
+  const listings = await findListingsBoostedFirst(where, 60, [
+    { soldOut: "asc" },
+    { isOffer: "desc" },
+    { createdAt: "desc" },
+  ]);
 
   const cards = listings.map((l) => ({
     id: l.id,
@@ -66,6 +61,8 @@ export default async function CatalogPage({
     currency: l.currency,
     isOffer: l.isOffer,
     available: l.available,
+    soldOut: l.soldOut,
+    boostedUntil: l.boostedUntil,
     category: l.category,
     imageUrl: l.photos[0]?.url ?? null,
     producer: l.producer,

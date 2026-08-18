@@ -76,7 +76,6 @@ export default function CartPage() {
         <div className="mt-8 flex flex-col gap-6">
           {groupList.map(([slug, group]) => {
             const subtotal = group.items.reduce((s, i) => s + i.qty * i.price, 0);
-            const currency = group.items[0]?.currency ?? "BGN";
             return (
               <section
                 key={slug}
@@ -106,7 +105,7 @@ export default function CartPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{it.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatPrice(it.price, it.currency as "BGN" | "EUR")} / {it.unit}
+                          {formatPrice(it.price)} / {it.unit}
                         </p>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -122,7 +121,7 @@ export default function CartPage() {
                       </div>
                       <div className="w-24 text-right">
                         <p className="font-semibold">
-                          {formatPrice(it.qty * it.price, it.currency as "BGN" | "EUR")}
+                          {formatPrice(it.qty * it.price)}
                         </p>
                         <button
                           onClick={() => remove(it.listingId)}
@@ -141,7 +140,7 @@ export default function CartPage() {
                       Междинна сума
                     </span>
                     <span className="font-serif text-lg font-semibold">
-                      {formatPrice(subtotal, currency as "BGN" | "EUR")}
+                      {formatPrice(subtotal)}
                     </span>
                   </div>
                   <OrderBox
@@ -166,7 +165,7 @@ export default function CartPage() {
         <div className="mt-8 flex items-center justify-between rounded-[var(--radius-lg)] border border-border bg-surface p-5">
           <span className="text-lg font-semibold">Общо</span>
           <span className="font-serif text-2xl font-semibold text-primary">
-            {formatPrice(total, "BGN")}
+            {formatPrice(total)}
           </span>
         </div>
         <p className="mt-3 text-center text-xs text-muted-foreground">

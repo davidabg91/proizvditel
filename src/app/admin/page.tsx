@@ -53,8 +53,8 @@ export default async function AdminOverviewPage() {
     { label: "Производители", value: producers, sub: `${publishedProducers} активни` },
     { label: "Обяви", value: listings },
     { label: "Поръчки (карта)", value: orderAgg._count },
-    { label: "Оборот", value: formatPrice(revenue, "BGN") },
-    { label: "Комисиони (5%)", value: formatPrice(fees, "BGN") },
+    { label: "Оборот", value: formatPrice(revenue) },
+    { label: "Комисиони (5%)", value: formatPrice(fees) },
     { label: "Посещения", value: visitsAgg._sum.visits ?? 0 },
     { label: "Оценки", value: reviews },
   ];
@@ -123,7 +123,7 @@ export default async function AdminOverviewPage() {
                     </p>
                   </div>
                   <span className="shrink-0 font-medium">
-                    {formatPrice(o.amountTotal / 100, o.currency.toUpperCase() as "BGN" | "EUR")}
+                    {formatPrice(o.amountTotal / 100)}
                   </span>
                 </li>
               ))}

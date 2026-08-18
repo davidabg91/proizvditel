@@ -34,7 +34,7 @@ export default async function TownGroupPage({
       logoUrl: true,
       listings: {
         where: { available: true },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ soldOut: "asc" }, { createdAt: "desc" }],
         include: { photos: { orderBy: { sort: "asc" }, take: 1 } },
       },
     },
@@ -115,6 +115,8 @@ export default async function TownGroupPage({
                       currency: l.currency,
                       isOffer: l.isOffer,
                       available: l.available,
+                      soldOut: l.soldOut,
+                      boostedUntil: l.boostedUntil,
                       category: l.category,
                       imageUrl: l.photos[0]?.url ?? null,
                       producer: {

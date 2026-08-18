@@ -66,6 +66,7 @@ export default async function ListingDetailPage({
           <div className="flex flex-wrap items-center gap-2">
             {listing.category ? <Badge tone="primary">{listing.category}</Badge> : null}
             {listing.isOffer ? <Badge tone="accent">Оферта</Badge> : null}
+            {listing.soldOut ? <Badge tone="danger">Изчерпан</Badge> : null}
             {!listing.available ? <Badge tone="neutral">Не е налично</Badge> : null}
           </div>
 
@@ -73,12 +74,12 @@ export default async function ListingDetailPage({
 
           <div className="mt-4 flex items-baseline gap-3">
             <span className="font-serif text-3xl font-semibold text-primary">
-              {formatPrice(listing.price, listing.currency as "BGN" | "EUR")}
+              {formatPrice(listing.price)}
             </span>
             <span className="text-muted-foreground">/ {listing.unit}</span>
             {listing.oldPrice && listing.oldPrice > listing.price ? (
               <span className="text-lg text-muted-foreground line-through">
-                {formatPrice(listing.oldPrice, listing.currency as "BGN" | "EUR")}
+                {formatPrice(listing.oldPrice)}
               </span>
             ) : null}
           </div>
@@ -139,7 +140,23 @@ export default async function ListingDetailPage({
 
           {/* Действия */}
           <div className="mt-6 flex flex-col gap-3">
-            {listing.available ? (
+            {listing.soldOut ? (
+              <div className="rounded-[var(--radius-lg)] border border-danger/30 bg-danger-soft px-4 py-4">
+                <p className="font-semibold text-danger">Продуктът е изчерпан</p>
+                <p className="mt-1 text-sm text-foreground/80">
+                  В момента този продукт го няма и не може да бъде поръчан. Попитайте
+                  производителя кога очаква нови количества.
+                </p>
+                <Button
+                  href={`/chat/${p.slug}`}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                >
+                  Попитай производителя
+                </Button>
+              </div>
+            ) : listing.available ? (
               <div className="flex gap-3">
                 <AddToCartButton
                   size="md"

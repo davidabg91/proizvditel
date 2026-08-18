@@ -173,20 +173,56 @@ model ProductListing {
   price    Float
   oldPrice Float? // За оферти / намаления
   unit     String  @default("кг") // кг / бр / връзка / литър / кашон
-  currency String  @default("BGN")
+  currency String  @default("EUR") // Сайтът работи само в евро
 
   available Boolean @default(true)
   isOffer   Boolean @default(false)
+  soldOut   Boolean @default(false) // Изчерпан — обявата се вижда, но не може да се купи
   stockNote String? // Напр. сезонна наличност
+
+  // Подсилване (платено промотиране на началната страница и в каталога)
+  boostedAt    DateTime? // Кога е активирано текущото подсилване
+  boostedUntil DateTime? // До кога е платено подсилването
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   photos ListingPhoto[]
+  boosts ListingBoost[]
 
   @@unique([producerId, slug])
   @@index([category])
   @@index([available])
+  @@index([soldOut])
+  @@index([boostedUntil])
+}
+
+// Платено подсилване на обява — таксата постъпва при платформата.
+model ListingBoost {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   ProductListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  producerId String
+
+  plan     String // week | days15 | month
+  days     Int
+  amount   Int    // в евроцентове
+  currency String @default("eur")
+
+  stripeSessionId String  @unique
+  paymentIntentId String?
+
+  status   String    @default("pending") // pending | paid | cancelled
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  @@index([listingId])
+  @@index([producerId])
+  @@index([status])
 }
 
 model ListingPhoto {
@@ -314,9 +350,9 @@ model Order {
   groupId         String? // общ идентификатор при съвместна поръчка
   combined        Boolean @default(false)
 
-  amountTotal    Int // в стотинки
-  applicationFee Int     @default(0) // комисиона на платформата (стотинки)
-  currency       String  @default("bgn")
+  amountTotal    Int // в евроцентове
+  applicationFee Int     @default(0) // комисиона на платформата (евроцентове)
+  currency       String  @default("eur")
 
   // Платежен статус
   paymentMethod String @default("card") // card | cod | bank | revolut

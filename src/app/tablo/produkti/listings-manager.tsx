@@ -8,8 +8,10 @@ import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, UNITS } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
-import { createListing, updateListing, deleteListing } from "./actions";
+import { isBoosted } from "@/lib/boost-plans";
+import { createListing, updateListing, deleteListing, setListingSoldOut } from "./actions";
 import { uploadFile } from "@/lib/upload";
+import { BoostDialog } from "./boost-dialog";
 
 export type ListingRow = {
   id: string;
@@ -22,7 +24,9 @@ export type ListingRow = {
   currency: string;
   available: boolean;
   isOffer: boolean;
+  soldOut: boolean;
   stockNote: string | null;
+  boostedUntil: string | null;
   photos: string[];
 };
 
@@ -33,9 +37,9 @@ type Draft = {
   price: string;
   oldPrice: string;
   unit: string;
-  currency: string;
   available: boolean;
   isOffer: boolean;
+  soldOut: boolean;
   stockNote: string;
   photos: string[];
 };
@@ -47,9 +51,9 @@ const emptyDraft = (): Draft => ({
   price: "",
   oldPrice: "",
   unit: "кг",
-  currency: "BGN",
   available: true,
   isOffer: false,
+  soldOut: false,
   stockNote: "",
   photos: [],
 });
@@ -62,9 +66,9 @@ function toDraft(l: ListingRow): Draft {
     price: String(l.price),
     oldPrice: l.oldPrice ? String(l.oldPrice) : "",
     unit: l.unit,
-    currency: l.currency,
     available: l.available,
     isOffer: l.isOffer,
+    soldOut: l.soldOut,
     stockNote: l.stockNote ?? "",
     photos: l.photos,
   };
@@ -82,9 +86,10 @@ function draftToInput(d: Draft) {
     price: num(d.price),
     oldPrice: d.oldPrice.trim() ? num(d.oldPrice) : null,
     unit: d.unit as (typeof UNITS)[number],
-    currency: d.currency as "BGN" | "EUR",
+    currency: "EUR" as const,
     available: d.available,
     isOffer: d.isOffer,
+    soldOut: d.soldOut,
     stockNote: d.stockNote.trim(),
     photos: d.photos,
   };
@@ -160,26 +165,73 @@ function ListingDisplay({
   onDeleted: () => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [boostOpen, setBoostOpen] = useState(false);
+  const boosted = isBoosted(listing.boostedUntil);
+
   return (
-    <div className="flex items-center gap-4 rounded-[var(--radius-lg)] border border-border bg-surface p-4">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-surface-muted">
-        {listing.photos[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={listing.photos[0]} alt="" className="h-full w-full object-cover" />
-        ) : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate font-semibold">{listing.title}</h3>
-          {listing.isOffer ? <Badge tone="accent">Оферта</Badge> : null}
-          {!listing.available ? <Badge tone="neutral">Скрита</Badge> : null}
+    <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border bg-surface p-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-surface-muted">
+          {listing.photos[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={listing.photos[0]} alt="" className="h-full w-full object-cover" />
+          ) : null}
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {formatPrice(listing.price, listing.currency as "BGN" | "EUR")} / {listing.unit}
-          {listing.category ? ` · ${listing.category}` : ""}
-        </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate font-semibold">{listing.title}</h3>
+            {listing.isOffer ? <Badge tone="accent">Оферта</Badge> : null}
+            {listing.soldOut ? <Badge tone="danger">Изчерпан</Badge> : null}
+            {boosted ? <Badge tone="primary">★ Подсилена</Badge> : null}
+            {!listing.available ? <Badge tone="neutral">Скрита</Badge> : null}
+          </div>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {formatPrice(listing.price)} / {listing.unit}
+            {listing.category ? ` · ${listing.category}` : ""}
+          </p>
+          {boosted && listing.boostedUntil ? (
+            <p className="mt-0.5 text-xs font-medium text-primary">
+              Подсилена до{" "}
+              {new Intl.DateTimeFormat("bg-BG", {
+                day: "numeric",
+                month: "long",
+              }).format(new Date(listing.boostedUntil))}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div className="flex shrink-0 gap-1">
+
+      <div className="flex shrink-0 flex-wrap items-center gap-1">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              await setListingSoldOut(listing.id, !listing.soldOut);
+              onDeleted();
+            })
+          }
+          className={
+            listing.soldOut
+              ? "rounded-[var(--radius-sm)] border border-success/40 bg-success-soft px-3 py-2 text-sm font-semibold text-success hover:opacity-90 disabled:opacity-50"
+              : "rounded-[var(--radius-sm)] border border-border-strong px-3 py-2 text-sm font-medium text-foreground hover:border-danger hover:text-danger disabled:opacity-50"
+          }
+          title={
+            listing.soldOut
+              ? "Върни продукта в наличност — купувачите отново ще могат да поръчват."
+              : "Отбележи като изчерпан — обявата остава видима в профила, но не може да се купува."
+          }
+        >
+          {listing.soldOut ? "Върни в наличност" : "Изчерпан"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setBoostOpen(true)}
+          className="rounded-[var(--radius-sm)] border border-accent/50 bg-accent-soft px-3 py-2 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground"
+          title="Плати, за да излезе обявата най-отпред в „Актуални предложения“ и каталога."
+        >
+          ★ {boosted ? "Удължи" : "Подсили"}
+        </button>
         <Button variant="ghost" size="sm" onClick={onEdit}>
           Редактирай
         </Button>
@@ -199,6 +251,15 @@ function ListingDisplay({
           Изтрий
         </button>
       </div>
+
+      {boostOpen ? (
+        <BoostDialog
+          listingId={listing.id}
+          listingTitle={listing.title}
+          boostedUntil={listing.boostedUntil}
+          onClose={() => setBoostOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -322,8 +383,8 @@ function ListingEditor({
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Field label="Цена">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Цена в евро (€)">
             <Input
               inputMode="decimal"
               value={d.price}
@@ -331,7 +392,7 @@ function ListingEditor({
               placeholder="0.00"
             />
           </Field>
-          <Field label="Стара цена" hint="оферта">
+          <Field label="Стара цена (€)" hint="оферта">
             <Input
               inputMode="decimal"
               value={d.oldPrice}
@@ -344,12 +405,6 @@ function ListingEditor({
               {UNITS.map((u) => (
                 <option key={u} value={u}>{u}</option>
               ))}
-            </Select>
-          </Field>
-          <Field label="Валута">
-            <Select value={d.currency} onChange={(e) => set({ currency: e.target.value })}>
-              <option value="BGN">лв. (BGN)</option>
-              <option value="EUR">€ (EUR)</option>
             </Select>
           </Field>
         </div>
@@ -372,6 +427,15 @@ function ListingEditor({
               className="h-5 w-5 rounded border-border-strong accent-[var(--color-accent)]"
             />
             Маркирай като оферта
+          </label>
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={d.soldOut}
+              onChange={(e) => set({ soldOut: e.target.checked })}
+              className="h-5 w-5 rounded border-border-strong accent-[var(--color-danger)]"
+            />
+            Изчерпан (вижда се, но не може да се купи)
           </label>
         </div>
       </div>

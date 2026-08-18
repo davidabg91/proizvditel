@@ -103,9 +103,12 @@ export const listingSchema = z.object({
   price: z.number({ message: "Въведете цена" }).min(0).max(1_000_000),
   oldPrice: z.number().min(0).max(1_000_000).optional().nullable(),
   unit: z.enum(UNITS),
-  currency: z.enum(["BGN", "EUR"]).default("BGN"),
+  // Сайтът работи само в евро; „BGN" се приема заради стари записи, но
+  // при запис винаги се съхранява EUR (виж `baseData` в actions.ts).
+  currency: z.enum(["BGN", "EUR"]).default("EUR"),
   available: z.boolean().default(true),
   isOffer: z.boolean().default(false),
+  soldOut: z.boolean().default(false),
   stockNote: z.string().trim().max(200).optional().or(z.literal("")),
   photos: z.array(z.string().trim()).max(8).default([]),
 });

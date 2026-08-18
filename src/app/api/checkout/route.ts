@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe, platformFee, getSiteUrl } from "@/lib/stripe";
+import { stripe, totalDeduction, getSiteUrl, SITE_CURRENCY } from "@/lib/stripe";
 
 type IncomingItem = { listingId: string; qty: number };
 
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       id: { in: [...qtyById.keys()] },
       producerId: producer.id,
       available: true,
+      soldOut: false,
     },
     select: { id: true, title: true, price: true, unit: true, currency: true },
   });
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Продуктите не са налични." }, { status: 400 });
   }
 
-  const currency = (listings[0].currency || "BGN").toLowerCase();
+  const currency = SITE_CURRENCY;
   const line_items = listings.map((l) => ({
     quantity: qtyById.get(l.id) ?? 1,
     price_data: {
@@ -78,7 +79,8 @@ export async function POST(req: Request) {
     (s, li) => s + li.price_data.unit_amount * li.quantity,
     0,
   );
-  const fee = platformFee(total);
+  // Удържаме комисионата + таксата на Stripe, за да останат чисти 5%.
+  const deduction = totalDeduction(total);
 
   const session = await auth();
   const site = getSiteUrl();
@@ -90,7 +92,7 @@ export async function POST(req: Request) {
       shipping_address_collection: { allowed_countries: ["BG"] },
       phone_number_collection: { enabled: true },
       payment_intent_data: {
-        application_fee_amount: fee,
+        application_fee_amount: deduction,
         on_behalf_of: producer.stripeAccountId,
         transfer_data: { destination: producer.stripeAccountId },
         metadata: {

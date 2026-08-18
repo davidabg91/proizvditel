@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe, getSiteUrl } from "@/lib/stripe";
+import { stripe, getSiteUrl, SITE_CURRENCY } from "@/lib/stripe";
 
 type IncomingItem = { listingId: string; qty: number };
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   }
 
   const listings = await prisma.productListing.findMany({
-    where: { id: { in: [...qtyById.keys()] }, available: true },
+    where: { id: { in: [...qtyById.keys()] }, available: true, soldOut: false },
     select: {
       id: true,
       title: true,
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const currency = (payable[0].currency || "BGN").toLowerCase();
+  const currency = SITE_CURRENCY;
 
   const line_items = payable.map((l) => ({
     quantity: qtyById.get(l.id) ?? 1,

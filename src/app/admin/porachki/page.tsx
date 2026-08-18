@@ -38,13 +38,13 @@ export default async function AdminOrdersPage() {
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-5">
           <p className="text-sm text-muted-foreground">Оборот</p>
           <p className="mt-2 font-serif text-2xl font-semibold">
-            {formatPrice(revenue, "BGN")}
+            {formatPrice(revenue)}
           </p>
         </div>
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-5">
           <p className="text-sm text-muted-foreground">Комисиони (5%)</p>
           <p className="mt-2 font-serif text-2xl font-semibold text-primary">
-            {formatPrice(fees, "BGN")}
+            {formatPrice(fees)}
           </p>
         </div>
       </div>
@@ -84,10 +84,10 @@ export default async function AdminOrdersPage() {
                     {o.customerName ?? o.email ?? "—"}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 font-medium">
-                    {formatPrice(o.amountTotal / 100, o.currency.toUpperCase() as "BGN" | "EUR")}
+                    {formatPrice(o.amountTotal / 100)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {formatPrice(o.applicationFee / 100, o.currency.toUpperCase() as "BGN" | "EUR")}
+                    {formatPrice(o.applicationFee / 100)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge tone={o.fulfillmentStatus === "delivered" ? "success" : "primary"}>
