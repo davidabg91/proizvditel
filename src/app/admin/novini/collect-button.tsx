@@ -3,13 +3,23 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { runNewsCollection, type CollectActionResult } from "./actions";
+import {
+  runNewsCollection,
+  publishSeedNews,
+  type CollectActionResult,
+} from "./actions";
 
 /**
  * Ръчно пускане на автоматичното събиране. Търсенето отнема до няколко
  * минути, затова бутонът остава зает през цялото време.
  */
-export function CollectButton({ lastRun }: { lastRun: string | null }) {
+export function CollectButton({
+  lastRun,
+  seedCount,
+}: {
+  lastRun: string | null;
+  seedCount: number;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<CollectActionResult | null>(null);
@@ -50,6 +60,28 @@ export function CollectButton({ lastRun }: { lastRun: string | null }) {
           Търсенето отнема до няколко минути — не затваряйте страницата.
         </p>
       ) : null}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-primary/20 pt-4">
+        <p className="text-sm text-foreground/85">
+          <strong>Начални новини</strong> — четири готови материала: текущият
+          прием на ДФЗ, календар на изложенията, къде се следят програмите и
+          какво се търси наесен.{" "}
+          {seedCount > 0 ? `Публикувани: ${seedCount} от 4.` : "Още не са публикувани."}
+        </p>
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              setResult(null);
+              setResult(await publishSeedNews());
+              router.refresh();
+            })
+          }
+        >
+          {seedCount > 0 ? "Обнови" : "Публикувай"}
+        </Button>
+      </div>
 
       {result ? (
         <p

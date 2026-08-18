@@ -138,3 +138,25 @@ export async function runNewsCollection(): Promise<CollectActionResult> {
 
   return { ok: true, message: `Готово: ${parts.join(", ")}.` };
 }
+
+/** Публикува началния набор новини и справки. */
+export async function publishSeedNews(): Promise<CollectActionResult> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "Няма достъп." };
+
+  try {
+    const { seedNews } = await import("@/lib/news-seed");
+    const { created, updated } = await seedNews(admin.id);
+    refresh();
+    return {
+      ok: true,
+      message: `Готово: ${created} нови, ${updated} обновени.`,
+    };
+  } catch (error) {
+    console.error("publishSeedNews error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при публикуване.",
+    };
+  }
+}
