@@ -532,6 +532,9 @@ model NewsItem {
 
   coverUrl String?
 
+  // Събрана автоматично от ИИ (виж lib/news-ai.ts), а не въведена от админ
+  aiGenerated Boolean @default(false)
+
   authorId String
   author   User   @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 

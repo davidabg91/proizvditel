@@ -24,6 +24,7 @@ export type NewsRow = {
   sourceName: string | null;
   coverUrl: string | null;
   published: boolean;
+  aiGenerated: boolean;
 };
 
 type Draft = {
@@ -159,6 +160,7 @@ function Row({
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="truncate font-semibold">{item.title}</h3>
           <Badge tone="primary">{item.category}</Badge>
+          {item.aiGenerated ? <Badge tone="outline">Автоматично</Badge> : null}
           {!item.published ? <Badge tone="neutral">Чернова</Badge> : null}
         </div>
         <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">

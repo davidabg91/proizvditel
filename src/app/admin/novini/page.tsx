@@ -1,10 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { NewsManager } from "./news-manager";
+import { CollectButton } from "./collect-button";
+import { formatRelative } from "@/lib/utils";
 
 export default async function AdminNewsPage() {
-  const items = await prisma.newsItem.findMany({
-    orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
-  });
+  const [items, lastAi] = await Promise.all([
+    prisma.newsItem.findMany({
+      orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
+    }),
+    prisma.newsItem.findFirst({
+      where: { aiGenerated: true },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+  ]);
 
   const rows = items.map((n) => ({
     id: n.id,
@@ -20,6 +29,7 @@ export default async function AdminNewsPage() {
     sourceName: n.sourceName,
     coverUrl: n.coverUrl,
     published: n.published,
+    aiGenerated: n.aiGenerated,
   }));
 
   return (
@@ -31,6 +41,10 @@ export default async function AdminNewsPage() {
           Събитията с бъдеща дата излизат най-отгоре в раздел „Предстоящи“.
         </p>
       </div>
+      <CollectButton
+        lastRun={lastAi ? formatRelative(lastAi.createdAt) : null}
+      />
+
       <NewsManager items={rows} />
     </div>
   );

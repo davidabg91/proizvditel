@@ -112,3 +112,29 @@ export async function deleteNewsItem(id: string): Promise<ActionResult> {
     return { ok: false, error: "Грешка при изтриване." };
   }
 }
+
+export type CollectActionResult =
+  | { ok: true; message: string }
+  | { ok: false; error: string };
+
+/**
+ * Ръчно пускане на автоматичното събиране — същото, което cron-ът прави
+ * всеки понеделник. Полезно за проверка, без да се чака следващия път.
+ */
+export async function runNewsCollection(): Promise<CollectActionResult> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "Няма достъп." };
+
+  const { collectNews } = await import("@/lib/news-ai");
+  const res = await collectNews();
+
+  if (!res.ok) return { ok: false, error: res.error ?? "Грешка при събирането." };
+
+  refresh();
+
+  const parts = [`намерени ${res.found}`, `добавени ${res.created}`];
+  if (res.skipped > 0) parts.push(`пропуснати като дубликати ${res.skipped}`);
+  if (res.archived > 0) parts.push(`свалени отминали ${res.archived}`);
+
+  return { ok: true, message: `Готово: ${parts.join(", ")}.` };
+}
