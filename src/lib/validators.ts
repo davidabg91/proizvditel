@@ -59,6 +59,11 @@ export const registerSchema = z.object({
   description: z.string().trim().max(2000).optional().or(z.literal("")),
 
   crops: z.array(cropSchema).max(30).default([]),
+
+  // Доказателство за съгласие с Общите условия (изисква се за регресните клаузи)
+  acceptTerms: z.literal(true, {
+    message: "Трябва да приемете Общите условия и Политиката за поверителност.",
+  }),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -132,6 +137,9 @@ export const customerRegisterSchema = z.object({
   name: z.string().trim().min(2, "Въведете вашето име").max(120),
   email: z.string().trim().toLowerCase().email("Невалиден имейл"),
   password: z.string().min(8, "Паролата трябва да е поне 8 символа").max(200),
+  acceptTerms: z.literal(true, {
+    message: "Трябва да приемете Общите условия и Политиката за поверителност.",
+  }),
 });
 
 export type CustomerRegisterInput = z.infer<typeof customerRegisterSchema>;

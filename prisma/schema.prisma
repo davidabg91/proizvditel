@@ -24,6 +24,9 @@ model User {
   // "producer" — земеделски производител | "customer" — купувач | "admin"
   role         String   @default("producer")
   banned       Boolean  @default(false)
+  // Приемане на Общите условия при регистрация (доказателство за съгласие)
+  termsAcceptedAt DateTime?
+  termsVersion    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -369,6 +372,9 @@ model Order {
   fulfillmentStatus String  @default("new") // new | processing | shipped | delivered | cancelled
   courier           String?
   trackingNote      String?
+
+  // Кога сумата е преведена на производителя (след „доставена")
+  paidOutAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

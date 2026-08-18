@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe, totalDeduction, getSiteUrl, SITE_CURRENCY } from "@/lib/stripe";
+import { stripe, getSiteUrl, SITE_CURRENCY } from "@/lib/stripe";
 
 type IncomingItem = { listingId: string; qty: number };
 
@@ -79,8 +79,6 @@ export async function POST(req: Request) {
     (s, li) => s + li.price_data.unit_amount * li.quantity,
     0,
   );
-  // Удържаме комисионата + таксата на Stripe, за да останат чисти 5%.
-  const deduction = totalDeduction(total);
 
   const session = await auth();
   const site = getSiteUrl();
@@ -92,9 +90,11 @@ export async function POST(req: Request) {
       shipping_address_collection: { allowed_countries: ["BG"] },
       phone_number_collection: { enabled: true },
       payment_intent_data: {
-        application_fee_amount: deduction,
-        on_behalf_of: producer.stripeAccountId,
-        transfer_data: { destination: producer.stripeAccountId },
+        // Преводът към производителя НЕ е автоматичен — прави се чак когато
+        // поръчката бъде отбелязана като „доставена" (виж lib/payout.ts).
+        // Така сумата стои в баланса на платформата, докато трае рискът от
+        // оспорване, за което по договора със Stripe отговаря платформата.
+        transfer_group: `order_${producer.id}_${Date.now()}`,
         metadata: {
           producerId: producer.id,
           customerId: session?.user?.id ?? "",

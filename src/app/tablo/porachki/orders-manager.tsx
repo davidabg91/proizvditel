@@ -59,6 +59,12 @@ export function OrdersManager({ orders }: { orders: OrderRow[] }) {
 
   return (
     <div>
+      <p className="mb-5 rounded-[var(--radius-md)] border border-primary/25 bg-primary-soft/50 px-4 py-3 text-sm leading-relaxed text-foreground/85">
+        💶 Парите от поръчките, платени с карта, се превеждат по вашата Stripe сметка,
+        когато отбележите поръчката като <strong>„Доставена“</strong>. Дотогава сумата
+        стои при платформата — така не рискувате да върнете пари, ако клиент оспори
+        плащането, докато пратката още пътува.
+      </p>
       <div className="mb-5 flex flex-wrap gap-2">
         {FILTERS.map(([key, label]) => {
           const count =

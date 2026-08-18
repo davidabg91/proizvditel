@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { LEGAL_VERSION } from "@/lib/company";
 import { registerSchema, type RegisterInput } from "@/lib/validators";
 import { uniqueProducerSlug } from "@/lib/slug";
 import { signIn } from "@/auth";
@@ -49,6 +50,8 @@ export async function registerProducer(
       passwordHash,
       name: data.ownerName,
       role: "producer",
+      termsAcceptedAt: new Date(),
+      termsVersion: LEGAL_VERSION,
       producer: {
         create: {
           farmName: data.farmName,

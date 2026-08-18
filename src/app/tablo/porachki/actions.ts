@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { payoutOrder } from "@/lib/payout";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -46,8 +47,21 @@ export async function updateOrder(
     },
   });
 
+  // Сумата се превежда на производителя чак сега — при потвърдена доставка.
+  let payoutError: string | null = null;
+  if (data.fulfillmentStatus === "delivered") {
+    const res = await payoutOrder(orderId);
+    if (!res.ok) payoutError = res.error;
+  }
+
   revalidatePath("/tablo/porachki");
   revalidatePath("/tablo");
+
+  if (payoutError)
+    return {
+      ok: false,
+      error: `Статусът е записан, но преводът не мина: ${payoutError}`,
+    };
   return { ok: true };
 }
 

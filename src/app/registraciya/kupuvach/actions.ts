@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { customerRegisterSchema, type CustomerRegisterInput } from "@/lib/validators";
 import { signIn } from "@/auth";
+import { LEGAL_VERSION } from "@/lib/company";
 
 export type RegisterResult = { ok: true } | { ok: false; error: string };
 
@@ -25,6 +26,8 @@ export async function registerCustomer(
       passwordHash,
       name: d.name,
       role: "customer",
+      termsAcceptedAt: new Date(),
+      termsVersion: LEGAL_VERSION,
     },
   });
 

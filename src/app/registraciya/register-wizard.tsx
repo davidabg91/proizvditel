@@ -53,6 +53,7 @@ export function RegisterWizard() {
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [phone, setPhone] = useState("");
 
   // Данни за ЗП
@@ -121,6 +122,10 @@ export function RegisterWizard() {
 
   function submit() {
     setError(null);
+    if (!acceptTerms) {
+      setError("Трябва да приемете Общите условия и Политиката за поверителност.");
+      return;
+    }
     startTransition(async () => {
       const res = await registerProducer({
         farmName: farmName.trim(),
@@ -135,6 +140,7 @@ export function RegisterWizard() {
         startedYear: numOrNull(startedYear) as number | null,
         totalDecares: numOrNull(totalDecares) as number | null,
         description: description.trim(),
+        acceptTerms: acceptTerms as true,
         crops: crops
           .filter((c) => c.name.trim())
           .map((c) => ({
@@ -610,6 +616,28 @@ export function RegisterWizard() {
             </Link>
           </span>
         )}
+
+        {step === STEPS.length - 1 ? (
+          <label className="flex w-full cursor-pointer items-start gap-2.5 text-sm sm:w-auto sm:max-w-md">
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 rounded border-border-strong accent-[var(--color-primary)]"
+            />
+            <span className="text-muted-foreground">
+              Прочетох и приемам{" "}
+              <Link href="/usloviya" target="_blank" className="font-medium text-primary underline">
+                Общите условия
+              </Link>{" "}
+              и{" "}
+              <Link href="/poveritelnost" target="_blank" className="font-medium text-primary underline">
+                Политиката за поверителност
+              </Link>
+              .
+            </span>
+          </label>
+        ) : null}
 
         {step < STEPS.length - 1 ? (
           <Button type="button" onClick={next}>

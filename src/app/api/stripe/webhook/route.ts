@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { stripe, platformFee, estimatedStripeFee, totalDeduction } from "@/lib/stripe";
+import { stripe, platformFee } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { activateBoost } from "@/lib/boost";
 
@@ -26,20 +26,6 @@ function extractShipping(session: Stripe.Checkout.Session) {
     email: cust?.email ?? null,
     shippingAddress,
   };
-}
-
-async function chargeIdForSession(
-  session: Stripe.Checkout.Session,
-): Promise<string | undefined> {
-  const piId =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : session.payment_intent?.id;
-  if (!piId) return undefined;
-  const pi = await stripe.paymentIntents.retrieve(piId);
-  return typeof pi.latest_charge === "string"
-    ? pi.latest_charge
-    : (pi.latest_charge?.id ?? undefined);
 }
 
 export async function POST(req: Request) {
@@ -143,51 +129,15 @@ export async function POST(req: Request) {
           byProducer.set(l.producer.id, g);
         }
 
-        const chargeId = await chargeIdForSession(session);
-
-        // Таксата на Stripe е ЕДНА за цялото плащане, затова я разпределяме
-        // пропорционално — иначе фиксираните 0,25 € биха се удържали от всеки.
-        const grandTotal = [...byProducer.values()].reduce(
-          (s, g) => s + g.subtotal,
-          0,
-        );
-        const totalStripeFee = estimatedStripeFee(grandTotal);
-
         for (const [producerId, g] of byProducer) {
           const fee = platformFee(g.subtotal);
-          const stripeShare =
-            grandTotal > 0
-              ? Math.round((totalStripeFee * g.subtotal) / grandTotal)
-              : 0;
-          // Платформата задържа 5% + дела от таксата на Stripe.
-          const transferAmount = Math.max(
-            0,
-            g.subtotal - totalDeduction(g.subtotal, stripeShare),
-          );
-          let transferId: string | null = null;
-          if (g.accountId && transferAmount > 0) {
-            try {
-              const tr = await stripe.transfers.create({
-                amount: transferAmount,
-                currency,
-                destination: g.accountId,
-                transfer_group: session.metadata?.transferGroup ?? undefined,
-                source_transaction: chargeId,
-                metadata: { producerId, groupId: session.id },
-              });
-              transferId = tr.id;
-            } catch {
-              // записваме поръчката дори трансферът да се провали (обработва се ръчно)
-            }
-          }
-
+          // Преводът се прави при отбелязване „доставена" (lib/payout.ts).
           await prisma.order.create({
             data: {
               producerId,
               customerId: customerId || null,
               stripeSessionId: `${session.id}_${producerId}`,
               paymentIntentId,
-              transferId,
               groupId: session.id,
               combined: true,
               amountTotal: g.subtotal,
