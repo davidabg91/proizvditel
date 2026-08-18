@@ -26,6 +26,11 @@ export async function addPhoto(
     const producer = await currentProducer();
     if (!producer) return { ok: false, error: "Изисква се вход." };
     if (!url || !TYPES.has(type)) return { ok: false, error: "Невалидни данни." };
+    if (url.startsWith("data:"))
+      return {
+        ok: false,
+        error: "Снимката не е качена в хранилището. Опитайте отново.",
+      };
 
     const count = await prisma.photo.count({ where: { producerId: producer.id } });
     if (count >= 60) return { ok: false, error: "Достигнат е лимитът от снимки." };
