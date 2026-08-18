@@ -1,21 +1,17 @@
+import { prisma } from "@/lib/prisma";
+
 /**
- * Записва началния набор статии в блога.
+ * Началният набор статии в блога.
  *
- * Стартиране (с работещ DATABASE_URL в .env):
- *   node scripts/seed-blog.mjs
- *
- * Скриптът е идемпотентен — сверява по slug и обновява вече записаните,
- * вместо да ги дублира. Може да се пуска колкото пъти е нужно.
+ * Държим ги в кода, а не само в базата, за да могат да се публикуват с един
+ * бутон от админа (виж app/admin/actions.ts) и да се обновяват при промяна.
+ * Записът е идемпотентен — сверява по slug.
  *
  * Текстът поддържа: ## подзаглавие, - списък, **удебелено**,
- * [текст](/адрес). Вижте components/blog/article-body.tsx.
+ * [текст](/адрес). Виж components/blog/article-body.tsx.
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-const POSTS = [
+export const SEED_POSTS = [
   {
     slug: "sezonen-kalendar-bulgarski-plodove-zelenchutsi",
     title: "Сезонен календар: кога какво зрее в България",
@@ -257,35 +253,32 @@ const POSTS = [
 
 А ако имате стопанство и четете това от другата страна — [регистрирайте се](/registraciya) и си направете профил.`,
   },
-];
+] as const;
 
-async function main() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").split(",")[0]?.trim();
+export type SeedResult = { created: number; updated: number };
 
-  // Авторът трябва да е реален потребител — предпочитаме админа, иначе
-  // първия производител.
-  const author =
-    (adminEmail
-      ? await prisma.user.findUnique({ where: { email: adminEmail } })
-      : null) ??
-    (await prisma.user.findFirst({
-      where: { role: { in: ["producer", "admin"] } },
-      orderBy: { createdAt: "asc" },
-    }));
+/** Записва или обновява началните статии. Авторът трябва да съществува. */
+export async function seedBlogPosts(authorId: string): Promise<SeedResult> {
+  let created = 0;
+  let updated = 0;
 
-  if (!author) {
-    console.error(
-      "Няма подходящ потребител за автор. Регистрирайте профил и пуснете отново.",
-    );
-    process.exit(1);
-  }
-
-  console.log(`Автор: ${author.name} <${author.email}>`);
-
-  for (const post of POSTS) {
-    const saved = await prisma.blogPost.upsert({
+  for (const post of SEED_POSTS) {
+    const existing = await prisma.blogPost.findUnique({
       where: { slug: post.slug },
-      create: { ...post, authorId: author.id, published: true },
+      select: { id: true },
+    });
+
+    await prisma.blogPost.upsert({
+      where: { slug: post.slug },
+      create: {
+        slug: post.slug,
+        title: post.title,
+        category: post.category,
+        excerpt: post.excerpt,
+        body: post.body,
+        authorId,
+        published: true,
+      },
       update: {
         title: post.title,
         category: post.category,
@@ -293,17 +286,10 @@ async function main() {
         body: post.body,
       },
     });
-    const words = post.body.split(/\s+/).length;
-    console.log(`✓ ${saved.slug} (${words} думи)`);
+
+    if (existing) updated++;
+    else created++;
   }
 
-  console.log(`\nГотово — ${POSTS.length} статии.`);
-  console.log("Корици се добавят от Табло → Блог за всяка статия.");
+  return { created, updated };
 }
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());

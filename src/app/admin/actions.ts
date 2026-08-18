@@ -83,3 +83,39 @@ export async function verifyProducerUrn(
   }
   return { ok: true };
 }
+
+/**
+ * Публикува началния набор статии в блога.
+ * Пуска се от админ панела, защото само сървърът има достъп до базата.
+ */
+export type SeedActionResult =
+  | { ok: true; message: string }
+  | { ok: false; error: string };
+
+export async function publishSeedBlogPosts(): Promise<SeedActionResult> {
+  const admin = await getAdmin();
+  if (!admin) return { ok: false, error: "Няма достъп." };
+
+  try {
+    const { seedBlogPosts } = await import("@/lib/blog-seed");
+    const { created, updated } = await seedBlogPosts(admin.id);
+
+    revalidatePath("/blog");
+    revalidatePath("/admin");
+    revalidatePath("/sitemap.xml");
+
+    return {
+      ok: true,
+      message:
+        created > 0 || updated > 0
+          ? `Готово: ${created} нови, ${updated} обновени статии.`
+          : "Няма промени.",
+    };
+  } catch (error) {
+    console.error("publishSeedBlogPosts error:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Грешка при публикуване.",
+    };
+  }
+}

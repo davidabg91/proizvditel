@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatRelative } from "@/lib/utils";
+import { SeedBlogButton } from "./seed-blog-button";
+import { SEED_POSTS } from "@/lib/blog-seed";
 
 export default async function AdminOverviewPage() {
   const [
@@ -17,6 +19,7 @@ export default async function AdminOverviewPage() {
     orderAgg,
     codAgg,
     visitsAgg,
+    seedPostCount,
     recentOrders,
     recentUsers,
   ] = await Promise.all([
@@ -40,6 +43,9 @@ export default async function AdminOverviewPage() {
       _sum: { amountTotal: true, notionalFee: true },
     }),
     prisma.producer.aggregate({ _sum: { visits: true } }),
+    prisma.blogPost.count({
+      where: { slug: { in: SEED_POSTS.map((p) => p.slug) } },
+    }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 6,
@@ -152,6 +158,10 @@ export default async function AdminOverviewPage() {
           Числата тук показват каква би била тя, за да се вижда колко оборот
           остава извън приходите.
         </p>
+      </div>
+
+      <div className="mt-4">
+        <SeedBlogButton existing={seedPostCount} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
