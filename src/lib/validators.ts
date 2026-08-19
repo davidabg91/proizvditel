@@ -50,7 +50,9 @@ export const registerSchema = z.object({
     .optional()
     .or(z.literal("")),
   urnDocumentUrl: z.string().trim().optional().or(z.literal("")),
-  region: z.enum(REGIONS).optional().or(z.literal("")),
+  // Задължителна: по областта се определя кои стопанства могат да изпращат
+  // заедно и кои се предлагат едно на друго за съвместна доставка.
+  region: z.enum(REGIONS, { message: "Изберете област." }),
   town: z.string().trim().max(120).optional().or(z.literal("")),
 
   // Обобщение
@@ -83,7 +85,8 @@ export const profileSchema = z.object({
     .optional()
     .or(z.literal("")),
   urnDocumentUrl: z.string().trim().optional().or(z.literal("")),
-  region: z.string().trim().optional().or(z.literal("")),
+  // Виж бележката при registerSchema — областта движи съвместната доставка.
+  region: z.enum(REGIONS, { message: "Изберете област." }),
   town: z.string().trim().max(120).optional().or(z.literal("")),
   phone: z.string().trim().max(60).optional().or(z.literal("")),
   contactEmail: z.string().trim().optional().or(z.literal("")),

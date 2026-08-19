@@ -88,6 +88,9 @@ export function RegisterWizard() {
         const urnCheck = validateUrnFormat(urn);
         if (!urnCheck.valid) return urnCheck.error ?? "Невалиден УРН.";
       }
+      // Без област стопанството не може да бъде включено в група за съвместна
+      // доставка, нито предложено на съседните — затова се иска тук.
+      if (!region) return "Изберете област — по нея се намират стопанствата за съвместна доставка.";
     }
     return null;
   }
@@ -346,7 +349,11 @@ export function RegisterWizard() {
             </div>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Област" htmlFor="region">
+            <Field
+              label="Област *"
+              htmlFor="region"
+              hint="по нея намираме с кои стопанства можете да изпращате заедно"
+            >
               <Select
                 id="region"
                 value={region}

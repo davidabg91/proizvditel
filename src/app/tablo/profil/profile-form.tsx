@@ -386,7 +386,10 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
         <h2 className="text-lg font-semibold">Локация и контакти</h2>
         <div className="mt-5 flex flex-col gap-5">
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Област">
+            <Field
+              label="Област *"
+              hint="по нея ви намират за съвместна доставка"
+            >
               <Select
                 value={f.region}
                 onChange={(e) => set({ region: e.target.value })}
