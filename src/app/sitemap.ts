@@ -94,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.5,
       })),
       ...groups.map((g) => ({
-        url: `${site}/savmestno/${encodeURIComponent(g.primaryTown)}`,
+        url: `${site}/savmestno/${encodeURIComponent(g.key)}`,
         changeFrequency: "weekly" as const,
         priority: 0.6,
       })),

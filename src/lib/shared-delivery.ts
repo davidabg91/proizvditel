@@ -6,13 +6,13 @@ import { prisma } from "@/lib/prisma";
  * Група се получава по два начина и те се сливат:
  *
  *  1. Изрично партньорство — двете стопанства взаимно са се избрали в
- *     „Партньори". Това е истинската уговорка и важи независимо от града;
- *     Ловеч и Умаревци са на десет километра и спокойно пращат заедно.
- *  2. Един и същи град — двама, които още не са се свързали, но могат.
- *     Оставено като начин да се намерят.
+ *     „Партньори". Това е истинската уговорка и важи навсякъде.
+ *  2. Една и съща област — всички стопанства в област Ловеч могат да
+ *     изпращат заедно, не само тези в град Ловеч. Разстоянията в една
+ *     област са такива, че една обща пратка е напълно реалистична.
  *
- * По-рано групирането беше само по град и партньорствата не се четяха
- * никъде — затова свързани стопанства от съседни села не се появяваха.
+ * Стопанство без попълнена област се групира по град — иначе би останало
+ * само с изричните си партньори.
  */
 
 export type GroupListing = {
@@ -37,13 +37,13 @@ export type GroupProducer = {
 };
 
 export type DeliveryGroup = {
-  /** Градът в адреса на групата — /savmestno/[town]. */
-  primaryTown: string;
-  /** Заглавие: „Ловеч“ или „Ловеч и Умаревци“. */
+  /** Каквото стои в адреса — /savmestno/[town]. Областта, ако е попълнена. */
+  key: string;
+  /** Заглавие: „Област Ловеч“, или списък градове при липсваща област. */
   title: string;
   towns: string[];
   region: string | null;
-  /** Има ли изрично партньорство вътре, или е само съвпадение по град. */
+  /** Има ли изрично партньорство вътре, или е само съвпадение по област. */
   connected: boolean;
   producers: GroupProducer[];
 };
@@ -157,16 +157,18 @@ export function buildGroups(
     partnered.add(b);
   }
 
-  // Един и същи град също слепва — за тези, които още не са партньори.
-  const byTown = new Map<string, string[]>();
+  // Една и съща област слепва останалите. Ключовете са с представка, за да
+  // не се слее област „Ловеч“ със село „Ловеч“ в друга област по случайност.
+  const byArea = new Map<string, string[]>();
   for (const p of raw) {
-    const key = townKey(p.town);
-    if (!key) continue;
-    const list = byTown.get(key) ?? [];
+    const region = p.region?.trim().toLowerCase();
+    const key = region ? `reg:${region}` : `town:${townKey(p.town)}`;
+    if (key === "town:") continue; // нито област, нито град — няма по какво
+    const list = byArea.get(key) ?? [];
     list.push(p.id);
-    byTown.set(key, list);
+    byArea.set(key, list);
   }
-  for (const list of byTown.values()) {
+  for (const list of byArea.values()) {
     for (let i = 1; i < list.length; i++) groups.union(list[0], list[i]);
   }
 
@@ -198,18 +200,32 @@ export function buildGroups(
     const towns = [...byKey.values()]
       .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display, "bg"))
       .map((v) => v.display);
-    if (towns.length === 0) continue; // без нито един град няма как да се адресира
+
+    // Обикновено областта е една, но изрично партньорство може да събере и
+    // съседни области — тогава заглавието трябва да ги назове и двете, а не
+    // да представи групата като изцяло от първата.
+    const regions = [...new Set(ps.map((p) => p.region?.trim()).filter(Boolean))] as string[];
+    const region = regions[0] ?? null;
+    // Адресът е областта, когато има такава — тя е обхватът на групата.
+    const key = region ?? towns[0];
+    if (!key) continue; // нито област, нито град — няма как да се адресира
 
     result.push({
-      primaryTown: towns[0],
+      key,
       title:
-        towns.length === 1
-          ? towns[0]
-          : towns.length === 2
-            ? `${towns[0]} и ${towns[1]}`
-            : `${towns[0]}, ${towns[1]} и още ${towns.length - 2}`,
+        regions.length === 1
+          ? `Област ${regions[0]}`
+          : regions.length === 2
+            ? `Области ${regions[0]} и ${regions[1]}`
+            : regions.length > 2
+              ? `Области ${regions[0]}, ${regions[1]} и още ${regions.length - 2}`
+              : towns.length === 1
+                ? towns[0]
+                : towns.length === 2
+                  ? `${towns[0]} и ${towns[1]}`
+                  : `${towns[0]}, ${towns[1]} и още ${towns.length - 2}`,
       towns,
-      region: ps.find((p) => p.region)?.region ?? null,
+      region,
       connected: ids.some((id) => partnered.has(id)),
       producers: ps.map((p) => ({
         slug: p.slug,
@@ -259,42 +275,18 @@ export async function getDeliveryGroups(q?: string): Promise<DeliveryGroup[]> {
 }
 
 /**
- * Групата, в която попада този град. Връща цялата група, включително
- * стопанствата от други села — те са част от същата уговорка.
+ * Групата зад този адрес. Приема както име на област, така и на град —
+ * старите връзки /savmestno/Ловеч продължават да работят.
  */
-export async function getTownGroup(town: string): Promise<DeliveryGroup | null> {
+export async function getDeliveryGroup(
+  param: string,
+): Promise<DeliveryGroup | null> {
   const groups = await getDeliveryGroups();
-  const key = townKey(town);
+  const key = townKey(param);
   return (
-    groups.find((g) => g.towns.some((t) => townKey(t) === key)) ?? null
+    groups.find(
+      (g) =>
+        townKey(g.region) === key || g.towns.some((t) => townKey(t) === key),
+    ) ?? null
   );
-}
-
-/**
- * Близки стопанства за комбиниране: партньорите плюс тези от същия град.
- * Ползва се при подсказките в таблото.
- */
-export async function getNearbySharedProducers(
-  producerId: string,
-  town: string | null,
-) {
-  const partners = await prisma.producerPartner.findMany({
-    where: { producerId },
-    select: { partnerId: true },
-  });
-  const partnerIds = partners.map((p) => p.partnerId);
-
-  return prisma.producer.findMany({
-    where: {
-      published: true,
-      sharedDelivery: true,
-      id: { not: producerId },
-      OR: [
-        { id: { in: partnerIds } },
-        ...(town ? [{ town: { equals: town } }] : []),
-      ],
-    },
-    take: 8,
-    select: { slug: true, farmName: true, logoUrl: true, town: true },
-  });
 }

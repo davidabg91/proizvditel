@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/savmestno" },
   title: "Съвместно пазаруване",
   description:
-    "Поръчайте от няколко производителя от един град с една обща доставка.",
+    "Поръчайте от няколко производителя от една област с една обща доставка.",
 };
 
 export const revalidate = 60;
@@ -29,9 +29,9 @@ export default async function SharedDeliveryPage({
         <p className="eyebrow">Съвместно пазаруване</p>
         <h1 className="mt-2 text-3xl sm:text-4xl">Една доставка, няколко стопанства</h1>
         <p className="mt-3 text-muted-foreground">
-          Стопанства, които изпращат продукцията си заедно — свързали са се като
-          партньори или са от един и същи край. Купете различни продукти от няколко
-          стопанства с една обща доставка и по-ниски разходи.
+          Стопанства от една област, които изпращат продукцията си заедно. Купете
+          различни продукти от няколко стопанства с една обща доставка и по-ниски
+          разходи.
         </p>
       </div>
 
@@ -61,15 +61,15 @@ export default async function SharedDeliveryPage({
             {q ? "Няма намерени групи за това търсене" : "Все още няма групи за съвместна доставка"}
           </p>
           <p className="mt-1 text-muted-foreground">
-            Групата се появява, когато две стопанства се свържат като партньори
-            или когато двама от един и същи град включат съвместна доставка.
+            Групата се появява, когато две стопанства от една област включат
+            съвместна доставка или се свържат като партньори.
           </p>
         </div>
       ) : (
         <div className="mt-8 flex flex-col gap-6">
           {groups.map((g) => (
             <section
-              key={g.primaryTown}
+              key={g.key}
               className="rounded-[var(--radius-lg)] border border-border bg-surface p-6"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -87,7 +87,7 @@ export default async function SharedDeliveryPage({
                   </p>
                 </div>
                 <Button
-                  href={`/savmestno/${encodeURIComponent(g.primaryTown)}`}
+                  href={`/savmestno/${encodeURIComponent(g.key)}`}
                   variant="outline"
                   size="sm"
                 >

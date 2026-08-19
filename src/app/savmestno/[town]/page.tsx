@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ListingCard } from "@/components/product/listing-card";
-import { getTownGroup } from "@/lib/shared-delivery";
+import { getDeliveryGroup } from "@/lib/shared-delivery";
 
 export async function generateMetadata({
   params,
@@ -26,7 +26,7 @@ export default async function TownGroupPage({
 
   // Групата може да събира стопанства от няколко села — взимаме я цялата,
   // а не само тези, чийто град съвпада буквално с адреса.
-  const group = await getTownGroup(town);
+  const group = await getDeliveryGroup(town);
   if (!group) notFound();
 
   const producers = await prisma.producer.findMany({
@@ -67,8 +67,9 @@ export default async function TownGroupPage({
         {group.connected ? <Badge tone="primary">Свързани партньори</Badge> : null}
       </div>
       <p className="mt-2 max-w-2xl text-muted-foreground">
-        {producers.length} стопанства от {group.towns.join(", ")}
-        {region ? ` (${region})` : ""} изпращат продукцията си заедно. Изберете
+        {producers.length} стопанства изпращат продукцията си заедно
+        {group.towns.length > 0 ? ` — ${group.towns.join(", ")}` : ""}
+        {region && group.towns.length === 0 ? ` (${region})` : ""}. Изберете
         продукти от различни стопанства и се свържете с тях — доставката може да е
         една обща.
       </p>
