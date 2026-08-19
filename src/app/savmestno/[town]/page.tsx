@@ -64,7 +64,7 @@ export default async function TownGroupPage({
           {group.title}
         </h1>
         <Badge tone="success">Съвместна доставка</Badge>
-        {group.connected ? <Badge tone="primary">Свързани партньори</Badge> : null}
+        {group.confirmed ? <Badge tone="primary">Свързани партньори</Badge> : null}
       </div>
       <p className="mt-2 max-w-2xl text-muted-foreground">
         {producers.length} стопанства изпращат продукцията си заедно

@@ -43,9 +43,16 @@ export type DeliveryGroup = {
   title: string;
   towns: string[];
   region: string | null;
-  /** Има ли изрично партньорство вътре, или е само съвпадение по област. */
-  connected: boolean;
+  /** Потвърдена уговорка (взаимно партньорство) или само възможност. */
+  confirmed: boolean;
   producers: GroupProducer[];
+};
+
+export type DeliveryBoard = {
+  /** Взаимно избрали се стопанства — истинска уговорка. */
+  confirmed: DeliveryGroup[];
+  /** Останалите от областта — могат да изпращат заедно, ако се разберат. */
+  potential: DeliveryGroup[];
 };
 
 function matchQuery(p: GroupProducer, q: string): boolean {
@@ -138,39 +145,72 @@ async function mutualPairs(ids: string[]): Promise<[string, string][]> {
   return pairs;
 }
 
+/** Ключ на областта (или на града, ако област не е попълнена). */
+function areaKey(p: { region: string | null; town: string | null }): string {
+  const region = p.region?.trim().toLowerCase();
+  if (region) return `reg:${region}`;
+  const t = townKey(p.town);
+  return t ? `town:${t}` : "";
+}
+
+/** Имената на градовете в група — без повторения от различно изписване. */
+function townNames(ps: RawProducer[]): string[] {
+  const byKey = new Map<string, { display: string; count: number }>();
+  for (const p of ps) {
+    const t = p.town?.trim();
+    if (!t) continue;
+    const key = townKey(t);
+    const cur = byKey.get(key);
+    if (cur) cur.count++;
+    else byKey.set(key, { display: t, count: 1 });
+  }
+  return [...byKey.values()]
+    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display, "bg"))
+    .map((v) => v.display);
+}
+
+function toGroupProducer(p: RawProducer): GroupProducer {
+  return {
+    slug: p.slug,
+    farmName: p.farmName,
+    town: p.town,
+    region: p.region,
+    logoUrl: p.logoUrl,
+    crops: p.crops.map((c) => c.name),
+    listings: p.listings,
+    matching: [],
+  };
+}
+
+/** Заглавие по областите, а при липсващи — по градовете. */
+function groupTitle(regions: string[], towns: string[]): string {
+  const list = regions.length > 0 ? regions : towns;
+  const prefix = regions.length > 0 ? (regions.length === 1 ? "Област " : "Области ") : "";
+  if (list.length === 0) return "";
+  if (list.length === 1) return `${prefix}${list[0]}`;
+  if (list.length === 2) return `${prefix}${list[0]} и ${list[1]}`;
+  return `${prefix}${list[0]}, ${list[1]} и още ${list.length - 2}`;
+}
+
 /**
- * Строи групите от списък стопанства и взаимните им партньорства.
+ * Строи таблото от списък стопанства и взаимните им партньорства.
  * Без заявки — за да може да се провери самостоятелно.
+ *
+ * Потвърдените групи излизат САМО от взаимно партньорство. Групирането по
+ * област стои отделно, като „могат да изпращат заедно“ — да пише „изпращат
+ * заедно“ за двама, които не са се уговаряли, значи да обещаем на купувача
+ * нещо, което никой не е потвърдил.
  */
-export function buildGroups(
+export function buildBoard(
   raw: RawProducer[],
   pairs: [string, string][],
-): DeliveryGroup[] {
+): DeliveryBoard {
   const byId = new Map(raw.map((p) => [p.id, p]));
+
+  // 1. Потвърдени — свързаните компоненти на партньорствата.
   const groups = new Groups();
   for (const p of raw) groups.find(p.id);
-
-  const partnered = new Set<string>();
-  for (const [a, b] of pairs) {
-    groups.union(a, b);
-    partnered.add(a);
-    partnered.add(b);
-  }
-
-  // Една и съща област слепва останалите. Ключовете са с представка, за да
-  // не се слее област „Ловеч“ със село „Ловеч“ в друга област по случайност.
-  const byArea = new Map<string, string[]>();
-  for (const p of raw) {
-    const region = p.region?.trim().toLowerCase();
-    const key = region ? `reg:${region}` : `town:${townKey(p.town)}`;
-    if (key === "town:") continue; // нито област, нито град — няма по какво
-    const list = byArea.get(key) ?? [];
-    list.push(p.id);
-    byArea.set(key, list);
-  }
-  for (const list of byArea.values()) {
-    for (let i = 1; i < list.length; i++) groups.union(list[0], list[i]);
-  }
+  for (const [a, b] of pairs) groups.union(a, b);
 
   const members = new Map<string, string[]>();
   for (const p of raw) {
@@ -180,88 +220,82 @@ export function buildGroups(
     members.set(root, list);
   }
 
-  const result: DeliveryGroup[] = [];
+  const confirmed: DeliveryGroup[] = [];
+  const inConfirmed = new Set<string>();
+  const confirmedAreas = new Set<string>();
+
   for (const ids of members.values()) {
     if (ids.length < 2) continue;
     const ps = ids.map((id) => byId.get(id)!).filter(Boolean);
-
-    // Градът за адреса: този с най-много стопанства, при равенство — по азбука.
-    // Броим по нормализиран ключ, за да не излезе „гр. Ловеч и Ловеч“ като две
-    // различни места; за показване остава изписването, което човекът е въвел.
-    const byKey = new Map<string, { display: string; count: number }>();
-    for (const p of ps) {
-      const t = p.town?.trim();
-      if (!t) continue;
-      const key = townKey(t);
-      const cur = byKey.get(key);
-      if (cur) cur.count++;
-      else byKey.set(key, { display: t, count: 1 });
-    }
-    const towns = [...byKey.values()]
-      .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display, "bg"))
-      .map((v) => v.display);
-
-    // Обикновено областта е една, но изрично партньорство може да събере и
-    // съседни области — тогава заглавието трябва да ги назове и двете, а не
-    // да представи групата като изцяло от първата.
-    const regions = [...new Set(ps.map((p) => p.region?.trim()).filter(Boolean))] as string[];
+    const towns = townNames(ps);
+    const regions = [
+      ...new Set(ps.map((p) => p.region?.trim()).filter(Boolean)),
+    ] as string[];
     const region = regions[0] ?? null;
-    // Адресът е областта, когато има такава — тя е обхватът на групата.
     const key = region ?? towns[0];
     if (!key) continue; // нито област, нито град — няма как да се адресира
 
-    result.push({
+    confirmed.push({
       key,
-      title:
-        regions.length === 1
-          ? `Област ${regions[0]}`
-          : regions.length === 2
-            ? `Области ${regions[0]} и ${regions[1]}`
-            : regions.length > 2
-              ? `Области ${regions[0]}, ${regions[1]} и още ${regions.length - 2}`
-              : towns.length === 1
-                ? towns[0]
-                : towns.length === 2
-                  ? `${towns[0]} и ${towns[1]}`
-                  : `${towns[0]}, ${towns[1]} и още ${towns.length - 2}`,
+      title: groupTitle(regions, towns),
       towns,
       region,
-      connected: ids.some((id) => partnered.has(id)),
-      producers: ps.map((p) => ({
-        slug: p.slug,
-        farmName: p.farmName,
-        town: p.town,
-        region: p.region,
-        logoUrl: p.logoUrl,
-        crops: p.crops.map((c) => c.name),
-        listings: p.listings,
-        matching: [],
-      })),
+      confirmed: true,
+      producers: ps.map(toGroupProducer),
+    });
+    for (const p of ps) {
+      inConfirmed.add(p.id);
+      const a = areaKey(p);
+      if (a) confirmedAreas.add(a);
+    }
+  }
+
+  // 2. Възможни — останалите по области.
+  const byArea = new Map<string, RawProducer[]>();
+  for (const p of raw) {
+    if (inConfirmed.has(p.id)) continue;
+    const key = areaKey(p);
+    if (!key) continue;
+    const list = byArea.get(key) ?? [];
+    list.push(p);
+    byArea.set(key, list);
+  }
+
+  const potential: DeliveryGroup[] = [];
+  for (const [key, ps] of byArea) {
+    const hasConfirmed = confirmedAreas.has(key);
+    // Двама могат да се сдвоят помежду си; един има смисъл само ако в
+    // областта вече има потвърдена група, към която да се присъедини.
+    if (ps.length < 2 && !hasConfirmed) continue;
+
+    const towns = townNames(ps);
+    const regions = [
+      ...new Set(ps.map((p) => p.region?.trim()).filter(Boolean)),
+    ] as string[];
+    const region = regions[0] ?? null;
+    const groupKey = region ?? towns[0];
+    if (!groupKey) continue;
+
+    potential.push({
+      key: groupKey,
+      title: groupTitle(regions, towns),
+      towns,
+      region,
+      confirmed: false,
+      producers: ps.map(toGroupProducer),
     });
   }
 
-  // Първо изрично свързаните, после по големина.
-  result.sort(
-    (a, b) =>
-      Number(b.connected) - Number(a.connected) ||
-      b.producers.length - a.producers.length,
-  );
-  return result;
+  const bySize = (a: DeliveryGroup, b: DeliveryGroup) =>
+    b.producers.length - a.producers.length;
+  confirmed.sort(bySize);
+  potential.sort(bySize);
+  return { confirmed, potential };
 }
 
-/** Всички групи за съвместна доставка. При q оставя само съвпадащите. */
-export async function getDeliveryGroups(q?: string): Promise<DeliveryGroup[]> {
-  const raw = await prisma.producer.findMany({
-    where: { published: true, sharedDelivery: true },
-    orderBy: { createdAt: "desc" },
-    select: producerSelect,
-  });
-
-  const pairs = await mutualPairs(raw.map((p) => p.id));
-  const groups = buildGroups(raw, pairs);
-  const ql = q?.trim().toLowerCase() ?? "";
+/** Оставя само групите с намерено съвпадение и маркира съвпадащите обяви. */
+function filterByQuery(groups: DeliveryGroup[], ql: string): DeliveryGroup[] {
   if (!ql) return groups;
-
   for (const g of groups) {
     for (const p of g.producers) {
       p.matching = p.listings.filter(
@@ -274,9 +308,34 @@ export async function getDeliveryGroups(q?: string): Promise<DeliveryGroup[]> {
   return groups.filter((g) => g.producers.some((p) => matchQuery(p, ql)));
 }
 
+/** Потвърдените и възможните групи. При q оставя само съвпадащите. */
+export async function getDeliveryBoard(q?: string): Promise<DeliveryBoard> {
+  const raw = await prisma.producer.findMany({
+    where: { published: true, sharedDelivery: true },
+    orderBy: { createdAt: "desc" },
+    select: producerSelect,
+  });
+
+  const pairs = await mutualPairs(raw.map((p) => p.id));
+  const board = buildBoard(raw, pairs);
+  const ql = q?.trim().toLowerCase() ?? "";
+  return {
+    confirmed: filterByQuery(board.confirmed, ql),
+    potential: filterByQuery(board.potential, ql),
+  };
+}
+
+/** Само потвърдените групи — те имат собствена страница и влизат в картата. */
+export async function getDeliveryGroups(): Promise<DeliveryGroup[]> {
+  const board = await getDeliveryBoard();
+  return board.confirmed;
+}
+
 /**
  * Групата зад този адрес. Приема както име на област, така и на град —
- * старите връзки /savmestno/Ловеч продължават да работят.
+ * старите връзки /savmestno/Ловеч продължават да работят. Отваря се само за
+ * потвърдени групи: страница „тези изпращат заедно“ за стопанства, които не
+ * са се уговаряли, би заблудила купувача.
  */
 export async function getDeliveryGroup(
   param: string,
