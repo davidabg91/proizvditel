@@ -9,6 +9,7 @@ import { getHeaderUser } from "@/lib/session";
 import { getSiteUrl } from "@/lib/site";
 import { SiteJsonLd } from "@/components/seo/json-ld";
 import { CookieConsent } from "@/components/legal/cookie-consent";
+import { Analytics } from "@vercel/analytics/next";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -82,6 +83,9 @@ export default async function RootLayout({
           <SiteFooter />
           <CookieConsent />
         </CartProvider>
+        {/* Брояч на посещенията. Без бисквитки и без профилиране — затова
+            стои извън съгласието, а описанието му е в /biskvitki. */}
+        <Analytics />
       </body>
     </html>
   );
