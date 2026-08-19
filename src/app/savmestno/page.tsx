@@ -29,9 +29,9 @@ export default async function SharedDeliveryPage({
         <p className="eyebrow">Съвместно пазаруване</p>
         <h1 className="mt-2 text-3xl sm:text-4xl">Една доставка, няколко стопанства</h1>
         <p className="mt-3 text-muted-foreground">
-          Производители от един град, които изпращат продукцията си заедно. Купете
-          различни продукти от няколко стопанства — с една обща доставка и по-ниски
-          разходи.
+          Стопанства, които изпращат продукцията си заедно — свързали са се като
+          партньори или са от един и същи край. Купете различни продукти от няколко
+          стопанства с една обща доставка и по-ниски разходи.
         </p>
       </div>
 
@@ -61,29 +61,36 @@ export default async function SharedDeliveryPage({
             {q ? "Няма намерени групи за това търсене" : "Все още няма групи за съвместна доставка"}
           </p>
           <p className="mt-1 text-muted-foreground">
-            Групите се появяват, когато поне двама производители от един град
-            включат съвместна доставка.
+            Групата се появява, когато две стопанства се свържат като партньори
+            или когато двама от един и същи град включат съвместна доставка.
           </p>
         </div>
       ) : (
         <div className="mt-8 flex flex-col gap-6">
           {groups.map((g) => (
             <section
-              key={g.town}
+              key={g.primaryTown}
               className="rounded-[var(--radius-lg)] border border-border bg-surface p-6"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{g.town}</h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-semibold">{g.title}</h2>
                     <Badge tone="success">Съвместна доставка</Badge>
+                    {g.connected ? (
+                      <Badge tone="primary">Свързани партньори</Badge>
+                    ) : null}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {g.producers.length} стопанства изпращат заедно
                     {g.region ? ` · ${g.region}` : ""}
                   </p>
                 </div>
-                <Button href={`/savmestno/${encodeURIComponent(g.town)}`} variant="outline" size="sm">
+                <Button
+                  href={`/savmestno/${encodeURIComponent(g.primaryTown)}`}
+                  variant="outline"
+                  size="sm"
+                >
                   Виж групата
                 </Button>
               </div>

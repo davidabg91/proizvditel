@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site";
+import { getDeliveryGroups } from "@/lib/shared-delivery";
 
 export const revalidate = 3600;
 
@@ -30,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [producers, listings, posts, topics, towns, news] = await Promise.all([
+    const [producers, listings, posts, topics, groups, news] = await Promise.all([
       prisma.producer.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
@@ -50,11 +51,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       prisma.forumTopic.findMany({
         select: { slug: true, lastReplyAt: true },
       }),
-      prisma.producer.findMany({
-        where: { published: true, sharedDelivery: true, town: { not: null } },
-        select: { town: true },
-        distinct: ["town"],
-      }),
+      // Само адресите, които наистина отварят група. Преди тук влизаше всеки
+      // град със стопанство със съвместна доставка, включително самотните —
+      // техните страници дават 404 и нямат работа в картата на сайта.
+      getDeliveryGroups(),
       prisma.newsItem.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
@@ -93,13 +93,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "monthly" as const,
         priority: 0.5,
       })),
-      ...towns
-        .filter((t): t is { town: string } => !!t.town)
-        .map((t) => ({
-          url: `${site}/savmestno/${encodeURIComponent(t.town)}`,
-          changeFrequency: "weekly" as const,
-          priority: 0.6,
-        })),
+      ...groups.map((g) => ({
+        url: `${site}/savmestno/${encodeURIComponent(g.primaryTown)}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      })),
     ];
   } catch (error) {
     // Без база данни връщаме поне статичните страници, вместо празна карта.
