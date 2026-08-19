@@ -25,8 +25,8 @@ export function validateUrnFormat(urn?: string | null): { valid: boolean; error?
   if (!/^\d+$/.test(clean)) {
     return { valid: false, error: "УРН номерът трябва да съдържа само цифри." };
   }
-  if (clean.length < 6 || clean.length > 7) {
-    return { valid: false, error: "УРН номерът по ДФЗ е с дължина 6 или 7 цифри." };
+  if (clean.length < 6 || clean.length > 8) {
+    return { valid: false, error: "УРН номерът по ДФЗ е с дължина от 6 до 8 цифри." };
   }
   return { valid: true };
 }
@@ -45,7 +45,7 @@ export const registerSchema = z.object({
     .trim()
     .max(40)
     .refine((val) => validateUrnFormat(val).valid, {
-      message: "УРН номерът трябва да е 6 или 7 цифри (от ДФЗ).",
+      message: "УРН номерът трябва да е от 6 до 8 цифри (от ДФЗ).",
     })
     .optional()
     .or(z.literal("")),
@@ -78,7 +78,7 @@ export const profileSchema = z.object({
     .trim()
     .max(100)
     .refine((val) => validateUrnFormat(val).valid, {
-      message: "УРН номерът трябва да е 6 или 7 цифри (от ДФЗ).",
+      message: "УРН номерът трябва да е от 6 до 8 цифри (от ДФЗ).",
     })
     .optional()
     .or(z.literal("")),

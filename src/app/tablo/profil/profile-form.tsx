@@ -309,14 +309,14 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="УРН (Уникален регистрационен номер)"
-                hint="6 или 7 цифри от ДФЗ"
+                hint="от 6 до 8 цифри от ДФЗ"
               >
                 <Input
                   value={f.urn}
-                  onChange={(e) => set({ urn: e.target.value.replace(/\D/g, "").slice(0, 7) })}
+                  onChange={(e) => set({ urn: e.target.value.replace(/\D/g, "").slice(0, 8) })}
                   placeholder="напр. 1234567"
                   inputMode="numeric"
-                  maxLength={7}
+                  maxLength={8}
                 />
               </Field>
 

@@ -284,15 +284,15 @@ export function RegisterWizard() {
           <Field
             label="УРН (Уникален регистрационен номер)"
             htmlFor="urn"
-            description="6 или 7-цифреният номер от ДФЗ / МЗХ (Наредба №3). По избор."
+            description="Номерът от ДФЗ / МЗХ (Наредба №3) — от 6 до 8 цифри. По избор."
           >
             <Input
               id="urn"
               value={urn}
-              onChange={(e) => setUrn(e.target.value.replace(/\D/g, "").slice(0, 7))}
+              onChange={(e) => setUrn(e.target.value.replace(/\D/g, "").slice(0, 8))}
               placeholder="напр. 1234567"
               inputMode="numeric"
-              maxLength={7}
+              maxLength={8}
             />
           </Field>
 
