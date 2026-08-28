@@ -11,11 +11,18 @@ export type ReviewItem = {
   createdAt: Date;
 };
 
-export function ReviewsList({ reviews }: { reviews: ReviewItem[] }) {
+export function ReviewsList({
+  reviews,
+  empty,
+}: {
+  reviews: ReviewItem[];
+  /** Текст, когато още няма оценки — различен за профил и за обява. */
+  empty?: string;
+}) {
   if (reviews.length === 0) {
     return (
       <p className="rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-surface p-8 text-center text-muted-foreground">
-        Все още няма оценки за този производител.
+        {empty ?? "Все още няма оценки за този производител."}
       </p>
     );
   }

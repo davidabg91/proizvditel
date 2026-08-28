@@ -15,3 +15,19 @@ export async function recomputeRating(producerId: string) {
     },
   });
 }
+
+/** Преизчислява средната оценка и броя оценки за обява. */
+export async function recomputeListingRating(listingId: string) {
+  const agg = await prisma.listingReview.aggregate({
+    where: { listingId },
+    _avg: { rating: true },
+    _count: true,
+  });
+  await prisma.productListing.update({
+    where: { id: listingId },
+    data: {
+      ratingAvg: agg._avg.rating ?? 0,
+      ratingCount: agg._count,
+    },
+  });
+}

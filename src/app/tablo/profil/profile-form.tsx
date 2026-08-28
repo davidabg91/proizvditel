@@ -27,6 +27,12 @@ type InitialProfile = {
   totalDecares: string;
   sharedDelivery: boolean;
   deliveryProviders: string[];
+  shippingPrice: string;
+  freeShippingOver: string;
+  handlingDaysMin: string;
+  handlingDaysMax: string;
+  transitDaysMin: string;
+  transitDaysMax: string;
   hasShop: boolean;
   shopName: string;
   shopAddress: string;
@@ -48,6 +54,11 @@ function numOrNull(v: string): number | null {
   if (v.trim() === "") return null;
   const n = Number(v.replace(",", "."));
   return Number.isFinite(n) ? n : null;
+}
+
+function intOrNull(v: string): number | null {
+  const n = numOrNull(v);
+  return n === null ? null : Math.round(n);
 }
 
 export function ProfileForm({ initial }: { initial: InitialProfile }) {
@@ -93,6 +104,12 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
           totalDecares: numOrNull(f.totalDecares) as number | null,
           sharedDelivery: f.sharedDelivery,
           deliveryProviders: f.deliveryProviders,
+          shippingPrice: numOrNull(f.shippingPrice),
+          freeShippingOver: numOrNull(f.freeShippingOver),
+          handlingDaysMin: intOrNull(f.handlingDaysMin),
+          handlingDaysMax: intOrNull(f.handlingDaysMax),
+          transitDaysMin: intOrNull(f.transitDaysMin),
+          transitDaysMax: intOrNull(f.transitDaysMax),
           hasShop: f.hasShop,
           shopName: f.shopName.trim(),
           shopAddress: f.shopAddress.trim(),
@@ -611,6 +628,88 @@ export function ProfileForm({ initial }: { initial: InitialProfile }) {
               </label>
             );
           })}
+        </div>
+      </section>
+
+      {/* Условия за доставка */}
+      <section className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
+        <h2 className="text-lg font-semibold">Условия за доставка</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          По желание. Попълните ли цената, тя се показва при всеки ваш продукт и
+          се подава на Google — обявите ви стават по-видими в търсенето.
+          Оставите ли празно, доставката остава „по договаряне“.
+        </p>
+
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <Field
+            label="Цена на доставка (€)"
+            description="Обичайната цена до адрес или офис. 0 = винаги безплатна."
+          >
+            <Input
+              inputMode="decimal"
+              value={f.shippingPrice}
+              onChange={(e) => set({ shippingPrice: e.target.value })}
+              placeholder="напр. 5.99"
+            />
+          </Field>
+          <Field
+            label="Безплатна доставка над (€)"
+            description="Оставете празно, ако нямате такъв праг."
+          >
+            <Input
+              inputMode="decimal"
+              value={f.freeShippingOver}
+              onChange={(e) => set({ freeShippingOver: e.target.value })}
+              placeholder="напр. 50"
+            />
+          </Field>
+        </div>
+
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <Field
+            label="Подготовка (работни дни)"
+            description="От поръчката до предаването на куриера."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                inputMode="numeric"
+                value={f.handlingDaysMin}
+                onChange={(e) => set({ handlingDaysMin: e.target.value })}
+                placeholder="от"
+                aria-label="Подготовка — най-малко дни"
+              />
+              <span className="text-muted-foreground">–</span>
+              <Input
+                inputMode="numeric"
+                value={f.handlingDaysMax}
+                onChange={(e) => set({ handlingDaysMax: e.target.value })}
+                placeholder="до"
+                aria-label="Подготовка — най-много дни"
+              />
+            </div>
+          </Field>
+          <Field
+            label="Път до клиента (работни дни)"
+            description="Колкото обикновено отнема на куриера."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                inputMode="numeric"
+                value={f.transitDaysMin}
+                onChange={(e) => set({ transitDaysMin: e.target.value })}
+                placeholder="от"
+                aria-label="Път — най-малко дни"
+              />
+              <span className="text-muted-foreground">–</span>
+              <Input
+                inputMode="numeric"
+                value={f.transitDaysMax}
+                onChange={(e) => set({ transitDaysMax: e.target.value })}
+                placeholder="до"
+                aria-label="Път — най-много дни"
+              />
+            </div>
+          </Field>
         </div>
       </section>
 

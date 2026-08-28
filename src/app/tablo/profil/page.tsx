@@ -40,6 +40,20 @@ export default async function EditProfilePage() {
           totalDecares: producer.totalDecares ? String(producer.totalDecares) : "",
           sharedDelivery: producer.sharedDelivery,
           deliveryProviders: parseProviders(producer.deliveryProviders),
+          shippingPrice:
+            producer.shippingPrice !== null ? String(producer.shippingPrice) : "",
+          freeShippingOver:
+            producer.freeShippingOver !== null
+              ? String(producer.freeShippingOver)
+              : "",
+          handlingDaysMin:
+            producer.handlingDaysMin !== null ? String(producer.handlingDaysMin) : "",
+          handlingDaysMax:
+            producer.handlingDaysMax !== null ? String(producer.handlingDaysMax) : "",
+          transitDaysMin:
+            producer.transitDaysMin !== null ? String(producer.transitDaysMin) : "",
+          transitDaysMax:
+            producer.transitDaysMax !== null ? String(producer.transitDaysMax) : "",
           hasShop: producer.hasShop,
           shopName: producer.shopName ?? "",
           shopAddress: producer.shopAddress ?? "",

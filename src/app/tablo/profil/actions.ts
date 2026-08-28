@@ -48,6 +48,12 @@ export async function updateProfile(
         deliveryProviders: d.deliveryProviders.length
           ? d.deliveryProviders.join(",")
           : null,
+        shippingPrice: d.shippingPrice ?? null,
+        freeShippingOver: d.freeShippingOver ?? null,
+        handlingDaysMin: d.handlingDaysMin ?? null,
+        handlingDaysMax: d.handlingDaysMax ?? null,
+        transitDaysMin: d.transitDaysMin ?? null,
+        transitDaysMax: d.transitDaysMax ?? null,
         hasShop: d.hasShop,
         shopName: d.shopName || null,
         shopAddress: d.shopAddress || null,

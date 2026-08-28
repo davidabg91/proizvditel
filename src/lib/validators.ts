@@ -95,6 +95,13 @@ export const profileSchema = z.object({
   totalDecares: z.number().min(0).max(1_000_000).optional().nullable(),
   sharedDelivery: z.boolean().default(false),
   deliveryProviders: z.array(z.string()).default([]),
+  // Условия на доставката. Празно (null) значи „уговаря се с производителя“.
+  shippingPrice: z.number().min(0).max(1000).optional().nullable(),
+  freeShippingOver: z.number().min(0).max(100_000).optional().nullable(),
+  handlingDaysMin: z.number().int().min(0).max(30).optional().nullable(),
+  handlingDaysMax: z.number().int().min(0).max(30).optional().nullable(),
+  transitDaysMin: z.number().int().min(0).max(30).optional().nullable(),
+  transitDaysMax: z.number().int().min(0).max(30).optional().nullable(),
   // Физически обект
   hasShop: z.boolean().default(false),
   shopName: z.string().trim().max(120).optional().or(z.literal("")),

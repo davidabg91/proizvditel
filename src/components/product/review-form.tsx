@@ -5,14 +5,29 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { submitReview, deleteReview } from "@/app/p/[slug]/review-actions";
+import type { ReviewInput } from "@/lib/validators";
 
+type Result = { ok: true } | { ok: false; error: string };
+
+/**
+ * Формата обслужва и оценките за стопанство, и тези за отделна обява —
+ * различава ги само по подадените сървърни действия и текста. Действията се
+ * подават вече вързани за адреса от съответната страница.
+ */
 export function ReviewForm({
-  slug,
+  submit,
+  remove,
   initial,
+  title,
+  hint,
+  placeholder,
 }: {
-  slug: string;
+  submit: (input: ReviewInput) => Promise<Result>;
+  remove: () => Promise<Result>;
   initial: { rating: number; comment: string } | null;
+  title?: string;
+  hint?: string;
+  placeholder?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -30,7 +45,7 @@ export function ReviewForm({
       return;
     }
     startTransition(async () => {
-      const res = await submitReview(slug, { rating, comment: comment.trim() });
+      const res = await submit({ rating, comment: comment.trim() });
       if (res.ok) {
         setSaved(true);
         router.refresh();
@@ -40,9 +55,9 @@ export function ReviewForm({
     });
   }
 
-  function remove() {
+  function clear() {
     startTransition(async () => {
-      await deleteReview(slug);
+      await remove();
       setRating(0);
       setComment("");
       router.refresh();
@@ -52,10 +67,10 @@ export function ReviewForm({
   return (
     <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
       <h3 className="font-semibold">
-        {initial ? "Вашата оценка" : "Оставете оценка"}
+        {title ?? (initial ? "Вашата оценка" : "Оставете оценка")}
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Споделете опита си с този производител.
+        {hint ?? "Споделете опита си с този производител."}
       </p>
 
       <div className="mt-4 flex items-center gap-1">
@@ -80,7 +95,9 @@ export function ReviewForm({
       <Textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        placeholder="Как беше продукцията и обслужването? (по избор)"
+        placeholder={
+          placeholder ?? "Как беше продукцията и обслужването? (по избор)"
+        }
         className="mt-4 min-h-24"
       />
 
@@ -96,7 +113,7 @@ export function ReviewForm({
         {initial ? (
           <button
             type="button"
-            onClick={remove}
+            onClick={clear}
             disabled={pending}
             className="text-sm font-medium text-muted-foreground hover:text-danger disabled:opacity-50"
           >

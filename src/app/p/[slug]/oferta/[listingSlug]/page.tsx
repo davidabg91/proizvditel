@@ -10,7 +10,12 @@ import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ListingCard, type ListingCardData } from "@/components/product/listing-card";
 import { getMutualPartners } from "@/lib/partners";
 import { formatPrice } from "@/lib/utils";
+import { ReviewsList } from "@/components/product/reviews-list";
+import { ReviewForm } from "@/components/product/review-form";
+import { RatingStars } from "@/components/ui/rating";
+import { auth } from "@/auth";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { submitListingReview, deleteListingReview } from "./review-actions";
 
 /** Полетата, които картата на обявата чете от заявката. */
 type ListingRow = {
@@ -106,6 +111,10 @@ export default async function ListingDetailPage({
       producer: {
         include: { payment: true },
       },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        include: { author: { select: { id: true, name: true } } },
+      },
     },
   });
 
@@ -142,6 +151,54 @@ export default async function ListingDetailPage({
 
   const otherCards = otherListings.map((l) => toCard(l, cardProducer));
 
+  // Оценки за обявата. Правото да се оцени идва от потвърдена покупка при
+  // стопанството — същият праг като при оценките на профила.
+  const session = await auth();
+  const currentUserId = session?.user?.id ?? null;
+  const isOwner = !!currentUserId && p.userId === currentUserId;
+  const existingReview = currentUserId
+    ? listing.reviews.find((r) => r.authorId === currentUserId) ?? null
+    : null;
+
+  let canReview = false;
+  if (currentUserId && !isOwner) {
+    const purchase = await prisma.purchase.findUnique({
+      where: {
+        producerId_customerId: { producerId: p.id, customerId: currentUserId },
+      },
+      select: { id: true },
+    });
+    canReview = !!purchase;
+  }
+
+  // Срок за доставка: подготовка + път. Показва се само ако е попълнен.
+  const totalMin =
+    (p.handlingDaysMin ?? p.handlingDaysMax ?? null) === null &&
+    (p.transitDaysMin ?? p.transitDaysMax ?? null) === null
+      ? null
+      : (p.handlingDaysMin ?? p.handlingDaysMax ?? 0) +
+        (p.transitDaysMin ?? p.transitDaysMax ?? 0);
+  const totalMax =
+    totalMin === null
+      ? null
+      : (p.handlingDaysMax ?? p.handlingDaysMin ?? 0) +
+        (p.transitDaysMax ?? p.transitDaysMin ?? 0);
+  const deliveryDays =
+    totalMin === null || totalMax === null
+      ? null
+      : totalMin === totalMax
+        ? `${totalMin} ${totalMin === 1 ? "работен ден" : "работни дни"}`
+        : `${totalMin}–${totalMax} работни дни`;
+
+  const reviewItems = listing.reviews.map((r) => ({
+    id: r.id,
+    authorName: r.author.name,
+    rating: r.rating,
+    comment: r.comment,
+    verified: r.verified,
+    createdAt: r.createdAt,
+  }));
+
   const partnerCards = partners
     .flatMap((partner) =>
       partner.listings.map((l) =>
@@ -167,6 +224,23 @@ export default async function ListingDetailPage({
         producerName={p.farmName}
         producerPath={`/p/${p.slug}`}
         url={path}
+        category={listing.category}
+        shipping={{
+          price: p.shippingPrice,
+          freeOver: p.freeShippingOver,
+          handlingMin: p.handlingDaysMin,
+          handlingMax: p.handlingDaysMax,
+          transitMin: p.transitDaysMin,
+          transitMax: p.transitDaysMax,
+        }}
+        ratingAvg={listing.ratingAvg}
+        ratingCount={listing.ratingCount}
+        reviews={listing.reviews.map((r) => ({
+          authorName: r.author.name,
+          rating: r.rating,
+          comment: r.comment,
+          createdAt: r.createdAt,
+        }))}
       />
       <BreadcrumbJsonLd
         items={[
@@ -197,6 +271,15 @@ export default async function ListingDetailPage({
           </div>
 
           <h1 className="mt-3 font-serif text-3xl font-semibold">{listing.title}</h1>
+
+          {listing.ratingCount > 0 ? (
+            <a href="#otzivi" className="mt-2 inline-flex items-center gap-2 hover:opacity-80">
+              <RatingStars value={listing.ratingAvg} count={listing.ratingCount} size="sm" />
+              <span className="text-sm text-muted-foreground underline-offset-2 hover:underline">
+                {listing.ratingCount === 1 ? "1 оценка" : `${listing.ratingCount} оценки`}
+              </span>
+            </a>
+          ) : null}
 
           <div className="mt-4 flex items-baseline gap-3">
             <span className="font-serif text-3xl font-semibold text-primary">
@@ -308,15 +391,86 @@ export default async function ListingDetailPage({
               </p>
             )}
 
-            {p.deliveryProviders ? (
+            {p.deliveryProviders || p.shippingPrice !== null ? (
               <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4">
-                <p className="mb-2 text-sm text-muted-foreground">Доставка с</p>
-                <DeliveryBadges providers={p.deliveryProviders} />
+                {p.deliveryProviders ? (
+                  <>
+                    <p className="mb-2 text-sm text-muted-foreground">Доставка с</p>
+                    <DeliveryBadges providers={p.deliveryProviders} />
+                  </>
+                ) : null}
+                {p.shippingPrice !== null ? (
+                  <div
+                    className={
+                      p.deliveryProviders
+                        ? "mt-3 border-t border-border pt-3 text-sm"
+                        : "text-sm"
+                    }
+                  >
+                    <p>
+                      Доставка:{" "}
+                      <strong>
+                        {p.shippingPrice === 0
+                          ? "безплатна"
+                          : formatPrice(p.shippingPrice)}
+                      </strong>
+                      {p.freeShippingOver !== null && p.shippingPrice > 0
+                        ? ` — безплатна над ${formatPrice(p.freeShippingOver)}`
+                        : ""}
+                    </p>
+                    {deliveryDays ? (
+                      <p className="mt-1 text-muted-foreground">
+                        Получавате я за {deliveryDays}.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
         </div>
       </div>
+
+      {/* Оценки за продукта */}
+      <section id="otzivi" className="mt-16 border-t border-border pt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="font-serif text-2xl font-semibold">Оценки за продукта</h2>
+          {listing.ratingCount > 0 ? (
+            <RatingStars value={listing.ratingAvg} count={listing.ratingCount} />
+          ) : null}
+        </div>
+
+        {canReview || existingReview ? (
+          <div className="mt-5">
+            <ReviewForm
+              submit={submitListingReview.bind(null, p.slug, listing.slug)}
+              remove={deleteListingReview.bind(null, p.slug, listing.slug)}
+              initial={
+                existingReview
+                  ? {
+                      rating: existingReview.rating,
+                      comment: existingReview.comment ?? "",
+                    }
+                  : null
+              }
+              hint={`Как беше „${listing.title}“ — качество, свежест, количество?`}
+              placeholder="Опишете продукта такъв, какъвто го получихте. (по избор)"
+            />
+          </div>
+        ) : currentUserId && !isOwner ? (
+          <p className="mt-5 rounded-[var(--radius-lg)] border border-border bg-surface-muted/60 p-4 text-sm text-muted-foreground">
+            Само клиенти с потвърдена от производителя покупка могат да оставят
+            оценка.
+          </p>
+        ) : null}
+
+        <div className="mt-6">
+          <ReviewsList
+            reviews={reviewItems}
+            empty="Все още няма оценки за този продукт."
+          />
+        </div>
+      </section>
 
       {/* Още от същото стопанство */}
       {otherCards.length > 0 ? (

@@ -12,6 +12,7 @@ import { PaymentMethodsDisplay } from "@/components/product/payment-display";
 import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
+import { submitReview, deleteReview } from "./review-actions";
 import { getMutualPartners } from "@/lib/partners";
 import { ReportButton } from "@/components/report/report-button";
 import { ProfileCover } from "@/components/profile/profile-cover";
@@ -387,7 +388,8 @@ export default async function ProducerProfilePage({
               {canReview || existingReview ? (
                 <div className="mt-5">
                   <ReviewForm
-                    slug={producer.slug}
+                    submit={submitReview.bind(null, producer.slug)}
+                    remove={deleteReview.bind(null, producer.slug)}
                     initial={
                       existingReview
                         ? {

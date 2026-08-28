@@ -93,10 +93,118 @@ export function BreadcrumbJsonLd({
   );
 }
 
-/** Обява за продукт — цена, наличност и кой я предлага. */
+/**
+ * Категории, които законът брои за бързоразвалящи се — при тях право на
+ * отказ не се прилага (виж /otkaz-ot-dogovor, т. 2). За всичко останало
+ * важи общият 14-дневен срок за сметка на купувача.
+ */
+const PERISHABLE_CATEGORIES = [
+  "Плодове",
+  "Зеленчуци",
+  "Млечни продукти",
+  "Месо и яйца",
+  "Цветя и разсади",
+];
+
+/** Политиката за връщане такава, каквато е публикувана на сайта. */
+function returnPolicy(category: string | null, site: string) {
+  const link = `${site}/otkaz-ot-dogovor`;
+  if (category && PERISHABLE_CATEGORIES.includes(category)) {
+    return {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "BG",
+      returnPolicyCountry: "BG",
+      returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      merchantReturnLink: link,
+    };
+  }
+  return {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "BG",
+    returnPolicyCountry: "BG",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: "https://schema.org/ReturnShippingFees",
+    merchantReturnLink: link,
+  };
+}
+
+/** Условията за доставка, попълнени от производителя в профила му. */
+export type ShippingForSchema = {
+  price: number | null;
+  freeOver: number | null;
+  handlingMin: number | null;
+  handlingMax: number | null;
+  transitMin: number | null;
+  transitMax: number | null;
+};
+
+/** Дни като интервал — подрежда границите, ако са въведени разбъркано. */
+function days(min: number | null, max: number | null) {
+  if (min === null && max === null) return undefined;
+  const a = min ?? max!;
+  const b = max ?? min!;
+  return {
+    "@type": "QuantitativeValue",
+    minValue: Math.min(a, b),
+    maxValue: Math.max(a, b),
+    unitCode: "DAY",
+  };
+}
+
+function shippingDetails(
+  shipping: ShippingForSchema | null | undefined,
+  price: number,
+) {
+  // Без обявена цена не подаваме нищо: условията на сайта казват, че тогава
+  // доставката се уговаря с производителя, а измислен тариф е по-лош от
+  // липсващо поле.
+  if (!shipping || shipping.price === null) return undefined;
+
+  // Прагът за безплатна доставка се мери спрямо цената на самата бройка —
+  // ако тя вече го надхвърля, всяка поръчка с този продукт е над прага.
+  const rate =
+    shipping.freeOver !== null && price >= shipping.freeOver ? 0 : shipping.price;
+
+  const handlingTime = days(shipping.handlingMin, shipping.handlingMax);
+  const transitTime = days(shipping.transitMin, shipping.transitMax);
+
+  return {
+    "@type": "OfferShippingDetails",
+    shippingRate: {
+      "@type": "MonetaryAmount",
+      value: rate.toFixed(2),
+      currency: "EUR",
+    },
+    shippingDestination: {
+      "@type": "DefinedRegion",
+      addressCountry: "BG",
+    },
+    deliveryTime:
+      handlingTime || transitTime
+        ? {
+            "@type": "ShippingDeliveryTime",
+            handlingTime,
+            transitTime,
+          }
+        : undefined,
+  };
+}
+
+/** Отзив за обявата, подготвен за структурираните данни. */
+export type ReviewForSchema = {
+  authorName: string;
+  rating: number;
+  comment: string | null;
+  createdAt: Date;
+};
+
+/** Обява за продукт — цена, наличност, доставка, връщане и оценки. */
 export function ProductJsonLd({
   title,
   description,
+  category,
   images,
   price,
   unit,
@@ -104,9 +212,14 @@ export function ProductJsonLd({
   producerName,
   producerPath,
   url,
+  shipping,
+  ratingAvg,
+  ratingCount,
+  reviews = [],
 }: {
   title: string;
   description: string | null;
+  category: string | null;
   images: string[];
   price: number;
   unit: string;
@@ -114,6 +227,10 @@ export function ProductJsonLd({
   producerName: string;
   producerPath: string;
   url: string;
+  shipping?: ShippingForSchema | null;
+  ratingAvg: number;
+  ratingCount: number;
+  reviews?: ReviewForSchema[];
 }) {
   const site = getSiteUrl();
   return (
@@ -124,6 +241,7 @@ export function ProductJsonLd({
         name: title,
         description: description ?? `${title} — директно от ${producerName}.`,
         image: images.length > 0 ? images : undefined,
+        category: category ?? undefined,
         brand: { "@type": "Brand", name: producerName },
         offers: {
           "@type": "Offer",
@@ -139,7 +257,36 @@ export function ProductJsonLd({
             url: `${site}${producerPath}`,
           },
           eligibleQuantity: { "@type": "QuantitativeValue", unitText: unit },
+          shippingDetails: shippingDetails(shipping, price),
+          hasMerchantReturnPolicy: returnPolicy(category, site),
         },
+        // Оценките се подават само когато наистина има такива — измислен
+        // рейтинг е нарушение на правилата на Google.
+        aggregateRating:
+          ratingCount > 0
+            ? {
+                "@type": "AggregateRating",
+                ratingValue: ratingAvg.toFixed(1),
+                reviewCount: ratingCount,
+                bestRating: 5,
+                worstRating: 1,
+              }
+            : undefined,
+        review:
+          reviews.length > 0
+            ? reviews.map((r) => ({
+                "@type": "Review",
+                author: { "@type": "Person", name: r.authorName },
+                datePublished: r.createdAt.toISOString().slice(0, 10),
+                reviewBody: r.comment ?? undefined,
+                reviewRating: {
+                  "@type": "Rating",
+                  ratingValue: r.rating,
+                  bestRating: 5,
+                  worstRating: 1,
+                },
+              }))
+            : undefined,
       }}
     />
   );
