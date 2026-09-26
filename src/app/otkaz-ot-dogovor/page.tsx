@@ -5,6 +5,7 @@ export const metadata = {
   title: "Отказ и рекламации",
   description:
     "Право на отказ от договора, изключенията при бързоразвалящи се храни и как да предявите рекламация.",
+  alternates: { canonical: "/otkaz-ot-dogovor" },
 };
 
 export default function WithdrawalPage() {

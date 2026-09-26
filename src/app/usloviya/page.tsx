@@ -2,7 +2,10 @@ import { ArticlePage } from "@/components/layout/article-page";
 import { COMPANY, AUTHORITIES, LEGAL_UPDATED } from "@/lib/company";
 import { BOOST_PLANS, formatBoostPrice } from "@/lib/boost-plans";
 
-export const metadata = { title: "Общи условия" };
+export const metadata = {
+  title: "Общи условия",
+  alternates: { canonical: "/usloviya" },
+};
 
 export default function TermsPage() {
   return (

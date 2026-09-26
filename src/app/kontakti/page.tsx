@@ -1,7 +1,10 @@
 import { ArticlePage } from "@/components/layout/article-page";
 import { COMPANY, AUTHORITIES } from "@/lib/company";
 
-export const metadata = { title: "Контакти" };
+export const metadata = {
+  title: "Контакти",
+  alternates: { canonical: "/kontakti" },
+};
 
 export default function ContactsPage() {
   return (

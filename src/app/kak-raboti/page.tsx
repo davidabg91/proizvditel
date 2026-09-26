@@ -1,6 +1,11 @@
 import { ArticlePage } from "@/components/layout/article-page";
 
-export const metadata = { title: "Как работи" };
+export const metadata = {
+  title: "Как работи",
+  description:
+    "Как работи Производител.net: как купувачите поръчват директно от земеделските производители и как стопанствата публикуват профил и обяви.",
+  alternates: { canonical: "/kak-raboti" },
+};
 
 export default function HowItWorksPage() {
   return (

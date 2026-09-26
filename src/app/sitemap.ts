@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site";
 import { getDeliveryGroups } from "@/lib/shared-delivery";
+import { CATEGORY_LANDINGS, regionLandingFor } from "@/lib/seo-landing";
 
 export const revalidate = 3600;
 
@@ -15,7 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${site}/`, changeFrequency: "daily", priority: 1 },
+    { url: `${site}/za-proizvoditeli`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${site}/katalog`, changeFrequency: "daily", priority: 0.9 },
+    ...CATEGORY_LANDINGS.map((c) => ({
+      url: `${site}/katalog/${c.slug}`,
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    })),
     { url: `${site}/proizvoditeli`, changeFrequency: "daily", priority: 0.9 },
     { url: `${site}/savmestno`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${site}/blog`, changeFrequency: "weekly", priority: 0.7 },
@@ -31,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [producers, listings, posts, topics, groups, news] = await Promise.all([
+    const [producers, listings, posts, topics, groups, news, regions] = await Promise.all([
       prisma.producer.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
@@ -59,10 +66,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         where: { published: true },
         select: { slug: true, updatedAt: true },
       }),
+      // Само областите със стопанства — празните са noindex.
+      prisma.producer.groupBy({
+        by: ["region"],
+        where: { published: true, region: { not: null } },
+        _max: { updatedAt: true },
+      }),
     ]);
+
+    const regionPages = regions.flatMap((r) => {
+      const landing = regionLandingFor(r.region);
+      return landing
+        ? [
+            {
+              url: `${site}/proizvoditeli/${landing.slug}`,
+              lastModified: r._max.updatedAt ?? undefined,
+              changeFrequency: "weekly" as const,
+              priority: 0.8,
+            },
+          ]
+        : [];
+    });
 
     return [
       ...staticPages,
+      ...regionPages,
       ...producers.map((p) => ({
         url: `${site}/p/${p.slug}`,
         lastModified: p.updatedAt,

@@ -1,7 +1,10 @@
 import { ArticlePage } from "@/components/layout/article-page";
 import { COMPANY, AUTHORITIES, LEGAL_UPDATED } from "@/lib/company";
 
-export const metadata = { title: "Поверителност" };
+export const metadata = {
+  title: "Поверителност",
+  alternates: { canonical: "/poveritelnost" },
+};
 
 export default function PrivacyPage() {
   return (

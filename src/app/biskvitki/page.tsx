@@ -1,7 +1,10 @@
 import { ArticlePage } from "@/components/layout/article-page";
 import { COMPANY, LEGAL_UPDATED } from "@/lib/company";
 
-export const metadata = { title: "Политика за бисквитки" };
+export const metadata = {
+  title: "Политика за бисквитки",
+  alternates: { canonical: "/biskvitki" },
+};
 
 export default function CookiesPage() {
   return (

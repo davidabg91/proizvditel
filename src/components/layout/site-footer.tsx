@@ -9,6 +9,7 @@ const COLUMNS = [
       { href: "/proizvoditeli", label: "Производители" },
       { href: "/katalog", label: "Каталог с продукти" },
       { href: "/savmestno", label: "Съвместна доставка" },
+      { href: "/za-proizvoditeli", label: "За производители" },
       { href: "/registraciya", label: "Регистрация" },
       { href: "/vhod", label: "Вход" },
     ],

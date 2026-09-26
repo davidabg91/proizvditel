@@ -4,9 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { ProducerCard } from "@/components/product/producer-card";
 import { ProducerFilters } from "./producer-filters";
 import type { Prisma } from "@prisma/client";
+import Link from "next/link";
+import { REGION_LANDINGS } from "@/lib/seo-landing";
 
 export const metadata: Metadata = {
-  title: "Български земеделски производители",
+  title: "Земеделски производители в България — всички стопанства",
   description:
     "Разгледайте регистрираните земеделски стопанства по област и продукция. Вижте кой отглежда храната ви и поръчайте директно от него.",
   alternates: { canonical: "/proizvoditeli" },
@@ -77,6 +79,24 @@ export default async function ProducersPage({
       <Suspense>
         <ProducerFilters />
       </Suspense>
+
+      <details className="mt-4 text-sm">
+        <summary className="cursor-pointer font-semibold text-primary">
+          Земеделски производители по област
+        </summary>
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {REGION_LANDINGS.map((r) => (
+            <li key={r.slug}>
+              <Link
+                href={`/proizvoditeli/${r.slug}`}
+                className="inline-block rounded-full border border-border px-3 py-1 hover:border-primary hover:text-primary"
+              >
+                {r.region}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </details>
 
       <p className="mt-6 text-sm text-muted-foreground">
         {cards.length} {cards.length === 1 ? "производител" : "производители"}

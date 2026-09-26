@@ -4,6 +4,8 @@ import { findListingsBoostedFirst } from "@/lib/boost";
 import { ListingCard } from "@/components/product/listing-card";
 import { CatalogFilters } from "./catalog-filters";
 import type { Prisma } from "@prisma/client";
+import Link from "next/link";
+import { CATEGORY_LANDINGS } from "@/lib/seo-landing";
 
 export const metadata: Metadata = {
   title: "Каталог с прясна продукция от български производители",
@@ -81,6 +83,19 @@ export default async function CatalogPage({
           Разгледайте предложенията на производителите и поръчайте директно от тях.
         </p>
       </div>
+
+      <ul className="mb-6 flex flex-wrap gap-2 text-sm">
+        {CATEGORY_LANDINGS.map((c) => (
+          <li key={c.slug}>
+            <Link
+              href={`/katalog/${c.slug}`}
+              className="inline-block rounded-full border border-border px-3 py-1 hover:border-primary hover:text-primary"
+            >
+              {c.category}
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       <Suspense>
         <CatalogFilters />

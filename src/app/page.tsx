@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
@@ -6,8 +7,35 @@ import { Button } from "@/components/ui/button";
 import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
 import { HeroSearch } from "@/components/home/hero-search";
+import { FaqSection } from "@/components/seo/faq-section";
+import { CATEGORY_LANDINGS, REGION_LANDINGS } from "@/lib/seo-landing";
+
+const HOME_FAQ = [
+  {
+    q: "Какво е Производител.net?",
+    a: "Производител.net е български сайт за земеделски производители и онлайн пазар за тяхната продукция. Стопанствата публикуват профил и обяви, а купувачите поръчват плодове, зеленчуци, мед, млечни продукти, месо и други храни директно от тях, без посредник.",
+  },
+  {
+    q: "Как да купя продукция директно от производител?",
+    a: "Изберете продукт от каталога или от профила на стопанството, добавете го в кошницата и платете с карта онлайн или с наложен платеж. Производителят изпраща пратката с куриер или я предава лично.",
+  },
+  {
+    q: "Как да продавам продукцията си като земеделски производител?",
+    a: "Регистрирайте стопанството си безплатно, попълнете профила и публикувайте обяви с цена и количество. Купувачите ще ви намират по продукция и по област и ще поръчват директно от вас.",
+  },
+  {
+    q: "Проверени ли са производителите?",
+    a: "Стопанствата могат да посочат УРН (уникален регистрационен номер на земеделски производител) и да качат регистрационната си карта. След преглед профилът получава знак „Потвърден производител“.",
+  },
+  {
+    q: "От кои области има производители?",
+    a: "Платформата обхваща всички 28 области в България. Можете да разгледате стопанствата по област — например Пловдив, Кюстендил, Пазарджик, Добрич или Смолян.",
+  },
+];
 
 export const revalidate = 60;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const [listings, producers, producerCount] = await Promise.all([
@@ -83,14 +111,14 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/30" />
         <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:items-start lg:py-24">
           <div>
-            <p className="eyebrow">Направо от нивата</p>
+            <p className="eyebrow">Сайт за земеделски производители</p>
             <h1 className="mt-4 text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
               Прясна, местна продукция — директно от българския производител
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Производител свързва земеделските стопанства с хората, които ценят
-              качеството. Открийте кой отглежда храната ви и поръчайте директно от
-              него.
+              Производител.net е онлайн пазар, който свързва българските земеделски
+              производители с хората, които ценят качеството. Открийте кой отглежда
+              храната ви и поръчайте директно от него — без посредник.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button href="/katalog" size="lg">
@@ -216,15 +244,53 @@ export default async function Home() {
             </h2>
             <p className="mt-4 max-w-xl leading-relaxed text-primary-foreground/80">
               Създайте безплатен профил, качете продукцията си и започнете да
-              продавате директно на клиентите — без комисиони и посредници.
+              продавате директно на клиентите — без прекупвачи и посредници.
             </p>
           </div>
           <div className="flex lg:justify-end">
-            <Button href="/registraciya" size="lg" variant="accent">
+            <Button href="/za-proizvoditeli" size="lg" variant="accent">
               Започнете безплатно
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* Разглеждане по категория и област + въпроси */}
+      <section className="container-page py-16">
+        <div className="grid gap-12 lg:grid-cols-2">
+          <div>
+            <h2 className="text-2xl">Продукция по категория</h2>
+            <ul className="mt-5 flex flex-wrap gap-2 text-sm">
+              {CATEGORY_LANDINGS.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/katalog/${c.slug}`}
+                    className="inline-block rounded-full border border-border px-3 py-1.5 hover:border-primary hover:text-primary"
+                  >
+                    {c.category}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-2xl">Земеделски производители по област</h2>
+            <ul className="mt-5 flex flex-wrap gap-2 text-sm">
+              {REGION_LANDINGS.map((r) => (
+                <li key={r.slug}>
+                  <Link
+                    href={`/proizvoditeli/${r.slug}`}
+                    className="inline-block rounded-full border border-border px-3 py-1.5 hover:border-primary hover:text-primary"
+                  >
+                    {r.region}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <FaqSection items={HOME_FAQ} />
       </section>
     </main>
   );

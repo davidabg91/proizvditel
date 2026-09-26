@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export function ProductGallery({ photos }: { photos: string[] }) {
+export function ProductGallery({ photos, alt }: { photos: string[]; alt: string }) {
   const [active, setActive] = useState(0);
 
   if (photos.length === 0) {
@@ -18,7 +18,10 @@ export function ProductGallery({ photos }: { photos: string[] }) {
     <div>
       <div className="aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[active]} alt="" className="h-full w-full object-cover" />
+        <img
+          src={photos[active]}
+          alt={photos.length > 1 ? `${alt} — снимка ${active + 1}` : alt}
+          className="h-full w-full object-cover" />
       </div>
       {photos.length > 1 ? (
         <div className="mt-3 flex gap-2 overflow-x-auto">

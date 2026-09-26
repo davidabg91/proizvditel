@@ -13,7 +13,12 @@ export async function generateMetadata({
   params: Promise<{ town: string }>;
 }): Promise<Metadata> {
   const { town } = await params;
-  return { title: `Съвместна доставка · ${decodeURIComponent(town)}` };
+  const name = decodeURIComponent(town);
+  return {
+    title: `Съвместна доставка · ${name}`,
+    description: `Земеделски производители от ${name}, които изпращат поръчките си заедно — купете от няколко стопанства и платете една доставка.`,
+    alternates: { canonical: `/savmestno/${town}` },
+  };
 }
 
 export default async function TownGroupPage({

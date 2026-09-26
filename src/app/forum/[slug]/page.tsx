@@ -21,9 +21,15 @@ export async function generateMetadata({
   const { slug } = await params;
   const topic = await prisma.forumTopic.findUnique({
     where: { slug },
-    select: { title: true },
+    select: { title: true, body: true },
   });
-  return { title: topic?.title ?? "Тема" };
+  if (!topic) return { title: "Тема" };
+  const description = topic.body.replace(/\s+/g, " ").trim().slice(0, 155);
+  return {
+    title: topic.title,
+    description: description || undefined,
+    alternates: { canonical: `/forum/${slug}` },
+  };
 }
 
 export default async function TopicPage({

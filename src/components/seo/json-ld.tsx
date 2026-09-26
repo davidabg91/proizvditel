@@ -412,3 +412,51 @@ export function ArticleJsonLd({
     />
   );
 }
+
+/**
+ * Въпроси и отговори. Google вече показва FAQ богати резултати само за
+ * официални сайтове, но AI търсачките четат блока като готови отговори.
+ */
+export function FaqJsonLd({ items }: { items: { q: string; a: string }[] }) {
+  if (items.length === 0) return null;
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: items.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: { "@type": "Answer", text: item.a },
+        })),
+      }}
+    />
+  );
+}
+
+/** Списък с елементи на страница — продукти или стопанства. */
+export function ItemListJsonLd({
+  name,
+  items,
+}: {
+  name: string;
+  items: { name: string; path: string }[];
+}) {
+  if (items.length === 0) return null;
+  const site = getSiteUrl();
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name,
+        itemListElement: items.map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.name,
+          url: `${site}${item.path}`,
+        })),
+      }}
+    />
+  );
+}

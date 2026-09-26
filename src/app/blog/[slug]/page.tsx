@@ -109,7 +109,7 @@ export default async function BlogArticlePage({
       {post.coverUrl ? (
         <div className="h-64 w-full overflow-hidden bg-surface-muted sm:h-80">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.coverUrl} alt="" className="h-full w-full object-cover" />
+          <img src={post.coverUrl} alt={post.title} className="h-full w-full object-cover" />
         </div>
       ) : null}
 

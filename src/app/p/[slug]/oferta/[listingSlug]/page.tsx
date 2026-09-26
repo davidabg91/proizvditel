@@ -260,7 +260,10 @@ export default async function ListingDetailPage({
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
-        <ProductGallery photos={listing.photos.map((ph) => ph.url)} />
+        <ProductGallery
+          photos={listing.photos.map((ph) => ph.url)}
+          alt={`${listing.title} от ${listing.producer.farmName}`}
+        />
 
         <div>
           <div className="flex flex-wrap items-center gap-2">

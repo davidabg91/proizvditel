@@ -64,7 +64,7 @@ export default async function NewsItemPage({
       {item.coverUrl ? (
         <div className="h-64 w-full overflow-hidden bg-surface-muted sm:h-80">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.coverUrl} alt="" className="h-full w-full object-cover" />
+          <img src={item.coverUrl} alt={item.title} className="h-full w-full object-cover" />
         </div>
       ) : null}
 

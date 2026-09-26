@@ -1,6 +1,11 @@
 import { ArticlePage } from "@/components/layout/article-page";
 
-export const metadata = { title: "За нас" };
+export const metadata = {
+  title: "За нас",
+  description:
+    "Производител.net е български онлайн пазар, който свързва земеделските производители директно с купувачите — без посредници.",
+  alternates: { canonical: "/za-nas" },
+};
 
 export default function AboutPage() {
   return (
