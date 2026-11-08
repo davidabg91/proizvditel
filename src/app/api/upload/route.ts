@@ -4,43 +4,35 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { put } from "@vercel/blob";
 import { auth } from "@/auth";
-
-const ALLOWED = new Set([
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/png",
-  "image/x-png",
-  "image/webp",
-  "image/avif",
-  "image/gif",
-  "image/heic",
-  "image/heif",
-  "image/heic-sequence",
-  "image/heif-sequence",
-  "image/x-heic",
-  "application/pdf",
-  "application/octet-stream",
-]);
+import { allow } from "@/lib/rate-limit";
 
 const MAX_BYTES = 12 * 1024 * 1024; // 12 MB
 
-const EXT: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/pjpeg": "jpg",
-  "image/png": "png",
-  "image/x-png": "png",
-  "image/webp": "webp",
-  "image/avif": "avif",
-  "image/gif": "gif",
-  "image/heic": "jpg",
-  "image/heif": "jpg",
-  "image/heic-sequence": "jpg",
-  "image/heif-sequence": "jpg",
-  "image/x-heic": "jpg",
-  "application/pdf": "pdf",
-};
+type Detected = { ext: string; contentType: string };
+
+/**
+ * Определя вида на файла по първите му байтове („магически числа“), а не по
+ * името или по типа, който казва браузърът — те са в ръцете на качващия.
+ * Иначе HTML страница с име „snimka.png“ щеше да се запише и сервира като
+ * HTML. Допускаме само снимки и PDF.
+ */
+function sniff(b: Uint8Array): Detected | null {
+  const ascii = (from: number, to: number) => String.fromCharCode(...b.slice(from, to));
+
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { ext: "jpg", contentType: "image/jpeg" };
+  if (b[0] === 0x89 && ascii(1, 4) === "PNG") return { ext: "png", contentType: "image/png" };
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return { ext: "webp", contentType: "image/webp" };
+  if (ascii(0, 4) === "GIF8") return { ext: "gif", contentType: "image/gif" };
+  if (ascii(0, 5) === "%PDF-") return { ext: "pdf", contentType: "application/pdf" };
+  if (ascii(4, 8) === "ftyp") {
+    const brand = ascii(8, 12);
+    if (brand === "avif" || brand === "avis") return { ext: "avif", contentType: "image/avif" };
+    if (["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(brand)) {
+      return { ext: "heic", contentType: "image/heic" };
+    }
+  }
+  return null;
+}
 
 /**
  * Явен токен за Vercel Blob, ако има такъв. При свързване през OIDC (както е
@@ -58,11 +50,7 @@ function blobToken(): string | undefined {
 
 /** Има ли изобщо как да пишем в Blob — през токен или през OIDC. */
 function blobConfigured(): boolean {
-  return (
-    !!blobToken() ||
-    (!!process.env.BLOB_STORE_ID && !!process.env.VERCEL_OIDC_TOKEN) ||
-    !!process.env.BLOB_STORE_ID
-  );
+  return !!blobToken() || !!process.env.BLOB_STORE_ID;
 }
 
 export async function POST(req: Request) {
@@ -75,32 +63,18 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!allow(`upload:${session.user.id}`, 60, 60 * 60_000)) {
+      return NextResponse.json(
+        { error: "Качихте много файлове за кратко време. Опитайте след малко." },
+        { status: 429 },
+      );
+    }
+
     const form = await req.formData();
     const file = form.get("file");
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Липсва файл." }, { status: 400 });
-    }
-
-    const mimeType = (file.type || "").toLowerCase();
-
-    // Защита за разширение при липсващ или нетипичен mimeType
-    let ext = EXT[mimeType];
-    if (!ext && file.name) {
-      const fileNameExt = file.name.split(".").pop()?.toLowerCase();
-      if (
-        fileNameExt &&
-        ["jpg", "jpeg", "png", "webp", "avif", "gif", "heic", "heif"].includes(fileNameExt)
-      ) {
-        ext = ["jpeg", "heic", "heif"].includes(fileNameExt) ? "jpg" : fileNameExt;
-      }
-    }
-
-    if (!ext && (!mimeType || !ALLOWED.has(mimeType))) {
-      return NextResponse.json(
-        { error: "Позволени са само изображения (JPG, PNG, WEBP, AVIF, HEIC)." },
-        { status: 400 }
-      );
     }
 
     if (file.size > MAX_BYTES) {
@@ -110,15 +84,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const name = `${randomUUID()}.${ext || "jpg"}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const detected = sniff(buffer.subarray(0, 16));
+    if (!detected) {
+      return NextResponse.json(
+        { error: "Позволени са само изображения (JPG, PNG, WEBP, AVIF, HEIC) и PDF." },
+        { status: 400 }
+      );
+    }
+
+    const name = `${randomUUID()}.${detected.ext}`;
 
     // 1. Vercel Blob — така работи сайтът в production.
     const token = blobToken();
     if (blobConfigured()) {
       try {
-        const blob = await put(`uploads/${name}`, file, {
+        const blob = await put(`uploads/${name}`, buffer, {
           access: "public",
-          contentType: mimeType || "image/jpeg",
+          // Типът идва от съдържанието, не от браузъра.
+          contentType: detected.contentType,
           // При OIDC не подаваме token — SDK-то си го намира само.
           ...(token ? { token } : {}),
         });
@@ -135,7 +119,6 @@ export async function POST(req: Request) {
     // 2. Локална разработка — записваме във файловата система.
     if (process.env.NODE_ENV !== "production") {
       try {
-        const buffer = Buffer.from(await file.arrayBuffer());
         const uploadDir = path.join(process.cwd(), "public", "uploads");
         await mkdir(uploadDir, { recursive: true });
         await writeFile(path.join(uploadDir, name), buffer);
@@ -165,4 +148,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

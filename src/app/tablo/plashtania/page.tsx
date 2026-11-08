@@ -25,6 +25,17 @@ export default async function PaymentPage({
         </p>
       </div>
 
+      {!producer.urnVerified ? (
+        <p className="mb-5 rounded-[var(--radius-md)] border border-accent/30 bg-accent-soft/60 px-4 py-3 text-sm leading-relaxed text-foreground/85">
+          <strong>Плащането с карта се включва, след като потвърдим стопанството.</strong>{" "}
+          Качете регистрационната си карта (зелен картон) в{" "}
+          <a href="/tablo/profil" className="font-semibold text-primary underline">
+            профила
+          </a>
+          . Докато я прегледаме, клиентите могат да ви поръчват с наложен платеж.
+        </p>
+      ) : null}
+
       <div className="mb-8">
         <StripeConnect
           hasAccount={!!producer.stripeAccountId}

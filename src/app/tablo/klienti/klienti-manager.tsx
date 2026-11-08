@@ -49,7 +49,7 @@ function ClientItem({ client }: { client: ClientRow }) {
             <RatingStars value={client.review.rating} size="sm" />
             {client.review.comment ? (
               <span className="truncate text-sm text-muted-foreground">
-                „{client.review.comment}"
+                „{client.review.comment}“
               </span>
             ) : null}
           </div>

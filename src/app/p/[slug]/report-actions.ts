@@ -1,5 +1,6 @@
 "use server";
 
+import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -15,6 +16,10 @@ export async function createReport(input: {
   const session = await auth();
   if (!session?.user?.id)
     return { ok: false, error: "Влезте, за да докладвате." };
+
+  if (!allow(`report:${session.user.id}`, 10, 60 * 60_000)) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   const reason = input.reason.trim();
   if (!reason) return { ok: false, error: "Изберете причина." };

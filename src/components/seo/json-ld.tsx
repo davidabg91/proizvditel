@@ -9,12 +9,26 @@ import { getSiteUrl } from "@/lib/site";
  * резултати в Google, а асистентите нямат откъде да цитират данните.
  */
 
+/**
+ * JSON за вграждане в <script>. В данните има текст от потребители (заглавия,
+ * описания, отзиви), а JSON.stringify не пипа „</script>“ — без екраниране
+ * едно заглавие може да затвори скрипта и да вмъкне свой код. Заменяме
+ * символите с \uXXXX: за JSON парсъра на търсачката това е същият текст.
+ */
+export function safeJson(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"
-      // Съдържанието е наше, не потребителско — сериализираме го директно.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: safeJson(data) }}
     />
   );
 }

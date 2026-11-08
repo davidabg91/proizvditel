@@ -10,6 +10,16 @@ import { stripe, platformFee, estimatedStripeFee, totalDeduction } from "@/lib/s
  * договора със Stripe носи оспорванията и връщанията.
  */
 
+/**
+ * Колко дни след „доставена“ чакаме, преди да преведем сумата. През това
+ * време купувачът може да подаде рекламация, а производителят сам е
+ * отбелязал доставката — без срок това не би защитило никого.
+ */
+export const PAYOUT_HOLD_DAYS = Math.max(
+  0,
+  Number(process.env.PAYOUT_HOLD_DAYS ?? 3) || 0,
+);
+
 /** Намира идентификатора на плащането, от което да излезе преводът. */
 async function chargeIdForOrder(paymentIntentId: string): Promise<string | undefined> {
   const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -101,17 +111,22 @@ export async function payoutOrder(orderId: string): Promise<PayoutResult> {
     }
 
     const chargeId = await chargeIdForOrder(order.paymentIntentId);
-    const transfer = await stripe.transfers.create({
-      amount,
-      currency: order.currency,
-      destination: order.producer.stripeAccountId,
-      source_transaction: chargeId,
-      metadata: {
-        orderId: order.id,
-        producerId: order.producerId,
-        commission: String(platformFee(order.amountTotal)),
+    // Ключът за идемпотентност гарантира един превод на поръчка, дори при
+    // двоен клик или два паралелни опита — Stripe връща същия превод.
+    const transfer = await stripe.transfers.create(
+      {
+        amount,
+        currency: order.currency,
+        destination: order.producer.stripeAccountId,
+        source_transaction: chargeId,
+        metadata: {
+          orderId: order.id,
+          producerId: order.producerId,
+          commission: String(platformFee(order.amountTotal)),
+        },
       },
-    });
+      { idempotencyKey: `payout_${order.id}` },
+    );
 
     await prisma.order.update({
       where: { id: order.id },
@@ -126,4 +141,39 @@ export async function payoutOrder(orderId: string): Promise<PayoutResult> {
       error: e instanceof Error ? e.message : "Грешка при превода към производителя.",
     };
   }
+}
+
+/**
+ * Изплаща всички поръчки, при които срокът за рекламации е изтекъл.
+ * Вика се веднъж дневно от Vercel Cron (/api/cron/payouts).
+ */
+export async function payoutDueOrders(): Promise<{
+  paid: number;
+  skipped: number;
+  failed: { orderId: string; error: string }[];
+}> {
+  const cutoff = new Date(Date.now() - PAYOUT_HOLD_DAYS * 24 * 60 * 60_000);
+  const due = await prisma.order.findMany({
+    where: {
+      paymentMethod: "card",
+      paymentStatus: "paid",
+      fulfillmentStatus: "delivered",
+      deliveredAt: { lte: cutoff },
+      paidOutAt: null,
+      transferId: null,
+    },
+    select: { id: true },
+    take: 100,
+  });
+
+  let paid = 0;
+  let skipped = 0;
+  const failed: { orderId: string; error: string }[] = [];
+  for (const o of due) {
+    const res = await payoutOrder(o.id);
+    if (!res.ok) failed.push({ orderId: o.id, error: res.error });
+    else if (res.transferId) paid++;
+    else skipped++;
+  }
+  return { paid, skipped, failed };
 }

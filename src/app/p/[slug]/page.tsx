@@ -523,7 +523,11 @@ export default async function ProducerProfilePage({
 
             <PaymentMethodsDisplay
               payment={producer.payment}
-              cardEnabled={!!producer.stripeAccountId && producer.stripeChargesEnabled}
+              cardEnabled={
+                !!producer.stripeAccountId &&
+                producer.stripeChargesEnabled &&
+                producer.urnVerified
+              }
             />
 
             {producer.sharedDelivery ? (

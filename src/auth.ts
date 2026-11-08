@@ -48,6 +48,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.role = (user as { role: string }).role;
+        token.checkedAt = Date.now();
+        return token;
+      }
+
+      // Банът спира само новия вход, а JWT сесията живее седмици. Затова на
+      // всеки 5 минути питаме базата дали потребителят още е активен —
+      // достатъчно рядко, за да не товари всяка заявка.
+      const checkedAt = typeof token.checkedAt === "number" ? token.checkedAt : 0;
+      if (token.id && Date.now() - checkedAt > 5 * 60_000) {
+        const current = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { banned: true, role: true },
+        });
+        if (!current || current.banned) return null;
+        token.role = current.role;
+        token.checkedAt = Date.now();
       }
       return token;
     },

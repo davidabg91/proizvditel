@@ -4,7 +4,10 @@ import { getSiteUrl } from "@/lib/site";
 import { getDeliveryGroups } from "@/lib/shared-delivery";
 import { CATEGORY_LANDINGS, regionLandingFor } from "@/lib/seo-landing";
 
-export const revalidate = 3600;
+// Генерира се при всяка заявка. С `revalidate` картата оставаше замразена от
+// последното качване (на живо беше на 2+ дни и без новите стопанства);
+// търсачките я теглят рядко, а заявките са няколко леки SELECT-а.
+export const dynamic = "force-dynamic";
 
 /**
  * Карта на сайта. Освен статичните страници включва всички публикувани

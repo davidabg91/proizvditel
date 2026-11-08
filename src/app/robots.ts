@@ -16,6 +16,7 @@ const PRIVATE_PATHS = [
   "/plateno", // страница след плащане
   "/vhod",
   "/registraciya",
+  "/akaunt",
 ];
 
 /**

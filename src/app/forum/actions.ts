@@ -1,5 +1,6 @@
 "use server";
 
+import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,10 @@ export async function createTopic(input: ForumTopicInput): Promise<TopicResult> 
   const parsed = forumTopicSchema.safeParse(input);
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
+
+  if (!allow(`forum-topic:${session.user.id}`, 5, 60 * 60_000)) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   const slug = await uniqueTopicSlug(parsed.data.title);
   await prisma.forumTopic.create({
@@ -44,6 +49,10 @@ export async function createReply(
   const parsed = forumReplySchema.safeParse({ body });
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
+
+  if (!allow(`forum-reply:${session.user.id}`, 20, 60 * 60_000)) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   const topic = await prisma.forumTopic.findUnique({
     where: { id: topicId },

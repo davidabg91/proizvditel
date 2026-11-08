@@ -56,6 +56,11 @@ export function LoginForm({ next }: { next?: string }) {
           autoComplete="current-password"
         />
       </Field>
+      <div className="-mt-2 text-right">
+        <Link href="/vhod/zabravena-parola" className="text-sm font-medium text-primary hover:underline">
+          Забравена парола?
+        </Link>
+      </div>
       <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Влизаме…" : "Вход"}
       </Button>

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { payoutOrder } from "@/lib/payout";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -30,7 +29,7 @@ export async function updateOrder(
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { producerId: true },
+    select: { producerId: true, customerId: true, deliveredAt: true, paidOutAt: true },
   });
   if (!order || order.producerId !== producer.id)
     return { ok: false, error: "Няма достъп." };
@@ -38,30 +37,38 @@ export async function updateOrder(
   if (!STATUSES.has(data.fulfillmentStatus))
     return { ok: false, error: "Невалиден статус." };
 
+  const delivered = data.fulfillmentStatus === "delivered";
+  // Веднъж изплатена, поръчката не може да се „върне“ назад от доставена.
+  if (order.paidOutAt && !delivered)
+    return { ok: false, error: "Поръчката вече е изплатена и не може да се промени." };
+
   await prisma.order.update({
     where: { id: orderId },
     data: {
       fulfillmentStatus: data.fulfillmentStatus,
       courier: data.courier.trim() || null,
       trackingNote: data.trackingNote.trim() || null,
+      // Срокът за рекламации тече от първото отбелязване като доставена.
+      deliveredAt: delivered ? (order.deliveredAt ?? new Date()) : null,
     },
   });
 
-  // Сумата се превежда на производителя чак сега — при потвърдена доставка.
-  let payoutError: string | null = null;
-  if (data.fulfillmentStatus === "delivered") {
-    const res = await payoutOrder(orderId);
-    if (!res.ok) payoutError = res.error;
+  // Едва доставената поръчка дава право на „потвърден“ отзив — не самото
+  // заявяване (при наложен платеж то може да е фалшиво).
+  if (delivered && order.customerId) {
+    await prisma.purchase
+      .upsert({
+        where: {
+          producerId_customerId: { producerId: producer.id, customerId: order.customerId },
+        },
+        create: { producerId: producer.id, customerId: order.customerId },
+        update: {},
+      })
+      .catch(() => {});
   }
 
   revalidatePath("/tablo/porachki");
   revalidatePath("/tablo");
-
-  if (payoutError)
-    return {
-      ok: false,
-      error: `Статусът е записан, но преводът не мина: ${payoutError}`,
-    };
   return { ok: true };
 }
 
@@ -71,3 +78,4 @@ export async function getNewOrdersCount(producerId: string): Promise<number> {
     where: { producerId, fulfillmentStatus: "new" },
   });
 }
+

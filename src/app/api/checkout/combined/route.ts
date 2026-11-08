@@ -42,14 +42,20 @@ export async function POST(req: Request) {
           farmName: true,
           stripeAccountId: true,
           stripeChargesEnabled: true,
+          urnVerified: true,
         },
       },
     },
   });
 
   // Само продукти на производители, приемащи карти
+  // Картата се приема само от потвърдени производители (проверен УРН) —
+  // при картово плащане платформата носи риска от оспорване.
   const payable = listings.filter(
-    (l) => l.producer.stripeChargesEnabled && l.producer.stripeAccountId,
+    (l) =>
+      l.producer.stripeChargesEnabled &&
+      l.producer.stripeAccountId &&
+      l.producer.urnVerified,
   );
   if (payable.length === 0) {
     return NextResponse.json(
@@ -65,7 +71,9 @@ export async function POST(req: Request) {
     price_data: {
       currency,
       unit_amount: Math.round(l.price * 100),
-      product_data: { name: `${l.title} (${l.unit})` },
+      // Webhook-ът чете количеството и цената от самото плащане, а коя е
+      // обявата — оттук. Така записаната поръчка отговаря точно на платеното.
+      product_data: { name: `${l.title} (${l.unit})`, metadata: { listingId: l.id } },
     },
   }));
 
@@ -93,7 +101,9 @@ export async function POST(req: Request) {
         kind: "combined",
         customerId: session?.user?.id ?? "",
         transferGroup,
-        lst,
+        // Резервен списък за стари версии на webhook-а; Stripe приема до 500
+        // знака на стойност, затова при голяма кошница се пропуска.
+        ...(lst.length <= 490 ? { lst } : {}),
       },
     });
 

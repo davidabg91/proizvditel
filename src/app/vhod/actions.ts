@@ -1,5 +1,6 @@
 "use server";
 
+import { allow, allowIp, TOO_MANY } from "@/lib/rate-limit";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -16,6 +17,14 @@ export async function login(input: {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
+  }
+
+  const email = parsed.data.email.toLowerCase();
+  if (
+    !(await allowIp("login", 10, 15 * 60_000)) ||
+    !allow(`login-email:${email}`, 5, 15 * 60_000)
+  ) {
+    return { ok: false, error: TOO_MANY };
   }
 
   try {

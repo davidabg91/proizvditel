@@ -19,7 +19,7 @@ export default async function PartnersPage() {
         </div>
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center">
           <p className="text-muted-foreground">
-            За да избирате партньори, първо включете „Съвместно пазаруване" в профила
+            За да избирате партньори, първо включете „Съвместно пазаруване“ в профила
             на стопанството.
           </p>
           <Button href="/tablo/profil" className="mt-5">

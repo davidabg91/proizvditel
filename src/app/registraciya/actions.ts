@@ -1,11 +1,12 @@
 "use server";
 
+import { allowIp, TOO_MANY } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { LEGAL_VERSION } from "@/lib/company";
 import { registerSchema, type RegisterInput } from "@/lib/validators";
 import { uniqueProducerSlug } from "@/lib/slug";
-import { signIn } from "@/auth";
+import { auth, signIn } from "@/auth";
 
 export type RegisterResult =
   | { ok: true }
@@ -21,6 +22,10 @@ export async function registerProducer(
   }
 
   const data = parsed.data;
+
+  if (!(await allowIp("register", 5, 60 * 60_000))) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   const existing = await prisma.user.findUnique({
     where: { email: data.email },
@@ -58,7 +63,6 @@ export async function registerProducer(
           slug,
           ownerName: data.ownerName,
           urn: data.urn || null,
-          urnDocumentUrl: data.urnDocumentUrl || null,
           region: data.region || null,
           town: data.town || null,
           phone: data.phone || null,
@@ -80,5 +84,24 @@ export async function registerProducer(
     redirect: false,
   });
 
+  return { ok: true };
+}
+
+/**
+ * Записва регистрационната карта към току-що създадения профил. Качването
+ * става след регистрацията, защото /api/upload изисква вход.
+ */
+export async function attachUrnDocument(url: string): Promise<{ ok: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false };
+  // Само файлове от нашето хранилище — не произволни външни адреси.
+  const ours =
+    /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/uploads\//i.test(url) ||
+    (process.env.NODE_ENV !== "production" && url.startsWith("/uploads/"));
+  if (!ours) return { ok: false };
+  await prisma.producer.updateMany({
+    where: { userId: session.user.id },
+    data: { urnDocumentUrl: url },
+  });
   return { ok: true };
 }

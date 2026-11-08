@@ -152,6 +152,9 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
                   Табло
                 </Button>
               ) : null}
+              <Button href="/akaunt" variant="ghost" size="sm">
+                Акаунт
+              </Button>
               <form action={doSignOut}>
                 <Button variant="ghost" size="sm" type="submit">
                   Изход
@@ -230,6 +233,9 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
                       Табло
                     </Button>
                   ) : null}
+                  <Button href="/akaunt" variant="outline" onClick={() => setOpen(false)}>
+                    Моят акаунт
+                  </Button>
                   <form action={doSignOut}>
                     <Button variant="ghost" type="submit" className="w-full justify-start">
                       Изход

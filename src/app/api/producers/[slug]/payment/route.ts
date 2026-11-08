@@ -13,6 +13,7 @@ export async function GET(
       phone: true,
       contactEmail: true,
       stripeChargesEnabled: true,
+      urnVerified: true,
       payment: true,
     },
   });
@@ -25,7 +26,7 @@ export async function GET(
     farmName: producer.farmName,
     phone: producer.phone,
     contactEmail: producer.contactEmail,
-    card: producer.stripeChargesEnabled,
+    card: producer.stripeChargesEnabled && producer.urnVerified,
     payment: {
       acceptsBankTransfer: p?.acceptsBankTransfer ?? false,
       bankName: p?.bankName ?? null,

@@ -24,6 +24,11 @@ model User {
   // "producer" — земеделски производител | "customer" — купувач | "admin"
   role         String   @default("producer")
   banned       Boolean  @default(false)
+  // Възстановяване на парола: пазим само хеша на токена и срока му.
+  resetTokenHash      String?   @unique
+  resetTokenExpiresAt DateTime?
+  // Изтрит по желание на потребителя — личните данни са обезличени.
+  deletedAt    DateTime?
   // Приемане на Общите условия при регистрация (доказателство за съгласие)
   termsAcceptedAt DateTime?
   termsVersion    String?
@@ -417,6 +422,10 @@ model Order {
   fulfillmentStatus String  @default("new") // new | processing | shipped | delivered | cancelled
   courier           String?
   trackingNote      String?
+
+  // Кога производителят я е отбелязал като доставена. Изплащането става
+  // след срока за рекламации (PAYOUT_HOLD_DAYS), не веднага.
+  deliveredAt DateTime?
 
   // Кога сумата е преведена на производителя (след „доставена")
   paidOutAt DateTime?

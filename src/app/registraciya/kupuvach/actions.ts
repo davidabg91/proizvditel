@@ -1,5 +1,6 @@
 "use server";
 
+import { allowIp, TOO_MANY } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { customerRegisterSchema, type CustomerRegisterInput } from "@/lib/validators";
@@ -15,6 +16,10 @@ export async function registerCustomer(
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Невалидни данни." };
   const d = parsed.data;
+
+  if (!(await allowIp("register", 5, 60 * 60_000))) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   const existing = await prisma.user.findUnique({ where: { email: d.email } });
   if (existing) return { ok: false, error: "Вече съществува акаунт с този имейл." };

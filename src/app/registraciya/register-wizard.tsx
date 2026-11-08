@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { REGIONS, CATEGORIES, YIELD_UNITS } from "@/lib/constants";
-import { registerProducer } from "./actions";
+import { registerProducer, attachUrnDocument } from "./actions";
 
 import { uploadFile } from "@/lib/upload";
 import { validateUrnFormat } from "@/lib/validators";
@@ -58,6 +58,9 @@ export function RegisterWizard() {
 
   // Данни за ЗП
   const [urn, setUrn] = useState("");
+  // Документът се пази в браузъра и се качва чак след създаването на
+  // профила — качването изисква вход, а преди регистрацията няма акаунт.
+  const [urnDocFile, setUrnDocFile] = useState<File | null>(null);
   const [urnDocumentUrl, setUrnDocumentUrl] = useState("");
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [region, setRegion] = useState("");
@@ -110,17 +113,16 @@ export function RegisterWizard() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  async function handleDocUpload(file: File) {
-    setUploadingDoc(true);
+  function handleDocUpload(file: File) {
     setError(null);
-    try {
-      const url = await uploadFile(file);
-      setUrnDocumentUrl(url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Грешка при качване на документа.");
-    } finally {
-      setUploadingDoc(false);
+    if (file.size > 12 * 1024 * 1024) {
+      setError("Файлът е твърде голям (макс. 12 MB).");
+      return;
     }
+    if (urnDocumentUrl.startsWith("blob:")) URL.revokeObjectURL(urnDocumentUrl);
+    setUrnDocFile(file);
+    // Локален адрес само за прегледа в прозореца „Преглед“.
+    setUrnDocumentUrl(URL.createObjectURL(file));
   }
 
   function submit() {
@@ -137,7 +139,6 @@ export function RegisterWizard() {
         password,
         phone: phone.trim(),
         urn: urn.trim(),
-        urnDocumentUrl: urnDocumentUrl || undefined,
         region: (region as (typeof REGIONS)[number]) || "",
         town: town.trim(),
         startedYear: numOrNull(startedYear) as number | null,
@@ -158,6 +159,20 @@ export function RegisterWizard() {
       });
 
       if (res.ok) {
+        // Профилът вече съществува и сме влезли — сега качваме документа.
+        // Ако не стане, регистрацията пак е успешна: картата може да се
+        // качи и по-късно от „Профил“.
+        if (urnDocFile) {
+          setUploadingDoc(true);
+          try {
+            const url = await uploadFile(urnDocFile);
+            await attachUrnDocument(url);
+          } catch (e) {
+            console.error("Качване на регистрационната карта:", e);
+          } finally {
+            setUploadingDoc(false);
+          }
+        }
         router.push("/tablo");
         router.refresh();
       } else {
@@ -315,7 +330,7 @@ export function RegisterWizard() {
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {urnDocumentUrl ? (
                 <div className="flex items-center gap-2 rounded bg-surface px-3 py-1.5 text-xs font-medium text-success border border-success/30">
-                  <span>✓ Документът е качен успешно</span>
+                  <span>✓ Документът е избран — ще се качи при регистрацията</span>
                   <button
                     type="button"
                     onClick={() => setShowDocModal(true)}
@@ -325,7 +340,11 @@ export function RegisterWizard() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUrnDocumentUrl("")}
+                    onClick={() => {
+                      if (urnDocumentUrl.startsWith("blob:")) URL.revokeObjectURL(urnDocumentUrl);
+                      setUrnDocumentUrl("");
+                      setUrnDocFile(null);
+                    }}
                     className="text-danger hover:underline ml-2"
                   >
                     Премахни

@@ -1,5 +1,6 @@
 "use server";
 
+import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,9 @@ export async function sendMessage(
 
   const canAccess = await userCanAccessConversation(conversationId, session.user.id);
   if (!canAccess) return { ok: false, error: "Няма достъп." };
+  if (!allow(`msg:${session.user.id}`, 60, 10 * 60_000)) {
+    return { ok: false, error: TOO_MANY };
+  }
 
   await prisma.$transaction([
     prisma.message.create({

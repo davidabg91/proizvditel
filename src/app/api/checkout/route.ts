@@ -37,9 +37,16 @@ export async function POST(req: Request) {
       farmName: true,
       stripeAccountId: true,
       stripeChargesEnabled: true,
+      urnVerified: true,
     },
   });
-  if (!producer || !producer.stripeAccountId || !producer.stripeChargesEnabled) {
+  // Картата се приема само от потвърдени производители (проверен УРН).
+  if (
+    !producer ||
+    !producer.stripeAccountId ||
+    !producer.stripeChargesEnabled ||
+    !producer.urnVerified
+  ) {
     return NextResponse.json(
       { error: "Този производител не приема плащане с карта." },
       { status: 400 },
@@ -74,11 +81,6 @@ export async function POST(req: Request) {
       product_data: { name: `${l.title} (${l.unit})` },
     },
   }));
-
-  const total = line_items.reduce(
-    (s, li) => s + li.price_data.unit_amount * li.quantity,
-    0,
-  );
 
   const session = await auth();
   const site = getSiteUrl();

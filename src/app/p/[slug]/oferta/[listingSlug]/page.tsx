@@ -430,7 +430,7 @@ export default async function ListingDetailPage({
               </p>
               <PaymentMethodsDisplay
                 payment={p.payment}
-                cardEnabled={!!p.stripeAccountId && p.stripeChargesEnabled}
+                cardEnabled={!!p.stripeAccountId && p.stripeChargesEnabled && p.urnVerified}
                 variant="plain"
               />
             </div>

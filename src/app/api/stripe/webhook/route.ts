@@ -4,6 +4,7 @@ import { stripe, platformFee, canReceiveTransfers } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { activateBoost } from "@/lib/boost";
 import { createDeliveryChat } from "@/lib/delivery-chat";
+import { notifyProducerNewOrder } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,33 @@ function extractShipping(session: Stripe.Checkout.Session) {
     email: cust?.email ?? null,
     shippingAddress,
   };
+}
+
+/**
+ * Сменя платежния статус на поръчките по едно плащане (при обща поръчка са
+ * няколко). Изплащането (lib/payout.ts) върви само при статус „paid“, така че
+ * върнатите и оспорените поръчки спират автоматично. Ако сумата вече е
+ * преведена, остава за ръчно уреждане от администратора по Общите условия.
+ */
+async function markPayment(
+  paymentIntent: string | Stripe.PaymentIntent | null,
+  paymentStatus: "paid" | "refunded" | "partially_refunded" | "disputed",
+) {
+  const id = typeof paymentIntent === "string" ? paymentIntent : paymentIntent?.id;
+  if (!id) return;
+  const orders = await prisma.order.findMany({
+    where: { paymentIntentId: id },
+    select: { id: true, paidOutAt: true },
+  });
+  if (orders.length === 0) return;
+  await prisma.order.updateMany({ where: { paymentIntentId: id }, data: { paymentStatus } });
+  const alreadyPaid = orders.filter((o) => o.paidOutAt);
+  if (alreadyPaid.length > 0 && paymentStatus !== "paid") {
+    console.warn(
+      `Плащане ${id} е ${paymentStatus}, но вече е изплатено по поръчки:`,
+      alreadyPaid.map((o) => o.id).join(", "),
+    );
+  }
 }
 
 export async function POST(req: Request) {
@@ -68,6 +96,20 @@ export async function POST(req: Request) {
         where: { stripeAccountId: acct.id },
         data: { stripeChargesEnabled: canReceiveTransfers(acct) },
       });
+    } else if (event.type === "charge.refunded") {
+      // Върнато плащане — поръчката вече не се изплаща на производителя.
+      const charge = event.data.object as Stripe.Charge;
+      await markPayment(
+        charge.payment_intent,
+        charge.amount_refunded >= charge.amount ? "refunded" : "partially_refunded",
+      );
+    } else if (event.type === "charge.dispute.created") {
+      // Оспорено плащане (chargeback) — изплащането спира до решението.
+      const dispute = event.data.object as Stripe.Dispute;
+      await markPayment(dispute.payment_intent, "disputed");
+    } else if (event.type === "charge.dispute.closed") {
+      const dispute = event.data.object as Stripe.Dispute;
+      await markPayment(dispute.payment_intent, dispute.status === "won" ? "paid" : "refunded");
     } else if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const kind = session.metadata?.kind ?? "single";
@@ -95,11 +137,35 @@ export async function POST(req: Request) {
         });
         if (exists) return NextResponse.json({ received: true });
 
-        const lst = session.metadata?.lst ?? "";
+        // Количество и цена — от редовете на самото плащане (каквото клиентът
+        // е платил), а не от текущите цени в базата: производителят може да
+        // е сменил цената, докато клиентът е плащал.
         const qtyById = new Map<string, number>();
-        for (const pair of lst.split(",")) {
-          const [id, q] = pair.split(":");
-          if (id) qtyById.set(id, Math.max(1, parseInt(q, 10) || 1));
+        const paidUnitById = new Map<string, number>();
+        try {
+          const li = await stripe.checkout.sessions.listLineItems(session.id, {
+            limit: 100,
+            expand: ["data.price.product"],
+          });
+          for (const row of li.data) {
+            const product = row.price?.product;
+            const listingId =
+              product && typeof product === "object" && "metadata" in product
+                ? product.metadata?.listingId
+                : undefined;
+            if (!listingId) continue;
+            qtyById.set(listingId, row.quantity ?? 1);
+            if (row.price?.unit_amount != null) paidUnitById.set(listingId, row.price.unit_amount);
+          }
+        } catch (e) {
+          console.error("listLineItems error:", e);
+        }
+        // Плащания отпреди тази промяна нямат listingId в продукта.
+        if (qtyById.size === 0) {
+          for (const pair of (session.metadata?.lst ?? "").split(",")) {
+            const [id, q] = pair.split(":");
+            if (id) qtyById.set(id, Math.max(1, parseInt(q, 10) || 1));
+          }
         }
         const listings = await prisma.productListing.findMany({
           where: { id: { in: [...qtyById.keys()] } },
@@ -119,7 +185,7 @@ export async function POST(req: Request) {
         >();
         for (const l of listings) {
           const qty = qtyById.get(l.id) ?? 1;
-          const unit = Math.round(l.price * 100);
+          const unit = paidUnitById.get(l.id) ?? Math.round(l.price * 100);
           const g = byProducer.get(l.producer.id) ?? {
             accountId: l.producer.stripeAccountId,
             subtotal: 0,
@@ -133,7 +199,7 @@ export async function POST(req: Request) {
         for (const [producerId, g] of byProducer) {
           const fee = platformFee(g.subtotal);
           // Преводът се прави при отбелязване „доставена" (lib/payout.ts).
-          await prisma.order.create({
+          const created = await prisma.order.create({
             data: {
               producerId,
               customerId: customerId || null,
@@ -155,6 +221,9 @@ export async function POST(req: Request) {
               items: { create: g.items },
             },
           });
+          await notifyProducerNewOrder(created.id).catch((e) =>
+            console.error("notifyProducerNewOrder error:", e),
+          );
 
           if (customerId) {
             await prisma.purchase
@@ -199,7 +268,7 @@ export async function POST(req: Request) {
         } catch {}
 
         const amountTotal = session.amount_total ?? 0;
-        await prisma.order.create({
+        const created = await prisma.order.create({
           data: {
             producerId,
             customerId: customerId || null,
@@ -219,6 +288,9 @@ export async function POST(req: Request) {
             items: { create: itemsData },
           },
         });
+        await notifyProducerNewOrder(created.id).catch((e) =>
+          console.error("notifyProducerNewOrder error:", e),
+        );
 
         if (customerId) {
           await prisma.purchase
