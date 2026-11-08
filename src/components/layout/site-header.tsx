@@ -61,6 +61,10 @@ function CartLink({ onClick, full }: { onClick?: () => void; full?: boolean }) {
   );
 }
 
+/** Плавен трикольор за линията под менюто. */
+const TRICOLOR =
+  "linear-gradient(90deg, #ffffff 0%, #ffffff 30%, #2fbf8a 40%, #13996a 60%, #d9372a 70%, #c42a1e 100%)";
+
 export type HeaderUser = {
   name: string;
   slug: string;
@@ -111,7 +115,7 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-md">
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <div className="flex items-center gap-8">
           <Logo />
@@ -256,6 +260,13 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
           </nav>
         </div>
       ) : null}
+      {/* Трикольорът по долния край на менюто — бяло, зелено, червено.
+          Белият край има тънка сянка, за да се вижда върху светлия фон. */}
+      <div
+        aria-hidden
+        className="pointer-events-none h-1 w-full shadow-[0_1px_0_rgba(27,30,26,0.08)]"
+        style={{ backgroundImage: TRICOLOR }}
+      />
     </header>
   );
 }
