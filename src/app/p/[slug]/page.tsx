@@ -279,7 +279,7 @@ export default async function ProducerProfilePage({
             <Fact icon="basket" label="Продукти" value={String(listingCards.length - soldOutCount)} />
             <Fact
               icon="sprout"
-              label="Стопанисва от"
+              label="От година"
               value={producer.startedYear ? `${producer.startedYear} г.` : "—"}
             />
             <Fact
