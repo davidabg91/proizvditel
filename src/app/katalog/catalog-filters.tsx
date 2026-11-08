@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { REGIONS } from "@/lib/constants";
 import { Icon } from "@/components/ui/icons";
+import { SORTS } from "./sorts";
 
 /** Сменя един параметър в адреса на каталога и запазва останалите. */
 function useCatalogNav() {
@@ -53,13 +54,6 @@ export function CatalogSearch() {
     </form>
   );
 }
-
-export const SORTS = [
-  { value: "", label: "Препоръчани" },
-  { value: "new", label: "Най-нови" },
-  { value: "price_asc", label: "Цена: ниска → висока" },
-  { value: "price_desc", label: "Цена: висока → ниска" },
-] as const;
 
 export function SortSelect() {
   const params = useSearchParams();
