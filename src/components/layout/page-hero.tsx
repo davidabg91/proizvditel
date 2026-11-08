@@ -100,27 +100,42 @@ export function SectionHeading({
   title,
   description,
   action,
+  tone = "light",
   className,
 }: {
   eyebrow?: string;
   title: React.ReactNode;
   description?: React.ReactNode;
   action?: { href: string; label: string };
+  /** "dark" — върху зелен панел. */
+  tone?: "light" | "dark";
   className?: string;
 }) {
+  const dark = tone === "dark";
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="max-w-2xl">
-        {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-        <h2 className={cn("text-2xl sm:text-3xl", eyebrow && "mt-2")}>{title}</h2>
+        {eyebrow ? (
+          <p className={cn("eyebrow", dark && "text-[#f0c977]")}>{eyebrow}</p>
+        ) : null}
+        <h2 className={cn("text-2xl sm:text-3xl", eyebrow && "mt-2", dark && "text-white")}>
+          {title}
+        </h2>
         {description ? (
-          <p className="mt-2 leading-relaxed text-muted-foreground">{description}</p>
+          <p className={cn("mt-2 leading-relaxed", dark ? "text-white/75" : "text-muted-foreground")}>
+            {description}
+          </p>
         ) : null}
       </div>
       {action ? (
         <Link
           href={action.href}
-          className="group inline-flex items-center gap-1.5 rounded-full border border-border-strong bg-surface px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+          className={cn(
+            "group inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+            dark
+              ? "border-white/25 bg-white/10 text-white hover:bg-white hover:text-primary"
+              : "border-border-strong bg-surface text-foreground hover:border-primary hover:text-primary",
+          )}
         >
           {action.label}
           <Icon

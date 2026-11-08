@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { FieldBackdrop } from "@/components/brand/field-backdrop";
+import { WheatEdge } from "@/components/brand/wheat-edge";
 import { Icon } from "@/components/ui/icons";
 import { COMPANY } from "@/lib/company";
 
@@ -39,8 +40,10 @@ export function SiteFooter() {
   return (
     <footer className="relative isolate mt-auto overflow-hidden text-white">
       <FieldBackdrop id="site-footer" fields="none" />
+      {/* Житната линия, която отделя страницата от футъра */}
+      <WheatEdge id="site-footer" />
 
-      <div className="container-page relative py-14 sm:py-16">
+      <div className="container-page relative pb-14 pt-24 sm:pb-16 sm:pt-28">
         {/* Покана за производителите */}
         <div className="flex flex-col items-start justify-between gap-5 rounded-[var(--radius-xl)] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:p-8">
           <div>

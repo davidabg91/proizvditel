@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { findListingsBoostedFirst } from "@/lib/boost";
 import { Icon, categoryIcon, type IconName } from "@/components/ui/icons";
 import { SectionHeading } from "@/components/layout/page-hero";
+import { GreenBand } from "@/components/layout/green-band";
 import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
 import { HomeHero } from "@/components/home/home-hero";
@@ -137,65 +138,64 @@ export default async function Home() {
         </ol>
       </section>
 
-      {/* Оферти */}
+      {/* Пазар — зелен панел */}
       {listingCards.length > 0 ? (
-        <section className="border-y border-border bg-surface-muted/50">
-          <div className="container-page py-16 sm:py-20">
-            <SectionHeading
-              eyebrow="Пазар"
-              title="Актуални предложения"
-              description="Прясна продукция директно от стопанствата — изберете количество и добавете в кошницата."
-              action={{ href: "/katalog", label: "Целият каталог" }}
-            />
+        <GreenBand id="home-market">
+          <SectionHeading
+            tone="dark"
+            eyebrow="Пазар"
+            title="Актуални предложения"
+            description="Прясна продукция директно от стопанствата — изберете количество и добавете в кошницата."
+            action={{ href: "/katalog", label: "Целият каталог" }}
+          />
 
-            {/* Бърз избор по категория */}
-            <nav
-              aria-label="Категории продукция"
-              className="no-scrollbar -mx-6 mt-7 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          {/* Бърз избор по категория */}
+          <nav
+            aria-label="Категории продукция"
+            className="no-scrollbar -mx-6 mt-7 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          >
+            <Link
+              href="/katalog"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f0c977] px-4 py-2 text-sm font-semibold text-[#1a3a2c]"
             >
+              <Icon name="basket" size={16} />
+              Всички
+            </Link>
+            {HOME_SHELF_CATEGORIES.map((c) => (
               <Link
-                href="/katalog"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                key={c}
+                href={`/katalog?category=${encodeURIComponent(c)}`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-primary"
               >
-                <Icon name="basket" size={16} />
-                Всички
+                <Icon name={categoryIcon(c)} size={16} className="text-[#f0c977]" />
+                {c}
               </Link>
-              {HOME_SHELF_CATEGORIES.map((c) => (
-                <Link
-                  key={c}
-                  href={`/katalog?category=${encodeURIComponent(c)}`}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-                >
-                  <Icon name={categoryIcon(c)} size={16} className="text-primary" />
-                  {c}
-                </Link>
-              ))}
-            </nav>
+            ))}
+          </nav>
 
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {listingCards.map((l) => (
-                <ListingCard key={l.id} listing={l} />
-              ))}
-            </div>
-
-            <div className="mt-10 flex justify-center">
-              <Link
-                href="/katalog"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
-              >
-                Разгледай всички продукти
-                <Icon
-                  name="arrow-right"
-                  size={18}
-                  className="transition-transform group-hover:translate-x-0.5"
-                />
-              </Link>
-            </div>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {listingCards.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
           </div>
-        </section>
+
+          <div className="mt-10 flex justify-center">
+            <Link
+              href="/katalog"
+              className="group inline-flex h-12 items-center gap-2 rounded-full bg-[#f0c977] px-7 text-base font-semibold text-[#1a3a2c] shadow-sm transition-colors hover:bg-[#f5d792]"
+            >
+              Разгледай всички продукти
+              <Icon
+                name="arrow-right"
+                size={18}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
+            </Link>
+          </div>
+        </GreenBand>
       ) : null}
 
-      {/* Производители */}
+      {/* Производители — светла секция */}
       {producerCards.length > 0 ? (
         <section className="container-page py-16 sm:py-20">
           <SectionHeading
@@ -211,52 +211,52 @@ export default async function Home() {
         </section>
       ) : null}
 
-      {/* Разглеждане по категория */}
-      <section className="border-t border-border bg-surface-muted/50">
-        <div className="container-page py-16 sm:py-20">
-          <SectionHeading
-            eyebrow="Каталог"
-            title="Продукция по категория"
-            action={{ href: "/katalog", label: "Всички продукти" }}
-          />
-          <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {CATEGORY_LANDINGS.map((c) => (
-              <li key={c.slug}>
+      {/* Каталог по категория и област — зелен панел */}
+      <GreenBand id="home-categories">
+        <SectionHeading
+          tone="dark"
+          eyebrow="Каталог"
+          title="Продукция по категория"
+          action={{ href: "/katalog", label: "Всички продукти" }}
+        />
+        <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {CATEGORY_LANDINGS.map((c) => (
+            <li key={c.slug}>
+              <Link
+                href={`/katalog/${c.slug}`}
+                className="group flex h-full items-center gap-3 rounded-[var(--radius-lg)] bg-surface p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors group-hover:bg-primary group-hover:text-[#f0c977]">
+                  <Icon name={categoryIcon(c.category)} size={20} strokeWidth={1.6} />
+                </span>
+                <span className="text-sm font-semibold leading-tight text-foreground">
+                  {c.category}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-14">
+          <h2 className="text-xl text-white sm:text-2xl">Земеделски производители по област</h2>
+          <ul className="mt-5 flex flex-wrap gap-2 text-sm">
+            {REGION_LANDINGS.map((r) => (
+              <li key={r.slug}>
                 <Link
-                  href={`/katalog/${c.slug}`}
-                  className="group flex h-full items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                  href={`/proizvoditeli/${r.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 font-medium text-white/90 transition-colors hover:bg-white hover:text-primary"
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Icon name={categoryIcon(c.category)} size={20} strokeWidth={1.6} />
-                  </span>
-                  <span className="text-sm font-semibold leading-tight text-foreground">
-                    {c.category}
-                  </span>
+                  <Icon name="pin" size={13} className="text-[#f0c977]" />
+                  {r.region}
                 </Link>
               </li>
             ))}
           </ul>
-
-          <div className="mt-14">
-            <h2 className="text-xl sm:text-2xl">Земеделски производители по област</h2>
-            <ul className="mt-5 flex flex-wrap gap-2 text-sm">
-              {REGION_LANDINGS.map((r) => (
-                <li key={r.slug}>
-                  <Link
-                    href={`/proizvoditeli/${r.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 font-medium text-foreground/80 transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary"
-                  >
-                    <Icon name="pin" size={13} className="text-accent" />
-                    {r.region}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
-      </section>
+      </GreenBand>
 
-      <section className="container-page pb-20">
+      {/* Въпроси — светла секция */}
+      <section className="container-page pb-16 pt-2 sm:pb-20">
         <div className="mx-auto max-w-3xl">
           <FaqSection items={HOME_FAQ} />
         </div>
