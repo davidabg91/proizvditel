@@ -33,6 +33,16 @@ const HOME_FAQ = [
   },
 ];
 
+/** Категориите за бърз избор над офертите на началната страница. */
+const HOME_SHELF_CATEGORIES = [
+  "Плодове",
+  "Зеленчуци",
+  "Мед и пчелни продукти",
+  "Млечни продукти",
+  "Месо и яйца",
+  "Билки и подправки",
+];
+
 export const revalidate = 60;
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -134,12 +144,52 @@ export default async function Home() {
             <SectionHeading
               eyebrow="Пазар"
               title="Актуални предложения"
+              description="Прясна продукция директно от стопанствата — изберете количество и добавете в кошницата."
               action={{ href: "/katalog", label: "Целият каталог" }}
             />
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+            {/* Бърз избор по категория */}
+            <nav
+              aria-label="Категории продукция"
+              className="no-scrollbar -mx-6 mt-7 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+            >
+              <Link
+                href="/katalog"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                <Icon name="basket" size={16} />
+                Всички
+              </Link>
+              {HOME_SHELF_CATEGORIES.map((c) => (
+                <Link
+                  key={c}
+                  href={`/katalog?category=${encodeURIComponent(c)}`}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Icon name={categoryIcon(c)} size={16} className="text-primary" />
+                  {c}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {listingCards.map((l) => (
                 <ListingCard key={l.id} listing={l} />
               ))}
+            </div>
+
+            <div className="mt-10 flex justify-center">
+              <Link
+                href="/katalog"
+                className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+              >
+                Разгледай всички продукти
+                <Icon
+                  name="arrow-right"
+                  size={18}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
+              </Link>
             </div>
           </div>
         </section>

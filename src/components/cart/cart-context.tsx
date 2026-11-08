@@ -36,6 +36,10 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | null>(null);
 const STORAGE_KEY = "proizvoditel_cart_v1";
 
+/** Най-много бройки/кг от един продукт — същият таван като при плащането. */
+export const MAX_QTY = 99;
+const clampQty = (q: number) => Math.min(MAX_QTY, Math.max(1, Math.floor(q) || 1));
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
@@ -66,10 +70,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = prev.find((i) => i.listingId === item.listingId);
       if (existing) {
         return prev.map((i) =>
-          i.listingId === item.listingId ? { ...i, qty: i.qty + qty } : i,
+          i.listingId === item.listingId ? { ...i, qty: clampQty(i.qty + qty) } : i,
         );
       }
-      return [...prev, { ...item, qty }];
+      return [...prev, { ...item, qty: clampQty(qty) }];
     });
   }, []);
 
@@ -77,7 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) =>
       qty <= 0
         ? prev.filter((i) => i.listingId !== listingId)
-        : prev.map((i) => (i.listingId === listingId ? { ...i, qty } : i)),
+        : prev.map((i) => (i.listingId === listingId ? { ...i, qty: clampQty(qty) } : i)),
     );
   }, []);
 

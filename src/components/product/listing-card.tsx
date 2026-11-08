@@ -43,7 +43,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
       )}
     >
       <Link href={href} className="flex flex-1 flex-col">
-        <div className="relative aspect-[4/3] overflow-hidden bg-surface-muted">
+        <div className="relative aspect-[5/4] overflow-hidden bg-surface-muted">
           {listing.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -101,40 +101,48 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         </div>
 
         <div className="flex flex-1 flex-col p-4 sm:p-5">
-          {listing.category ? (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
-              <Icon name={categoryIcon(listing.category)} size={13} />
-              {listing.category}
-            </span>
-          ) : null}
+          <p className="flex items-center gap-1.5 truncate text-xs font-medium text-muted-foreground">
+            <span className="truncate">{listing.producer.farmName}</span>
+            {listing.producer.town ? (
+              <>
+                <span aria-hidden className="text-border-strong">•</span>
+                <span className="inline-flex items-center gap-0.5 truncate">
+                  <Icon name="pin" size={12} className="text-accent" />
+                  {listing.producer.town}
+                </span>
+              </>
+            ) : null}
+          </p>
           <h3 className="mt-1.5 line-clamp-2 text-[17px] font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
             {listing.title}
           </h3>
-          <p className="mt-1.5 flex items-center gap-1 truncate text-sm text-muted-foreground">
-            <Icon name="pin" size={14} className="text-muted-foreground/70" />
-            <span className="truncate">
-              {listing.producer.farmName}
-              {listing.producer.town ? ` · ${listing.producer.town}` : ""}
+          {listing.category ? (
+            <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-primary-soft px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+              <Icon name={categoryIcon(listing.category)} size={12} />
+              {listing.category}
             </span>
-          </p>
-          <div className="mt-auto flex items-baseline gap-1.5 pt-4">
-            <span className="font-serif text-2xl font-semibold text-foreground">
-              {formatPrice(listing.price)}
-            </span>
-            <span className="text-sm text-muted-foreground">/ {listing.unit}</span>
-            {discount ? (
-              <span className="ml-1 text-sm text-muted-foreground line-through">
-                {formatPrice(listing.oldPrice!)}
+          ) : null}
+          <div className="mt-auto pt-4">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-serif text-2xl font-semibold text-foreground">
+                {formatPrice(listing.price)}
               </span>
-            ) : null}
+              {discount ? (
+                <span className="text-sm text-muted-foreground line-through">
+                  {formatPrice(listing.oldPrice!)}
+                </span>
+              ) : null}
+            </div>
+            <p className="text-xs text-muted-foreground">цена за 1 {listing.unit}</p>
           </div>
         </div>
       </Link>
 
-      {/* Действия */}
-      <div className="flex items-center gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+      {/* Количество и добавяне */}
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5">
         {buyable ? (
           <AddToCartButton
+            withQty
             block
             item={{
               listingId: listing.id,
@@ -148,18 +156,13 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
             }}
           />
         ) : (
-          <span className="flex h-9 flex-1 items-center justify-center rounded-full bg-surface-muted text-sm font-medium text-muted-foreground">
-            {listing.soldOut ? "Изчерпан" : "Не е налично"}
-          </span>
+          <Link
+            href={href}
+            className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-surface-muted text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            {listing.soldOut ? "Изчерпан — виж подробности" : "Не е налично — виж подробности"}
+          </Link>
         )}
-        <Link
-          href={href}
-          aria-label={`Виж повече за ${listing.title}`}
-          title="Виж повече"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-foreground transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary"
-        >
-          <Icon name="arrow-right" size={16} />
-        </Link>
       </div>
     </div>
   );

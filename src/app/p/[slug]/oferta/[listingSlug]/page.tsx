@@ -5,12 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProductGallery } from "@/components/product/product-gallery";
+import { PaymentMethodsDisplay } from "@/components/product/payment-display";
+import { FieldBackdrop } from "@/components/brand/field-backdrop";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ListingCard, type ListingCardData } from "@/components/product/listing-card";
 import { getMutualPartners } from "@/lib/partners";
 import { formatPrice, farmInitial } from "@/lib/utils";
-import { Icon, categoryIcon } from "@/components/ui/icons";
+import { Icon, categoryIcon, type IconName } from "@/components/ui/icons";
 import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
 import { RatingStars } from "@/components/ui/rating";
@@ -351,11 +353,15 @@ export default async function ListingDetailPage({
                   </Button>
                 </div>
               ) : listing.available ? (
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm font-medium text-foreground">
+                    Количество ({listing.unit})
+                  </p>
                   <AddToCartButton
-                    size="md"
+                    size="lg"
+                    withQty
+                    showTotal
                     block
-                    className="h-12 text-base"
                     item={{
                       listingId: listing.id,
                       producerSlug: p.slug,
@@ -367,14 +373,9 @@ export default async function ListingDetailPage({
                       imageUrl: listing.photos[0]?.url ?? null,
                     }}
                   />
-                  <Button
-                    href={`/chat/${p.slug}`}
-                    variant="outline"
-                    size="md"
-                    className="h-12 shrink-0"
-                  >
+                  <Button href={`/chat/${p.slug}`} variant="outline" className="w-full">
                     <Icon name="chat" size={17} />
-                    Попитай
+                    Попитай производителя
                   </Button>
                 </div>
               ) : (
@@ -386,6 +387,9 @@ export default async function ListingDetailPage({
 
             {p.deliveryProviders || p.shippingPrice !== null ? (
               <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  Доставка
+                </p>
                 {p.shippingPrice !== null ? (
                   <div className="flex items-start gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
@@ -419,6 +423,17 @@ export default async function ListingDetailPage({
                 ) : null}
               </div>
             ) : null}
+
+            <div className="mt-5 border-t border-border pt-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Плащане
+              </p>
+              <PaymentMethodsDisplay
+                payment={p.payment}
+                cardEnabled={!!p.stripeAccountId && p.stripeChargesEnabled}
+                variant="plain"
+              />
+            </div>
 
             <ul className="mt-5 grid gap-2 border-t border-border pt-5 text-sm text-muted-foreground sm:grid-cols-2">
               <li className="flex items-center gap-2">
@@ -491,19 +506,71 @@ export default async function ListingDetailPage({
         </div>
       </div>
 
-      {listing.description ? (
-        <section className="mt-12 rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs sm:p-8">
+      <div className="mt-12 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <section className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs sm:p-8">
           <h2 className="flex items-center gap-2.5 text-xl font-semibold">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
               <Icon name="leaf" size={18} />
             </span>
             За продукта
           </h2>
-          <p className="mt-4 max-w-3xl whitespace-pre-line leading-relaxed text-foreground/90">
-            {listing.description}
-          </p>
+          {listing.description ? (
+            <p className="mt-4 whitespace-pre-line leading-relaxed text-foreground/90">
+              {listing.description}
+            </p>
+          ) : (
+            <p className="mt-4 text-muted-foreground">
+              Производителят не е добавил описание. Попитайте го за сорта, начина
+              на отглеждане и количествата.
+            </p>
+          )}
+
+          <dl className="mt-6 grid gap-x-6 gap-y-3 border-t border-border pt-6 text-sm sm:grid-cols-2">
+            {listing.category ? <Detail label="Категория" value={listing.category} /> : null}
+            <Detail label="Мерна единица" value={`1 ${listing.unit}`} />
+            <Detail
+              label="Наличност"
+              value={
+                listing.soldOut
+                  ? "Изчерпан"
+                  : listing.available
+                    ? listing.stockNote || "Налично"
+                    : "Не е налично"
+              }
+            />
+            <Detail label="Производител" value={p.farmName} href={`/p/${p.slug}`} />
+            {location ? <Detail label="Произход" value={location} /> : null}
+            {deliveryDays ? <Detail label="Срок за доставка" value={deliveryDays} /> : null}
+          </dl>
         </section>
-      ) : null}
+
+        <section className="relative isolate overflow-hidden rounded-[var(--radius-xl)] p-6 text-white shadow-sm sm:p-8">
+          <FieldBackdrop id="how-to-order" fields="none" />
+          <h2 className="text-xl font-semibold text-white">Как да поръчате</h2>
+          <ol className="mt-5 flex flex-col gap-4">
+            {ORDER_STEPS.map((step, i) => (
+              <li key={step.title} className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-[#f0c977] ring-1 ring-white/15">
+                  <Icon name={step.icon} size={18} />
+                </span>
+                <div>
+                  <p className="font-semibold text-white">
+                    {i + 1}. {step.title}
+                  </p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-white/70">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <Link
+            href="/koshnitsa"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#f0c977] hover:underline"
+          >
+            Към кошницата
+            <Icon name="arrow-right" size={15} />
+          </Link>
+        </section>
+      </div>
 
       {/* Оценки за продукта */}
       <section id="otzivi" className="mt-14 scroll-mt-28">
@@ -601,5 +668,40 @@ export default async function ListingDetailPage({
         </section>
       ) : null}
     </main>
+  );
+}
+
+const ORDER_STEPS: { icon: IconName; title: string; text: string }[] = [
+  {
+    icon: "basket",
+    title: "Изберете количество",
+    text: "Добавете продукта в кошницата — може и заедно с други продукти от стопанството.",
+  },
+  {
+    icon: "wallet",
+    title: "Платете удобно",
+    text: "С карта онлайн или с наложен платеж — според това, което приема производителят.",
+  },
+  {
+    icon: "truck",
+    title: "Получете пратката",
+    text: "Производителят изпраща с куриер или предава лично и се свързва с вас за детайлите.",
+  },
+];
+
+function Detail({ label, value, href }: { label: string; value: string; href?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium text-foreground">
+        {href ? (
+          <Link href={href} className="text-primary hover:underline">
+            {value}
+          </Link>
+        ) : (
+          value
+        )}
+      </dd>
+    </div>
   );
 }

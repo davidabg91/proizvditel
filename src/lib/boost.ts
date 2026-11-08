@@ -60,7 +60,7 @@ export async function activateBoost(
 }
 
 /** Общи данни, нужни за карта на обява в списък. */
-const listingCardInclude = {
+export const listingCardInclude = {
   photos: { orderBy: { sort: "asc" }, take: 1 },
   producer: { select: { slug: true, farmName: true, town: true, region: true } },
 } satisfies Prisma.ProductListingInclude;

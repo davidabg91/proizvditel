@@ -521,7 +521,10 @@ export default async function ProducerProfilePage({
 
             <ShopCard shop={producer} farmName={producer.farmName} />
 
-            <PaymentMethodsDisplay payment={producer.payment} />
+            <PaymentMethodsDisplay
+              payment={producer.payment}
+              cardEnabled={!!producer.stripeAccountId && producer.stripeChargesEnabled}
+            />
 
             {producer.sharedDelivery ? (
               <div className="rounded-[var(--radius-xl)] border border-primary/20 bg-primary-soft/60 p-6">
