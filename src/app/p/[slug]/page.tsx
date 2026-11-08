@@ -233,11 +233,12 @@ export default async function ProducerProfilePage({
                   </h1>
                   {producer.urnVerified ? (
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1 text-xs font-semibold text-white shadow-xs"
+                      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-success px-3 py-1 text-xs font-semibold text-white shadow-xs"
                       title={`Потвърден земеделски производител с проверена регистрационна карта${producer.urn ? ` (УРН: ${producer.urn})` : ""}`}
                     >
                       <Icon name="shield" size={14} />
-                      Потвърден производител
+                      <span className="sm:hidden">Потвърден</span>
+                      <span className="hidden sm:inline">Потвърден производител</span>
                     </span>
                   ) : null}
                 </div>
@@ -589,12 +590,12 @@ export default async function ProducerProfilePage({
 
 function Fact({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-surface-muted/60 p-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface text-primary shadow-xs">
-        <Icon name={icon} size={18} />
+    <div className="flex items-center gap-2.5 rounded-[var(--radius-lg)] bg-surface-muted/60 p-2.5 sm:gap-3 sm:p-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface text-primary shadow-xs sm:h-10 sm:w-10">
+        <Icon name={icon} size={16} />
       </span>
       <div className="min-w-0">
-        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dt className="truncate text-[11px] text-muted-foreground sm:text-xs">{label}</dt>
         <dd className="truncate font-serif text-lg font-semibold leading-tight">{value}</dd>
       </div>
     </div>
