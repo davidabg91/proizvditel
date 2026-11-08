@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { WeatherIcon } from "./weather-icon";
 
@@ -245,15 +245,10 @@ const BG_DEFAULT = { lat: 42.73, lon: 25.4, label: "България" };
 export function WeatherBar() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [w, setW] = useState<Weather | null>(null);
-  const [isDefault, setIsDefault] = useState(false);
-  const [showWarningView, setShowWarningView] = useState(false);
   const [showForecastModal, setShowForecastModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-
-  const clipRef = useRef<HTMLDivElement>(null);
-  const groupRef = useRef<HTMLDivElement>(null);
-  const [overflow, setOverflow] = useState(false);
-  const [duration, setDuration] = useState(30);
+  const [geoDenied, setGeoDenied] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   async function load(lat: number, lon: number, forcedPlace?: string) {
     try {
@@ -372,7 +367,6 @@ export function WeatherBar() {
   }
 
   function loadDefault() {
-    setIsDefault(true);
     load(BG_DEFAULT.lat, BG_DEFAULT.lon, BG_DEFAULT.label);
   }
 
@@ -380,331 +374,263 @@ export function WeatherBar() {
     try {
       localStorage.setItem("proizvoditel_weather_city", JSON.stringify(city));
     } catch {}
-    setIsDefault(false);
     setShowLocationModal(false);
     load(city.lat, city.lon, city.label);
   }
 
-  function requestLocation(isExplicitClick = false) {
-    // Проверка за предварително избран град в localStorage
+  /** Първоначално зареждане: запазен град → локация на устройството → България. */
+  function loadInitial() {
     try {
       const saved = localStorage.getItem("proizvoditel_weather_city");
-      if (saved && !isExplicitClick) {
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.lat && parsed?.lon) {
-          setIsDefault(false);
           load(parsed.lat, parsed.lon, parsed.label);
           return;
         }
       }
     } catch {}
 
-    if (!("geolocation" in navigator)) {
-      if (isExplicitClick) setShowLocationModal(true);
-      return loadDefault();
-    }
+    if (!("geolocation" in navigator)) return loadDefault();
 
-    setState("loading");
+    navigator.geolocation.getCurrentPosition(
+      (p) => load(p.coords.latitude, p.coords.longitude),
+      () => loadDefault(),
+      { timeout: 10000, maximumAge: 30 * 60 * 1000 },
+    );
+  }
+
+  /** Бутонът „Моето местоположение“ в избора на район. */
+  function locateMe() {
+    if (!("geolocation" in navigator)) {
+      setGeoDenied(true);
+      return;
+    }
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setIsDefault(false);
+        setLocating(false);
+        setGeoDenied(false);
+        setShowLocationModal(false);
         try {
           localStorage.removeItem("proizvoditel_weather_city");
         } catch {}
         load(p.coords.latitude, p.coords.longitude);
       },
-      (err) => {
-        loadDefault();
-        if (isExplicitClick) {
-          // Потребителят изрично натисна "Моят район", но локацията в браузъра е спряна/забранена
-          setShowLocationModal(true);
-        }
+      () => {
+        setLocating(false);
+        setGeoDenied(true);
       },
       { timeout: 10000, maximumAge: 30 * 60 * 1000 },
     );
   }
 
   useEffect(() => {
-    requestLocation(false);
+    loadInitial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Автоматично редуване на предупреждението и пълната прогноза на всеки 5.5 секунди
-  useEffect(() => {
-    if (!w?.highestAlert) {
-      setShowWarningView(false);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setShowWarningView((prev) => !prev);
-    }, 5500);
-
-    return () => clearInterval(interval);
-  }, [w]);
-
-  // Измерване на ширината за тикера
-  useEffect(() => {
-    if (state !== "ready") return;
-    function measure() {
-      const clip = clipRef.current;
-      const group = groupRef.current;
-      if (!clip || !group) return;
-      const groupWidth = group.offsetWidth;
-      setOverflow(groupWidth > clip.clientWidth + 4);
-      setDuration(Math.max(Math.round(groupWidth / 55), 16));
-    }
-    const id = window.setTimeout(measure, 50);
-    window.addEventListener("resize", measure);
-    return () => {
-      window.clearTimeout(id);
-      window.removeEventListener("resize", measure);
-    };
-  }, [state, w, showWarningView]);
-
   if (state !== "ready" || !w) {
     return (
-      <div className="w-full max-w-full overflow-hidden border-b border-border bg-surface">
-        <div className="flex h-9 w-full max-w-full items-center justify-between gap-2 px-3 text-xs text-muted-foreground sm:px-6">
-          <span className="truncate">
-            {state === "loading"
-              ? "Зареждаме агро прогнозата…"
-              : "Времето не може да бъде заредено"}
-          </span>
-          {state === "error" ? (
-            <button
-              onClick={() => requestLocation(true)}
-              className="shrink-0 font-semibold text-primary hover:underline"
-            >
-              Опитай отново
-            </button>
-          ) : null}
+      <div className="w-full border-b border-border bg-surface">
+        <div className="flex h-10 items-center gap-3 px-4 text-xs text-muted-foreground sm:px-6">
+          {state === "loading" ? (
+            <>
+              <span className="sr-only">Зареждаме прогнозата за времето…</span>
+              <span aria-hidden className="h-5 w-5 animate-pulse rounded-full bg-surface-muted" />
+              <span aria-hidden className="h-3 w-28 animate-pulse rounded-full bg-surface-muted" />
+              <span aria-hidden className="hidden h-3 w-20 animate-pulse rounded-full bg-surface-muted sm:block" />
+              <span aria-hidden className="hidden h-3 w-24 animate-pulse rounded-full bg-surface-muted md:block" />
+            </>
+          ) : (
+            <>
+              <span className="truncate">Времето не може да бъде заредено.</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setState("loading");
+                  loadInitial();
+                }}
+                className="shrink-0 font-semibold text-primary hover:underline"
+              >
+                Опитай отново
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
   }
 
   const alert = w.highestAlert;
-  const severity = alert?.severity ?? "none";
-
-  // Светещи стилове на лентата според нивото на опасност (с висок контраст на текста)
-  const barContainerStyles = {
-    danger: "bg-red-500/15 border-red-500/40 text-foreground shadow-[0_0_20px_rgba(239,68,68,0.20)]",
-    warning: "bg-amber-500/15 border-amber-500/40 text-foreground shadow-[0_0_15px_rgba(245,158,11,0.18)]",
-    notice: "bg-amber-500/10 border-amber-500/30 text-foreground shadow-[0_0_12px_rgba(245,158,11,0.15)]",
-    none: "bg-surface border-border text-foreground",
-  }[severity];
-
-  const group = (
-    ref?: React.Ref<HTMLDivElement>,
-    hidden?: boolean,
-    spaced = true,
-  ) => (
-    <div
-      ref={ref}
-      aria-hidden={hidden}
-      className={cn("flex shrink-0 items-center gap-4 sm:gap-6 text-xs sm:text-sm text-foreground", spaced && "pr-4 sm:pr-6")}
-    >
-      <div className="flex items-center gap-1.5 sm:gap-2 font-semibold text-foreground">
-        <WeatherIcon code={w.code} isDay={w.isDay} />
-        <span className="text-muted-foreground">{w.place ?? "Вашият район"}</span>
-        <span className="text-border-strong">·</span>
-        <span>{WMO[w.code] ?? "—"}</span>
-        <span className="font-serif text-sm sm:text-base font-bold">{w.temp}°</span>
-      </div>
-      <Metric label="усеща се" value={`${w.apparent}°`} />
-      <Metric label="мин / макс" value={`${w.tMin}° / ${w.tMax}°`} />
-      <Metric label="влажност" value={`${w.humidity}%`} />
-      <Metric label="вятър" value={`${w.wind} км/ч`} />
-      <Metric label="дъжд" value={`${w.rainProb}%`} />
-      <Metric label="UV" value={`${w.uv}`} />
-      <Metric label="изгрев / залез" value={`${hhmm(w.sunrise)} / ${hhmm(w.sunset)}`} />
-
-      {alert ? (
-        <button
-          type="button"
-          onClick={() => setShowForecastModal(true)}
-          className={cn(
-            "shrink-0 rounded-full px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold transition-transform hover:scale-105 flex items-center gap-1.5 shadow-xs text-white",
-            severity === "danger"
-              ? "bg-red-600 text-white animate-pulse"
-              : severity === "warning"
-                ? "bg-amber-600 text-white"
-                : "bg-amber-700 text-white",
-          )}
-        >
-          <span>{alert.icon}</span>
-          <span>{alert.dayName}: {alert.title}</span>
-        </button>
-      ) : null}
-    </div>
-  );
 
   return (
     <>
-      <div
-        className={cn(
-          "w-full max-w-full overflow-hidden border-b transition-colors duration-500 relative",
-          barContainerStyles,
-        )}
-      >
-        <div className="flex w-full max-w-full items-center justify-between min-h-[36px] sm:min-h-[38px] py-1">
-          {/* Режим 1: Предупредително съобщение за опасност */}
-          {alert && showWarningView ? (
-            <div className="flex-1 min-w-0 max-w-full overflow-hidden px-2.5 sm:px-6 flex items-center justify-between gap-1.5 sm:gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
-              <div
-                onClick={() => setShowForecastModal(true)}
-                className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer hover:underline text-xs sm:text-sm font-semibold min-w-0 flex-1 overflow-hidden text-foreground"
-              >
-                <span className="text-base shrink-0 animate-bounce">{alert.icon}</span>
-                <span
-                  className={cn(
-                    "uppercase tracking-wider text-[10px] sm:text-[11px] font-black px-1.5 py-0.5 rounded text-white shadow-xs shrink-0",
-                    severity === "danger"
-                      ? "bg-red-600"
-                      : severity === "warning"
-                        ? "bg-amber-600"
-                        : "bg-amber-700",
-                  )}
-                >
-                  {severity === "danger" ? "Опасност" : "Внимание"}
-                </span>
-                <span className="font-bold shrink-0 text-foreground hidden xs:inline">{alert.dayName}:</span>
-                <span className="truncate text-foreground font-semibold min-w-0">{alert.description}</span>
-              </div>
+      <div className="w-full border-b border-border bg-surface">
+        <div className="flex h-10 items-center gap-2 px-3 text-[13px] text-foreground sm:gap-4 sm:px-6">
+          {/* Район */}
+          <button
+            type="button"
+            onClick={() => setShowLocationModal(true)}
+            title="Смени района"
+            className="group inline-flex min-w-0 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-2 font-semibold transition-colors hover:bg-surface-muted sm:max-w-[14rem]"
+          >
+            <span className="text-accent">
+              <BarIcon kind="pin" />
+            </span>
+            <span className="truncate">{w.place ?? "Вашият район"}</span>
+            <span className="text-muted-foreground transition-transform group-hover:translate-y-px">
+              <BarIcon kind="chevron" size={12} />
+            </span>
+          </button>
 
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowWarningView(false)}
-                  className="text-[10px] sm:text-[11px] text-muted-foreground hover:text-foreground font-medium px-1.5 sm:px-2 py-0.5 rounded bg-surface/80 border border-border hover:bg-surface transition-colors shrink-0"
-                  title="Покажи температурата и метриките"
-                >
-                  🌡️ <span className="hidden sm:inline">Метрики</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowForecastModal(true)}
-                  className="text-[10px] sm:text-[11px] font-bold text-primary hover:underline px-1 sm:px-2 py-0.5 shrink-0 whitespace-nowrap"
-                >
-                  <span className="hidden sm:inline">Виж 5-дневна прогноза →</span>
-                  <span className="sm:hidden">Прогноза →</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Режим 2: Пълна метеорологична лента с тикер */
-            <div className="flex-1 min-w-0 max-w-full overflow-hidden flex items-center animate-in fade-in duration-300">
-              <div
-                ref={clipRef}
-                className="ticker-clip min-w-0 flex-1 overflow-hidden pl-2.5 sm:pl-6 max-w-full"
-              >
-                {overflow ? (
-                  <div
-                    className="ticker-track flex w-max"
-                    style={{ animationDuration: `${duration}s` }}
-                  >
-                    {group(groupRef, false, true)}
-                    {group(undefined, true, true)}
-                  </div>
-                ) : (
-                  <div className="flex justify-center min-w-0">{group(groupRef, false, false)}</div>
-                )}
-              </div>
+          <Divider />
 
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 px-2 sm:px-5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setShowForecastModal(true)}
-                  className="font-semibold text-primary hover:underline whitespace-nowrap text-[11px] sm:text-xs"
-                >
-                  <span className="hidden sm:inline">📅 5-дневна агро прогноза</span>
-                  <span className="sm:hidden">📅 Прогноза</span>
-                </button>
+          {/* Сега */}
+          <div className="flex shrink-0 items-center gap-2">
+            <WeatherIcon code={w.code} isDay={w.isDay} className="h-5 w-5 text-accent" />
+            <span className="font-serif text-base font-semibold leading-none">{w.temp}°</span>
+            <span className="hidden text-muted-foreground lg:inline">{WMO[w.code] ?? "—"}</span>
+          </div>
 
-                <button
-                  type="button"
-                  onClick={() => requestLocation(true)}
-                  className="font-semibold text-muted-foreground hover:text-primary hover:underline whitespace-nowrap border-l border-border pl-2 text-[11px] sm:text-xs"
-                  title="Изберете район или пуснете локация"
-                >
-                  {isDefault ? "Моят район 📍" : "Смени район 📍"}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Показатели — повече при по-широк екран */}
+          <div className="hidden min-w-0 items-center gap-4 md:flex">
+            <Divider />
+            <Metric icon="wind" label="Вятър" value={`${w.wind} км/ч`} />
+            <Metric icon="drop" label="Вероятност за дъжд" value={`${w.rainProb}%`} />
+            <Metric
+              icon="thermo"
+              label="Мин / макс днес"
+              value={`${w.tMin}° / ${w.tMax}°`}
+              className="hidden lg:flex"
+            />
+            <Metric
+              icon="humidity"
+              label="Влажност"
+              value={`${w.humidity}%`}
+              className="hidden xl:flex"
+            />
+            <Metric icon="uv" label="UV индекс" value={`UV ${w.uv}`} className="hidden xl:flex" />
+            <Metric
+              icon="sunrise"
+              label="Изгрев / залез"
+              value={`${hhmm(w.sunrise)} – ${hhmm(w.sunset)}`}
+              className="hidden 2xl:flex"
+            />
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Най-важното предупреждение за следващите дни */}
+          {alert ? (
+            <button
+              type="button"
+              onClick={() => setShowForecastModal(true)}
+              title={`${alert.dayName}: ${alert.title}`}
+              className={cn(
+                "inline-flex min-w-0 shrink items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset transition-colors",
+                ALERT_STYLES[alert.severity],
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn("h-1.5 w-1.5 shrink-0 rounded-full", ALERT_DOT[alert.severity])}
+              />
+              <span className="sm:hidden">
+                {alert.severity === "danger" ? "Опасност" : "Внимание"}
+              </span>
+              <span className="hidden truncate sm:inline">
+                {alert.dayName}: {alert.title}
+              </span>
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setShowForecastModal(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary-soft sm:px-3"
+          >
+            <BarIcon kind="calendar" />
+            <span className="hidden sm:inline">Прогноза за 5 дни</span>
+            <span className="sr-only sm:hidden">Прогноза за 5 дни</span>
+          </button>
         </div>
       </div>
 
-      {/* Модален прозорец при забранена локация + Избор на град */}
+      {/* Избор на район */}
       {showLocationModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-6 backdrop-blur-sm animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6"
           onClick={() => setShowLocationModal(false)}
         >
           <div
-            className="relative flex flex-col w-full max-w-lg rounded-[var(--radius-xl)] bg-surface border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="weather-location-title"
+            className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-surface-muted/50">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">📍</span>
-                <h3 className="text-base font-semibold text-foreground">
-                  Локацията не е пусната в браузъра
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div>
+                <h3 id="weather-location-title" className="text-lg font-semibold text-foreground">
+                  Изберете район
                 </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Прогнозата и агро съветите се смятат за избраното място.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowLocationModal(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted hover:text-foreground transition-colors font-bold text-base"
+                aria-label="Затвори"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
               >
-                ✕
+                <BarIcon kind="close" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
-              <div className="rounded-[var(--radius-md)] border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-foreground leading-relaxed">
-                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">
-                  ⚠️ Браузърът няма достъп до местоположението ви.
-                </p>
-                <p className="text-muted-foreground">
-                  Затова в момента ви показваме общото време за страната. За да включите автоматичната локация:
-                </p>
-                <ul className="mt-2 list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Кликнете върху <strong>катинарчето 🔒</strong> или иконата за настройки в адресната лента горе.</li>
-                  <li>Разрешете <strong>„Местоположение / Location“</strong> за Производител.net.</li>
-                  <li>Презаредете страницата.</li>
-                </ul>
-              </div>
+            <div className="space-y-4 overflow-y-auto p-5">
+              <button
+                type="button"
+                onClick={locateMe}
+                disabled={locating}
+                className="flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-primary/25 bg-primary-soft/60 px-4 py-3 text-left text-sm font-semibold text-primary transition-colors hover:bg-primary-soft disabled:opacity-60"
+              >
+                <BarIcon kind="locate" size={18} />
+                {locating ? "Определяме местоположението…" : "Използвай моето местоположение"}
+              </button>
+
+              {geoDenied ? (
+                <div className="rounded-[var(--radius-md)] border border-amber-500/30 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-900">
+                  <p className="font-semibold">Браузърът не дава достъп до местоположението.</p>
+                  <p className="mt-1">
+                    Натиснете катинарчето в адресната лента, разрешете „Местоположение“ за
+                    Производител.net и опитайте отново — или изберете град по-долу.
+                  </p>
+                </div>
+              ) : null}
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
-                  Или изберете вашия град / област ръчно:
+                <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Или изберете град
                 </p>
-
-                <div className="max-h-48 overflow-y-auto rounded-[var(--radius-md)] border border-border divide-y divide-border/60 bg-surface">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                   {BG_CITIES.map((c) => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => selectCity(c)}
-                      className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium text-foreground hover:bg-primary-soft hover:text-primary transition-colors text-left"
+                      className={cn(
+                        "truncate rounded-[var(--radius-sm)] border px-3 py-2 text-left text-[13px] font-medium transition-colors",
+                        w.place === c.label
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-surface text-foreground hover:border-primary/40 hover:bg-primary-soft hover:text-primary",
+                      )}
                     >
-                      <span>{c.label}</span>
-                      <span className="text-[11px] text-muted-foreground">Избери →</span>
+                      {c.label}
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLocationModal(false)}
-                  className="rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface-muted transition-colors"
-                >
-                  Затвори
-                </button>
               </div>
             </div>
           </div>
@@ -848,11 +774,119 @@ export function WeatherBar() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+
+const ALERT_STYLES: Record<"danger" | "warning" | "notice", string> = {
+  danger: "bg-danger-soft text-danger ring-danger/25 hover:bg-danger/10",
+  warning: "bg-amber-50 text-amber-800 ring-amber-400/40 hover:bg-amber-100",
+  notice: "bg-accent-soft text-accent-hover ring-accent/25 hover:bg-accent/15",
+};
+
+const ALERT_DOT: Record<"danger" | "warning" | "notice", string> = {
+  danger: "bg-danger",
+  warning: "bg-amber-500",
+  notice: "bg-accent",
+};
+
+function Divider() {
+  return <span aria-hidden className="h-4 w-px shrink-0 bg-border" />;
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  className,
+}: {
+  icon: BarIconKind;
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
-    <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+    <div
+      title={label}
+      className={cn("flex shrink-0 items-center gap-1.5 whitespace-nowrap", className)}
+    >
+      <span className="text-muted-foreground">
+        <BarIcon kind={icon} />
+      </span>
+      <span className="sr-only">{label}:</span>
+      <span className="font-medium tabular-nums">{value}</span>
     </div>
+  );
+}
+
+type BarIconKind =
+  | "pin"
+  | "chevron"
+  | "calendar"
+  | "wind"
+  | "drop"
+  | "thermo"
+  | "humidity"
+  | "uv"
+  | "sunrise"
+  | "close"
+  | "locate";
+
+function BarIcon({ kind, size = 15 }: { kind: BarIconKind; size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="shrink-0"
+    >
+      {kind === "pin" ? (
+        <>
+          <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+          <circle cx="12" cy="9.5" r="2.5" />
+        </>
+      ) : kind === "chevron" ? (
+        <path d="m6 9 6 6 6-6" />
+      ) : kind === "calendar" ? (
+        <>
+          <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+        </>
+      ) : kind === "wind" ? (
+        <path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h7" />
+      ) : kind === "drop" ? (
+        <path d="M12 3.5s-6 6.6-6 11a6 6 0 0 0 12 0c0-4.4-6-11-6-11Z" />
+      ) : kind === "thermo" ? (
+        <>
+          <path d="M14 14.5V5a2 2 0 0 0-4 0v9.5a4 4 0 1 0 4 0Z" />
+          <path d="M12 17v-4" />
+        </>
+      ) : kind === "humidity" ? (
+        <>
+          <path d="M12 3.5s-6 6.6-6 11a6 6 0 0 0 12 0c0-4.4-6-11-6-11Z" />
+          <path d="m9.5 17 5-5M9.8 12.3h.01M14.2 16.7h.01" />
+        </>
+      ) : kind === "uv" ? (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" />
+        </>
+      ) : kind === "sunrise" ? (
+        <>
+          <path d="M5 17a7 7 0 0 1 14 0M3 20h18M12 3v5M9 6l3-3 3 3" />
+        </>
+      ) : kind === "close" ? (
+        <path d="M6 6l12 12M18 6 6 18" />
+      ) : (
+        <>
+          <circle cx="12" cy="12" r="7" />
+          <circle cx="12" cy="12" r="2.5" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+        </>
+      )}
+    </svg>
   );
 }

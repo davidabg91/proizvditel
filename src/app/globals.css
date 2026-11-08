@@ -135,26 +135,10 @@
   }
 }
 
-/* Движеща се лента (тикер) за времето — без скролбар */
-@keyframes ticker-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+/* Хоризонтален ред, който се плъзга с пръст, без видим скролбар */
+.no-scrollbar {
+  scrollbar-width: none;
 }
-
-.ticker-track {
-  animation: ticker-scroll linear infinite;
-}
-
-.ticker-clip:hover .ticker-track {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ticker-track {
-    animation: none;
-  }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { findListingsBoostedFirst } from "@/lib/boost";
 import { Button } from "@/components/ui/button";
 import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
-import { HeroSearch } from "@/components/home/hero-search";
+import { HomeHero } from "@/components/home/home-hero";
 import { FaqSection } from "@/components/seo/faq-section";
 import { CATEGORY_LANDINGS, REGION_LANDINGS } from "@/lib/seo-landing";
 
@@ -38,7 +37,7 @@ export const revalidate = 60;
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
-  const [listings, producers, producerCount] = await Promise.all([
+  const [listings, producers] = await Promise.all([
     // Първо платените (подсилени) обяви, след тях — най-новите.
     findListingsBoostedFirst(
       { available: true, soldOut: false, producer: { published: true } },
@@ -53,7 +52,6 @@ export default async function Home() {
         _count: { select: { listings: { where: { available: true, soldOut: false } } } },
       },
     }),
-    prisma.producer.count({ where: { published: true } }),
   ]);
 
   const listingCards = listings.map((l) => ({
@@ -97,70 +95,7 @@ export default async function Home() {
 
   return (
     <main>
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border">
-        {/* Декоративен фон със земеделски мотиви */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero-pattern.webp"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-        />
-        {/* Градиент за четимост на текста */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/30" />
-        <div className="container-page relative z-10 grid gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:items-start lg:py-24">
-          <div>
-            <p className="eyebrow">Сайт за земеделски производители</p>
-            <h1 className="mt-4 text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
-              Прясна, местна продукция — директно от българския производител
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Производител.net е онлайн пазар, който свързва българските земеделски
-              производители с хората, които ценят качеството. Открийте кой отглежда
-              храната ви и поръчайте директно от него — без посредник.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button href="/katalog" size="lg">
-                Разгледай каталога
-              </Button>
-              <Button href="/registraciya" size="lg" variant="outline">
-                Регистрирай стопанство
-              </Button>
-            </div>
-            <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              <Stat value={`${producerCount}`} label="производители" />
-              <Stat value={`${listings.length > 0 ? "Ежедневно" : "Скоро"}`} label="нови оферти" />
-              <Stat value="28" label="области в България" />
-            </dl>
-          </div>
-
-          <div className="relative flex flex-col items-center lg:pl-6">
-            {/* Меки цветни ореоли за дълбочина (само на голям екран) */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-0 -z-10 hidden h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl lg:block"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute bottom-8 right-4 -z-10 hidden h-56 w-56 rounded-full bg-accent/20 blur-3xl lg:block"
-            />
-
-            {/* Единен брандов панел: банер (лого3) + търсачка */}
-            <div className="w-full max-w-[520px] overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface shadow-lg ring-1 ring-border/50">
-              <Image
-                src="/logo3.png"
-                alt="Производител.net — от производителя, директно за вас"
-                width={1536}
-                height={1024}
-                priority
-                className="hidden h-auto w-full object-cover lg:block"
-              />
-              <HeroSearch bare />
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeHero />
 
       {/* Как работи */}
       <section className="container-page py-16">
@@ -293,15 +228,6 @@ export default async function Home() {
         <FaqSection items={HOME_FAQ} />
       </section>
     </main>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <dt className="font-serif text-2xl font-semibold text-foreground">{value}</dt>
-      <dd className="text-sm text-muted-foreground">{label}</dd>
-    </div>
   );
 }
 
