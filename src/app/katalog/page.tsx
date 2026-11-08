@@ -6,6 +6,7 @@ import { CatalogFilters } from "./catalog-filters";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { CATEGORY_LANDINGS } from "@/lib/seo-landing";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   title: "Каталог с прясна продукция от български производители",
@@ -75,14 +76,14 @@ export default async function CatalogPage({
   }));
 
   return (
-    <main className="container-page py-12">
-      <div className="mb-8">
-        <p className="eyebrow">Каталог</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl">Прясна продукция от нивата</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Разгледайте предложенията на производителите и поръчайте директно от тях.
-        </p>
-      </div>
+    <main>
+      <PageHero
+        eyebrow="Каталог"
+        title="Прясна продукция от нивата"
+        description="Разгледайте предложенията на производителите и поръчайте директно от тях."
+        breadcrumbs={[{ label: "Каталог" }]}
+      />
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       <ul className="mb-6 flex flex-wrap gap-2 text-sm">
         {CATEGORY_LANDINGS.map((c) => (
@@ -119,6 +120,7 @@ export default async function CatalogPage({
           </p>
         </div>
       )}
+      </div>
     </main>
   );
 }

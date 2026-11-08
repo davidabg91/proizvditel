@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 
 /**
  * Карта „Заповядайте на място“ — физическият обект на стопанството.
@@ -58,7 +59,7 @@ export function ShopCard({
   const address = shopAddressLine(shop);
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-lg)] border border-accent/30 bg-accent-soft/40">
+    <div className="overflow-hidden rounded-[var(--radius-xl)] border border-accent/30 bg-accent-soft/40 shadow-xs">
       {shop.shopPhotoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -70,7 +71,8 @@ export function ShopCard({
 
       <div className="p-6">
         <h3 className="flex items-center gap-2 font-semibold text-foreground">
-          <span aria-hidden>📍</span> Заповядайте на място
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white"><Icon name="store" size={16} /></span>
+          Заповядайте на място
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Тук можете да ни намерите и да купите директно, без доставка.

@@ -9,6 +9,7 @@ import { ProducerCard } from "@/components/product/producer-card";
 import { Button } from "@/components/ui/button";
 import { FaqSection } from "@/components/seo/faq-section";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/json-ld";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const revalidate = 600;
 export const dynamicParams = false;
@@ -57,7 +58,7 @@ export default async function CategoryPage({
   const cards = listings.map(toListingCard);
 
   return (
-    <main className="container-page py-12">
+    <main>
       <BreadcrumbJsonLd
         items={[
           { name: "Начало", path: "/" },
@@ -73,21 +74,18 @@ export default async function CategoryPage({
         }))}
       />
 
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/katalog" className="hover:text-primary">
-          Каталог
-        </Link>{" "}
-        / <span className="text-foreground">{landing.category}</span>
-      </nav>
-
-      <div className="mt-4 max-w-3xl">
-        <h1 className="text-3xl sm:text-4xl">{landing.heading}</h1>
-        {landing.intro.map((p) => (
-          <p key={p.slice(0, 24)} className="mt-4 leading-relaxed text-muted-foreground">
+      <PageHero
+        eyebrow="Каталог"
+        title={landing.heading}
+        breadcrumbs={[{ label: "Каталог", href: "/katalog" }, { label: landing.category }]}
+        description={landing.intro.map((p) => (
+          <p key={p.slice(0, 24)} className="mt-3 first:mt-0">
             {p}
           </p>
         ))}
-      </div>
+      />
+
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       <CategoryNav current={landing.slug} />
 
@@ -144,6 +142,7 @@ export default async function CategoryPage({
           ))}
         </ul>
       </section>
+      </div>
     </main>
   );
 }

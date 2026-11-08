@@ -42,8 +42,8 @@
   /* Радиуси */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
 
   /* Сенки — меки, естествени */
   --shadow-xs: 0 1px 2px 0 rgb(27 30 26 / 0.04);

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/ui/rating";
 import { formatDate } from "@/lib/utils";
+import { Icon } from "@/components/ui/icons";
 
 export type ReviewItem = {
   id: string;
@@ -21,9 +22,10 @@ export function ReviewsList({
 }) {
   if (reviews.length === 0) {
     return (
-      <p className="rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-surface p-8 text-center text-muted-foreground">
-        {empty ?? "Все още няма оценки за този производител."}
-      </p>
+      <div className="flex flex-col items-center gap-2 rounded-[var(--radius-xl)] border border-dashed border-border-strong bg-surface/60 p-8 text-center text-muted-foreground">
+        <Icon name="star" size={28} strokeWidth={1.4} className="text-accent/60" />
+        <p>{empty ?? "Все още няма оценки за този производител."}</p>
+      </div>
     );
   }
 
@@ -32,11 +34,11 @@ export function ReviewsList({
       {reviews.map((r) => (
         <li
           key={r.id}
-          className="rounded-[var(--radius-lg)] border border-border bg-surface p-5"
+          className="rounded-[var(--radius-xl)] border border-border bg-surface p-5 shadow-xs"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted font-serif text-sm font-semibold text-primary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft font-serif text-sm font-semibold text-primary">
                 {r.authorName.charAt(0)}
               </div>
               <div>

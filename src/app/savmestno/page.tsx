@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/utils";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/savmestno" },
@@ -25,16 +26,14 @@ export default async function SharedDeliveryPage({
   const total = confirmed.length + potential.length;
 
   return (
-    <main className="container-page py-12">
-      <div className="max-w-2xl">
-        <p className="eyebrow">Съвместно пазаруване</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl">Една доставка, няколко стопанства</h1>
-        <p className="mt-3 text-muted-foreground">
-          Стопанства от една област, които изпращат продукцията си заедно. Купете
-          различни продукти от няколко стопанства с една обща доставка и по-ниски
-          разходи.
-        </p>
-      </div>
+    <main>
+      <PageHero
+        eyebrow="Съвместно пазаруване"
+        title="Една доставка, няколко стопанства"
+        description="Стопанства от една област, които изпращат продукцията си заедно. Купете различни продукти от няколко стопанства с една обща доставка и по-ниски разходи."
+        breadcrumbs={[{ label: "Съвместна доставка" }]}
+      />
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       {/* Търсене „търся това“ */}
       <form action="/savmestno" className="mt-8 flex max-w-xl gap-2">
@@ -106,6 +105,7 @@ export default async function SharedDeliveryPage({
           </div>
         </div>
       ) : null}
+      </div>
     </main>
   );
 }

@@ -24,9 +24,9 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3.5 text-sm rounded-[var(--radius-sm)] gap-1.5",
-  md: "h-11 px-5 text-sm rounded-[var(--radius-md)] gap-2",
-  lg: "h-13 px-7 text-base rounded-[var(--radius-md)] gap-2",
+  sm: "h-9 px-4 text-sm rounded-full gap-1.5",
+  md: "h-11 px-5 text-sm rounded-full gap-2",
+  lg: "h-13 px-7 text-base rounded-full gap-2",
 };
 
 type CommonProps = {

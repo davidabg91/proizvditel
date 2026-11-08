@@ -9,6 +9,7 @@ import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/json-ld";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const revalidate = 600;
 export const dynamicParams = false;
@@ -62,7 +63,7 @@ export default async function RegionPage({
   const cards = listings.map(toListingCard);
 
   return (
-    <main className="container-page py-12">
+    <main>
       <BreadcrumbJsonLd
         items={[
           { name: "Начало", path: "/" },
@@ -75,21 +76,21 @@ export default async function RegionPage({
         items={producers.map((p) => ({ name: p.farmName, path: `/p/${p.slug}` }))}
       />
 
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/proizvoditeli" className="hover:text-primary">
-          Производители
-        </Link>{" "}
-        / <span className="text-foreground">{landing.region}</span>
-      </nav>
-
-      <div className="mt-4 max-w-3xl">
-        <h1 className="text-3xl sm:text-4xl">Земеделски производители — {landing.label}</h1>
-        <p className="mt-4 leading-relaxed text-muted-foreground">
-          {producers.length > 0
+      <PageHero
+        eyebrow="Производители по област"
+        title={`Земеделски производители — ${landing.label}`}
+        breadcrumbs={[
+          { label: "Производители", href: "/proizvoditeli" },
+          { label: landing.region },
+        ]}
+        description={
+          producers.length > 0
             ? `${producers.length} ${producers.length === 1 ? "стопанство" : "стопанства"} от ${landing.label} продават продукцията си директно през Производител.net. Вижте кой какво отглежда, от коя година работи и какви оценки има от клиенти — и поръчайте без посредник.`
-            : `Все още няма регистрирани стопанства от ${landing.label}. Ако сте земеделски производител оттук, създайте безплатен профил и бъдете първият, когото купувачите от региона ще намерят.`}
-        </p>
-      </div>
+            : `Все още няма регистрирани стопанства от ${landing.label}. Ако сте земеделски производител оттук, създайте безплатен профил и бъдете първият, когото купувачите от региона ще намерят.`
+        }
+      />
+
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       {producers.length > 0 ? (
         <section className="mt-10">
@@ -152,6 +153,7 @@ export default async function RegionPage({
           </ul>
         </div>
       </section>
+      </div>
     </main>
   );
 }

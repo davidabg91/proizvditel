@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BLOG_CATEGORIES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/blog" },
@@ -42,20 +43,20 @@ export default async function BlogPage({
   const [featured, ...rest] = posts;
 
   return (
-    <main className="container-page py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Блог</p>
-          <h1 className="mt-2 text-3xl sm:text-4xl">Полезното за продуктите</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Ползи и качества на храните, съвети за отглеждане и съхранение,
-            сезонност и рецепти — от хората, които ги произвеждат.
-          </p>
-        </div>
+    <main>
+      <PageHero
+        eyebrow="Блог"
+        title="Полезното за продуктите"
+        description="Ползи и качества на храните, съвети за отглеждане и съхранение, сезонност и рецепти — от хората, които ги произвеждат."
+        breadcrumbs={[{ label: "Блог" }]}
+      >
         {session?.user?.role === "producer" ? (
-          <Button href="/tablo/blog">Напиши статия</Button>
+          <Button href="/tablo/blog" variant="accent">
+            Напиши статия
+          </Button>
         ) : null}
-      </div>
+      </PageHero>
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       {/* Категории */}
       <div className="mt-8 flex flex-wrap gap-2">
@@ -157,6 +158,7 @@ export default async function BlogPage({
           ) : null}
         </>
       )}
+      </div>
     </main>
   );
 }

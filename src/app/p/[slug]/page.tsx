@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { Badge } from "@/components/ui/badge";
+import { Icon, categoryIcon, type IconName } from "@/components/ui/icons";
+import { FieldBackdrop } from "@/components/brand/field-backdrop";
 import { Button } from "@/components/ui/button";
 import { RatingStars } from "@/components/ui/rating";
 import { ListingCard } from "@/components/product/listing-card";
@@ -207,81 +208,121 @@ export default async function ProducerProfilePage({
       />
 
       <div className="container-page">
-        {/* Заглавна част — под корицата, без застъпване */}
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface-muted shadow-sm sm:h-24 sm:w-24">
-              {producer.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={producer.logoUrl}
-                  alt={producer.farmName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-semibold text-primary">
-                  {producer.farmName.charAt(0)}
+        {/* Заглавна карта — под корицата, без застъпване */}
+        <header className="mt-6 rounded-[var(--radius-xl)] border border-border bg-surface p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4 sm:items-center sm:gap-5">
+              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-xl)] border border-border bg-primary-soft shadow-sm sm:h-24 sm:w-24">
+                {producer.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={producer.logoUrl}
+                    alt={producer.farmName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-semibold text-primary">
+                    {producer.farmName.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="font-serif text-2xl font-semibold leading-tight sm:text-4xl">
+                    {producer.farmName}
+                  </h1>
+                  {producer.urnVerified ? (
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1 text-xs font-semibold text-white shadow-xs"
+                      title={`Потвърден земеделски производител с проверена регистрационна карта${producer.urn ? ` (УРН: ${producer.urn})` : ""}`}
+                    >
+                      <Icon name="shield" size={14} />
+                      Потвърден производител
+                    </span>
+                  ) : null}
                 </div>
-              )}
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="font-serif text-2xl font-semibold sm:text-4xl">
-                  {producer.farmName}
-                </h1>
-                {producer.urnVerified ? (
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success border border-success/30 shadow-xs"
-                    title={`Потвърден земеделски производител с проверена регистрационна карта${producer.urn ? ` (УРН: ${producer.urn})` : ""}`}
-                  >
-                    <span className="font-bold">✓</span>
-                    <span>Потвърден производител</span>
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground sm:text-base">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon name="users" size={16} className="text-accent" />
+                    {producer.ownerName}
                   </span>
-                ) : null}
-              </div>
-              <p className="mt-1 text-muted-foreground">
-                {producer.ownerName}
-                {location ? ` · ${location}` : ""}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <RatingStars value={producer.ratingAvg} count={producer.ratingCount} />
-                <span className="text-sm text-muted-foreground">
-                  {producer.visits} посещения
-                </span>
+                  {location ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="pin" size={16} className="text-accent" />
+                      {location}
+                    </span>
+                  ) : null}
+                </p>
+                <div className="mt-2">
+                  <RatingStars value={producer.ratingAvg} count={producer.ratingCount} />
+                </div>
               </div>
             </div>
+
+            <div className="flex flex-wrap gap-2.5">
+              <Button href={`/chat/${producer.slug}`} size="lg">
+                <Icon name="chat" size={18} />
+                Изпрати съобщение
+              </Button>
+              {listingCards.length > 0 ? (
+                <Button href="#produkti" size="lg" variant="outline">
+                  <Icon name="basket" size={18} />
+                  Продуктите
+                </Button>
+              ) : null}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {showShop ? <Badge tone="accent">Магазин на място</Badge> : null}
-            {producer.sharedDelivery ? (
-              <Badge tone="success">Съвместна доставка</Badge>
-            ) : null}
-            {producer.startedYear ? (
-              <Badge tone="outline">Стопанисва от {producer.startedYear} г.</Badge>
-            ) : null}
-            {producer.totalDecares ? (
-              <Badge tone="outline">{producer.totalDecares} дка</Badge>
-            ) : null}
-          </div>
-        </div>
+
+          {/* Ключови данни */}
+          <dl className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-6 sm:grid-cols-4">
+            <Fact icon="basket" label="Продукти" value={String(listingCards.length - soldOutCount)} />
+            <Fact
+              icon="sprout"
+              label="Стопанисва от"
+              value={producer.startedYear ? `${producer.startedYear} г.` : "—"}
+            />
+            <Fact
+              icon="field"
+              label="Площ"
+              value={producer.totalDecares ? `${producer.totalDecares} дка` : "—"}
+            />
+            <Fact icon="eye" label="Посещения" value={String(producer.visits)} />
+          </dl>
+
+          {showShop || producer.sharedDelivery ? (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {showShop ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-hover">
+                  <Icon name="store" size={14} />
+                  Магазин на място
+                </span>
+              ) : null}
+              {producer.sharedDelivery ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+                  <Icon name="truck" size={14} />
+                  Съвместна доставка
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </header>
 
         {/* Съдържание */}
-        <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_320px]">
-          <div className="flex flex-col gap-12">
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
+          <div className="flex min-w-0 flex-col gap-8">
             {/* За стопанството */}
             {producer.description ? (
-              <section>
-                <h2 className="text-xl font-semibold">За стопанството</h2>
-                <p className="mt-3 whitespace-pre-line leading-relaxed text-foreground/90">
+              <Panel title="За стопанството" icon="leaf">
+                <p className="whitespace-pre-line leading-relaxed text-foreground/90">
                   {producer.description}
                 </p>
-              </section>
+              </Panel>
             ) : null}
 
             {/* Продукти за продажба */}
-            <section id="produkti">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-xl font-semibold">Продукти за продажба</h2>
+            <section id="produkti" className="scroll-mt-28">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-2xl font-semibold">Продукти за продажба</h2>
                 {listingCards.length > 0 ? (
                   <span className="text-sm text-muted-foreground">
                     {listingCards.length} обяви
@@ -298,90 +339,97 @@ export default async function ProducerProfilePage({
                 </p>
               ) : null}
               {listingCards.length > 0 ? (
-                <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {listingCards.map((l) => (
                     <ListingCard key={l.id} listing={l} />
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 rounded-[var(--radius-lg)] border border-dashed border-border-strong bg-surface p-8 text-center text-muted-foreground">
-                  Няма активни обяви в момента.
-                </p>
+                <div className="mt-4 flex flex-col items-center gap-3 rounded-[var(--radius-xl)] border border-dashed border-border-strong bg-surface/60 p-8 text-center">
+                  <Icon name="basket" size={30} strokeWidth={1.4} className="text-primary/50" />
+                  <p className="text-muted-foreground">Няма активни обяви в момента.</p>
+                  <Button href={`/chat/${producer.slug}`} variant="outline" size="sm">
+                    Попитайте какво предлага
+                  </Button>
+                </div>
               )}
             </section>
 
             {/* Продукция */}
             {producer.crops.length > 0 ? (
-              <section>
-                <h2 className="text-xl font-semibold">Какво отглеждаме</h2>
-                <div className="mt-5 overflow-hidden rounded-[var(--radius-lg)] border border-border">
-                  <table className="w-full text-sm">
-                    <thead className="bg-surface-muted text-left text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Култура</th>
-                        <th className="px-4 py-3 font-semibold">Сортове</th>
-                        <th className="px-4 py-3 font-semibold">От</th>
-                        <th className="px-4 py-3 font-semibold">Площ</th>
-                        <th className="px-4 py-3 font-semibold">Годишно</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border bg-surface">
-                      {producer.crops.map((c) => (
-                        <tr key={c.id}>
-                          <td className="px-4 py-3 font-medium">{c.name}</td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {c.varieties ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {c.sinceYear ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {c.decares ? `${c.decares} дка` : "—"}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {c.annualYield
-                              ? `${c.annualYield} ${c.yieldUnit ?? ""}`
-                              : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
+              <Panel title="Какво отглеждаме" icon="sprout">
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {producer.crops.map((c) => (
+                    <li
+                      key={c.id}
+                      className="rounded-[var(--radius-lg)] border border-border bg-surface-muted/40 p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                          <Icon name={categoryIcon(c.category)} size={19} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold leading-tight">{c.name}</p>
+                          {c.varieties ? (
+                            <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+                              {c.varieties}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                      {c.sinceYear || c.decares || c.annualYield ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+                          {c.sinceYear ? (
+                            <span className="rounded-full bg-surface px-2.5 py-1 font-medium text-muted-foreground ring-1 ring-border">
+                              от {c.sinceYear} г.
+                            </span>
+                          ) : null}
+                          {c.decares ? (
+                            <span className="rounded-full bg-surface px-2.5 py-1 font-medium text-muted-foreground ring-1 ring-border">
+                              {c.decares} дка
+                            </span>
+                          ) : null}
+                          {c.annualYield ? (
+                            <span className="rounded-full bg-surface px-2.5 py-1 font-medium text-muted-foreground ring-1 ring-border">
+                              {c.annualYield} {c.yieldUnit ?? ""} годишно
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
             ) : null}
 
             {/* Галерия */}
             {gallery.length > 0 ? (
-              <section>
-                <h2 className="text-xl font-semibold">Галерия</h2>
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <Panel title="Галерия" icon="eye">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {gallery.map((photo) => (
                     <div
                       key={photo.id}
-                      className="aspect-square overflow-hidden rounded-[var(--radius-md)] border border-border bg-surface-muted"
+                      className="group aspect-square overflow-hidden rounded-[var(--radius-lg)] bg-surface-muted"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo.url}
-                        alt={photo.caption ?? ""}
-                        className="h-full w-full object-cover"
+                        alt={photo.caption || `${producer.farmName} — снимка`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
                   ))}
                 </div>
-              </section>
+              </Panel>
             ) : null}
 
             {/* Оценки */}
-            <section id="ocenki">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Оценки от клиенти</h2>
+            <section id="ocenki" className="scroll-mt-28">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-2xl font-semibold">Оценки от клиенти</h2>
                 {producer.ratingCount > 0 ? (
-                  <RatingStars
-                    value={producer.ratingAvg}
-                    count={producer.ratingCount}
-                  />
+                  <RatingStars value={producer.ratingAvg} count={producer.ratingCount} />
                 ) : null}
               </div>
 
@@ -407,57 +455,64 @@ export default async function ProducerProfilePage({
                 </p>
               ) : null}
 
-              <div className="mt-6">
+              <div className="mt-5">
                 <ReviewsList reviews={reviewItems} />
               </div>
             </section>
           </div>
 
           {/* Странична колона */}
-          <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6">
-              <h3 className="font-semibold">Свържете се</h3>
-              <dl className="mt-4 flex flex-col gap-3 text-sm">
-                {producer.phone ? (
-                  <div>
-                    <dt className="text-muted-foreground">Телефон</dt>
-                    <dd className="font-medium">{producer.phone}</dd>
-                  </div>
-                ) : null}
-                {producer.contactEmail ? (
-                  <div>
-                    <dt className="text-muted-foreground">Имейл</dt>
-                    <dd className="font-medium break-words">
+          <aside className="flex flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
+            <div className="overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface shadow-sm">
+              <div className="relative isolate overflow-hidden px-6 py-5 text-white">
+                <FieldBackdrop id="contact-card" fields="none" />
+                <h3 className="font-serif text-lg font-semibold text-white">Свържете се</h3>
+                <p className="mt-0.5 text-sm text-white/70">
+                  Питайте за продукцията, количества и доставка.
+                </p>
+              </div>
+              <div className="p-6">
+                <ul className="flex flex-col gap-3 text-sm">
+                  {producer.phone ? (
+                    <ContactRow
+                      icon="phone"
+                      label="Телефон"
+                      href={`tel:${producer.phone.replace(/\s+/g, "")}`}
+                    >
+                      {producer.phone}
+                    </ContactRow>
+                  ) : null}
+                  {producer.contactEmail ? (
+                    <ContactRow icon="mail" label="Имейл" href={`mailto:${producer.contactEmail}`}>
                       {producer.contactEmail}
-                    </dd>
+                    </ContactRow>
+                  ) : null}
+                  {producer.website ? (
+                    <ContactRow
+                      icon="globe"
+                      label="Уебсайт"
+                      href={/^https?:\/\//i.test(producer.website) ? producer.website : undefined}
+                    >
+                      {producer.website}
+                    </ContactRow>
+                  ) : null}
+                  {location ? (
+                    <ContactRow icon="pin" label="Локация">
+                      {location}
+                    </ContactRow>
+                  ) : null}
+                </ul>
+                {producer.deliveryProviders ? (
+                  <div className="mt-5 border-t border-border pt-4">
+                    <p className="mb-2 text-sm font-medium text-muted-foreground">Доставка с</p>
+                    <DeliveryBadges providers={producer.deliveryProviders} />
                   </div>
                 ) : null}
-                {producer.website ? (
-                  <div>
-                    <dt className="text-muted-foreground">Уебсайт</dt>
-                    <dd className="font-medium break-words">{producer.website}</dd>
-                  </div>
-                ) : null}
-                {location ? (
-                  <div>
-                    <dt className="text-muted-foreground">Локация</dt>
-                    <dd className="font-medium">{location}</dd>
-                  </div>
-                ) : null}
-              </dl>
-              {producer.deliveryProviders ? (
-                <div className="mt-4 border-t border-border pt-4">
-                  <p className="mb-2 text-sm text-muted-foreground">Доставка с</p>
-                  <DeliveryBadges providers={producer.deliveryProviders} />
-                </div>
-              ) : null}
-              <Button
-                href={`/chat/${producer.slug}`}
-                className="mt-5 w-full"
-                variant="primary"
-              >
-                Изпрати съобщение
-              </Button>
+                <Button href={`/chat/${producer.slug}`} className="mt-5 w-full">
+                  <Icon name="chat" size={17} />
+                  Изпрати съобщение
+                </Button>
+              </div>
             </div>
 
             <ShopCard shop={producer} farmName={producer.farmName} />
@@ -465,11 +520,16 @@ export default async function ProducerProfilePage({
             <PaymentMethodsDisplay payment={producer.payment} />
 
             {producer.sharedDelivery ? (
-              <div className="rounded-[var(--radius-lg)] border border-success/30 bg-success-soft/60 p-6">
-                <h3 className="font-semibold text-success">Съвместна доставка</h3>
+              <div className="rounded-[var(--radius-xl)] border border-primary/20 bg-primary-soft/60 p-6">
+                <h3 className="flex items-center gap-2 font-semibold text-primary">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[#f0c977]">
+                    <Icon name="truck" size={16} />
+                  </span>
+                  Съвместна доставка
+                </h3>
                 {partners.length > 0 ? (
                   <>
-                    <p className="mt-1 text-sm text-foreground/80">
+                    <p className="mt-2 text-sm text-foreground/80">
                       Работим заедно с тези стопанства — поръчайте от нас и от тях
                       с една обща доставка.
                     </p>
@@ -478,9 +538,9 @@ export default async function ProducerProfilePage({
                         <li key={n.slug}>
                           <Link
                             href={`/p/${n.slug}`}
-                            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                            className="flex items-center gap-2.5 rounded-full bg-surface py-1 pl-1 pr-3 text-sm font-medium text-foreground shadow-xs transition-colors hover:text-primary"
                           >
-                            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-surface font-serif text-xs font-semibold text-primary">
+                            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary-soft font-serif text-xs font-semibold text-primary">
                               {n.logoUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={n.logoUrl} alt="" className="h-full w-full object-cover" />
@@ -488,14 +548,14 @@ export default async function ProducerProfilePage({
                                 n.farmName.charAt(0)
                               )}
                             </span>
-                            {n.farmName}
+                            <span className="truncate">{n.farmName}</span>
                           </Link>
                         </li>
                       ))}
                     </ul>
                   </>
                 ) : (
-                  <p className="mt-1 text-sm text-foreground/80">
+                  <p className="mt-2 text-sm text-foreground/80">
                     Този производител е готов за съвместна доставка. Когато се
                     свърже с партньори, ще можете да поръчате заедно с тях.
                   </p>
@@ -508,9 +568,10 @@ export default async function ProducerProfilePage({
         <div className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
           <Link
             href="/proizvoditeli"
-            className="text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
           >
-            ← Всички производители
+            <Icon name="arrow-left" size={16} />
+            Всички производители
           </Link>
           {!isOwner ? (
             <ReportButton
@@ -523,5 +584,76 @@ export default async function ProducerProfilePage({
         </div>
       </div>
     </main>
+  );
+}
+
+function Fact({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-surface-muted/60 p-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface text-primary shadow-xs">
+        <Icon name={icon} size={18} />
+      </span>
+      <div className="min-w-0">
+        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dd className="truncate font-serif text-lg font-semibold leading-tight">{value}</dd>
+      </div>
+    </div>
+  );
+}
+
+function Panel({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: IconName;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs sm:p-7">
+      <h2 className="flex items-center gap-2.5 text-xl font-semibold">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
+          <Icon name={icon} size={18} />
+        </span>
+        {title}
+      </h2>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+function ContactRow({
+  icon,
+  label,
+  href,
+  children,
+}: {
+  icon: IconName;
+  label: string;
+  href?: string;
+  children: React.ReactNode;
+}) {
+  const external = href?.startsWith("http");
+  return (
+    <li className="flex items-start gap-3">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+        <Icon name={icon} size={16} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {href ? (
+          <a
+            href={href}
+            {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
+            className="break-words font-medium text-foreground hover:text-primary hover:underline"
+          >
+            {children}
+          </a>
+        ) : (
+          <p className="break-words font-medium">{children}</p>
+        )}
+      </div>
+    </li>
   );
 }

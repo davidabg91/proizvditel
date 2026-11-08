@@ -23,7 +23,7 @@ export function DeliveryBadges({
         {items.map((p) => (
           <span
             key={p.code}
-            className="inline-flex items-center rounded-[var(--radius-sm)] px-2.5 py-1 text-xs font-semibold tracking-wide"
+            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide"
             style={{ backgroundColor: p.bg, color: p.fg }}
           >
             {p.name}

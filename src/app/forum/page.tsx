@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FORUM_CATEGORIES } from "@/lib/constants";
 import { formatRelative } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/forum" },
@@ -41,20 +42,21 @@ export default async function ForumPage({
   });
 
   return (
-    <main className="container-page py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Общност</p>
-          <h1 className="mt-2 text-3xl sm:text-4xl">Форум</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Задавайте въпроси, споделяйте опит и си помагайте — за всичко, свързано
-            със земеделието и продукцията.
-          </p>
-        </div>
-        <Button href={session?.user ? "/forum/nova" : "/vhod?next=/forum/nova"}>
+    <main>
+      <PageHero
+        eyebrow="Общност"
+        title="Форум"
+        description="Задавайте въпроси, споделяйте опит и си помагайте — за всичко, свързано със земеделието и продукцията."
+        breadcrumbs={[{ label: "Форум" }]}
+      >
+        <Button
+          href={session?.user ? "/forum/nova" : "/vhod?next=/forum/nova"}
+          variant="accent"
+        >
           Нова тема
         </Button>
-      </div>
+      </PageHero>
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       {/* Категории */}
       <div className="mt-8 flex flex-wrap gap-2">
@@ -115,6 +117,7 @@ export default async function ForumPage({
           </Button>
         </div>
       )}
+      </div>
     </main>
   );
 }

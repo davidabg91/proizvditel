@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart, type CartItem } from "@/components/cart/cart-context";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/ui/icons";
 
 export function AddToCartButton({
   item,
@@ -29,7 +30,7 @@ export function AddToCartButton({
       type="button"
       onClick={onAdd}
       className={cn(
-        "inline-flex items-center justify-center rounded-[var(--radius-sm)] font-semibold transition-colors",
+        "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-colors",
         size === "sm" ? "h-9 px-3.5 text-sm" : "h-11 px-5 text-sm",
         block && "w-full",
         added
@@ -38,7 +39,8 @@ export function AddToCartButton({
         className,
       )}
     >
-      {added ? "Добавено ✓" : "Добави"}
+      <Icon name={added ? "check" : "basket"} size={16} />
+      {added ? "Добавено" : "Добави"}
     </button>
   );
 }

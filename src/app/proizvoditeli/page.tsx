@@ -6,6 +6,7 @@ import { ProducerFilters } from "./producer-filters";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { REGION_LANDINGS } from "@/lib/seo-landing";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
   title: "Земеделски производители в България — всички стопанства",
@@ -66,15 +67,14 @@ export default async function ProducersPage({
   }));
 
   return (
-    <main className="container-page py-12">
-      <div className="mb-8">
-        <p className="eyebrow">Производители</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl">Българските стопанства</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Опознайте хората зад храната. Разгледайте профилите, продукцията и
-          оценките от клиенти.
-        </p>
-      </div>
+    <main>
+      <PageHero
+        eyebrow="Производители"
+        title="Българските стопанства"
+        description="Опознайте хората зад храната. Разгледайте профилите, продукцията и оценките от клиенти."
+        breadcrumbs={[{ label: "Производители" }]}
+      />
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       <Suspense>
         <ProducerFilters />
@@ -114,6 +114,7 @@ export default async function ProducersPage({
           <p className="mt-1 text-muted-foreground">Опитайте с други филтри.</p>
         </div>
       )}
+      </div>
     </main>
   );
 }

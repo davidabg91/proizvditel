@@ -9,11 +9,15 @@ export function Logo({
   className,
   href = "/",
   withTagline = false,
+  tone = "default",
 }: {
   className?: string;
   href?: string;
   withTagline?: boolean;
+  /** "light" — за тъмен фон (футъра). */
+  tone?: "default" | "light";
 }) {
+  const light = tone === "light";
   return (
     <Link
       href={href}
@@ -29,12 +33,22 @@ export function Logo({
         priority
       />
       <span className="flex flex-col leading-none">
-        <span className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+        <span
+          className={cn(
+            "font-serif text-xl font-semibold tracking-tight sm:text-2xl",
+            light ? "text-white" : "text-foreground",
+          )}
+        >
           Производител
-          <span className="text-accent">.net</span>
+          <span className={light ? "text-[#f0c977]" : "text-accent"}>.net</span>
         </span>
         {withTagline ? (
-          <span className="mt-1 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <span
+            className={cn(
+              "mt-1 text-[0.7rem] font-medium uppercase tracking-[0.16em]",
+              light ? "text-white/55" : "text-muted-foreground",
+            )}
+          >
             Направо от нивата
           </span>
         ) : null}

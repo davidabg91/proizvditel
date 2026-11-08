@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { findListingsBoostedFirst } from "@/lib/boost";
-import { Button } from "@/components/ui/button";
+import { Icon, categoryIcon, type IconName } from "@/components/ui/icons";
+import { SectionHeading } from "@/components/layout/page-hero";
 import { ListingCard } from "@/components/product/listing-card";
 import { ProducerCard } from "@/components/product/producer-card";
 import { HomeHero } from "@/components/home/home-hero";
@@ -98,46 +99,43 @@ export default async function Home() {
       <HomeHero />
 
       {/* Как работи */}
-      <section className="container-page py-16">
-        <div className="max-w-2xl">
-          <p className="eyebrow">Как работи</p>
-          <h2 className="mt-3 text-3xl">Три стъпки до прясната храна</h2>
-        </div>
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
+      <section className="container-page py-16 sm:py-20">
+        <SectionHeading
+          eyebrow="Как работи"
+          title="Три стъпки до прясната храна"
+          description="Без регистрация, без абонамент. Купувате директно от човека, който отглежда продукцията."
+        />
+        <ol className="mt-10 grid gap-5 md:grid-cols-3">
           <Step
             n="01"
+            icon="search"
             title="Открийте производител"
             text="Разгледайте стопанствата по област и категория. Вижте какво отглеждат, снимки от нивата и оценки от клиенти."
           />
           <Step
             n="02"
+            icon="basket"
             title="Изберете продукция"
             text="Прегледайте каталога с актуални цени и оферти. Всеки продукт е директно от стопанството, без посредници."
           />
           <Step
             n="03"
+            icon="truck"
             title="Поръчайте директно"
-            text="Свържете се с производителя и се разберете за плащане и доставка — плащане с карта или наложен платеж."
+            text="Платете с карта или с наложен платеж. Производителят изпраща с куриер или предава лично."
           />
-        </div>
+        </ol>
       </section>
 
       {/* Оферти */}
       {listingCards.length > 0 ? (
-        <section className="border-t border-border bg-surface-muted/40">
-          <div className="container-page py-16">
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="eyebrow">Пазар</p>
-                <h2 className="mt-3 text-3xl">Актуални предложения</h2>
-              </div>
-              <Link
-                href="/katalog"
-                className="hidden text-sm font-semibold text-primary hover:underline sm:block"
-              >
-                Виж целия каталог →
-              </Link>
-            </div>
+        <section className="border-y border-border bg-surface-muted/50">
+          <div className="container-page py-16 sm:py-20">
+            <SectionHeading
+              eyebrow="Пазар"
+              title="Актуални предложения"
+              action={{ href: "/katalog", label: "Целият каталог" }}
+            />
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {listingCards.map((l) => (
                 <ListingCard key={l.id} listing={l} />
@@ -149,19 +147,12 @@ export default async function Home() {
 
       {/* Производители */}
       {producerCards.length > 0 ? (
-        <section className="container-page py-16">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="eyebrow">Стопанства</p>
-              <h2 className="mt-3 text-3xl">Запознайте се с производителите</h2>
-            </div>
-            <Link
-              href="/proizvoditeli"
-              className="hidden text-sm font-semibold text-primary hover:underline sm:block"
-            >
-              Всички производители →
-            </Link>
-          </div>
+        <section className="container-page py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="Стопанства"
+            title="Запознайте се с производителите"
+            action={{ href: "/proizvoditeli", label: "Всички производители" }}
+          />
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {producerCards.map((p) => (
               <ProducerCard key={p.slug} producer={p} />
@@ -170,53 +161,42 @@ export default async function Home() {
         </section>
       ) : null}
 
-      {/* CTA за производители */}
-      <section className="border-t border-border bg-primary text-primary-foreground">
-        <div className="container-page grid gap-8 py-16 lg:grid-cols-[1.5fr_1fr] lg:items-center">
-          <div>
-            <h2 className="text-3xl text-primary-foreground sm:text-4xl">
-              Вие сте производител? Представете стопанството си.
-            </h2>
-            <p className="mt-4 max-w-xl leading-relaxed text-primary-foreground/80">
-              Създайте безплатен профил, качете продукцията си и започнете да
-              продавате директно на клиентите — без прекупвачи и посредници.
-            </p>
-          </div>
-          <div className="flex lg:justify-end">
-            <Button href="/za-proizvoditeli" size="lg" variant="accent">
-              Започнете безплатно
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Разглеждане по категория и област + въпроси */}
-      <section className="container-page py-16">
-        <div className="grid gap-12 lg:grid-cols-2">
-          <div>
-            <h2 className="text-2xl">Продукция по категория</h2>
-            <ul className="mt-5 flex flex-wrap gap-2 text-sm">
-              {CATEGORY_LANDINGS.map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/katalog/${c.slug}`}
-                    className="inline-block rounded-full border border-border px-3 py-1.5 hover:border-primary hover:text-primary"
-                  >
+      {/* Разглеждане по категория */}
+      <section className="border-t border-border bg-surface-muted/50">
+        <div className="container-page py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="Каталог"
+            title="Продукция по категория"
+            action={{ href: "/katalog", label: "Всички продукти" }}
+          />
+          <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {CATEGORY_LANDINGS.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  href={`/katalog/${c.slug}`}
+                  className="group flex h-full items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <Icon name={categoryIcon(c.category)} size={20} strokeWidth={1.6} />
+                  </span>
+                  <span className="text-sm font-semibold leading-tight text-foreground">
                     {c.category}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-2xl">Земеделски производители по област</h2>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-14">
+            <h2 className="text-xl sm:text-2xl">Земеделски производители по област</h2>
             <ul className="mt-5 flex flex-wrap gap-2 text-sm">
               {REGION_LANDINGS.map((r) => (
                 <li key={r.slug}>
                   <Link
                     href={`/proizvoditeli/${r.slug}`}
-                    className="inline-block rounded-full border border-border px-3 py-1.5 hover:border-primary hover:text-primary"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 font-medium text-foreground/80 transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary"
                   >
+                    <Icon name="pin" size={13} className="text-accent" />
                     {r.region}
                   </Link>
                 </li>
@@ -224,19 +204,41 @@ export default async function Home() {
             </ul>
           </div>
         </div>
+      </section>
 
-        <FaqSection items={HOME_FAQ} />
+      <section className="container-page pb-20">
+        <div className="mx-auto max-w-3xl">
+          <FaqSection items={HOME_FAQ} />
+        </div>
       </section>
     </main>
   );
 }
 
-function Step({ n, title, text }: { n: string; title: string; text: string }) {
+function Step({
+  n,
+  icon,
+  title,
+  text,
+}: {
+  n: string;
+  icon: IconName;
+  title: string;
+  text: string;
+}) {
   return (
-    <div className="border-t-2 border-primary/20 pt-5">
-      <span className="font-serif text-sm font-semibold text-accent">{n}</span>
-      <h3 className="mt-2 text-xl font-semibold">{title}</h3>
+    <li className="relative overflow-hidden rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs sm:p-7">
+      <span
+        aria-hidden
+        className="absolute -right-2 -top-4 font-serif text-[5.5rem] font-semibold leading-none text-primary/[0.06]"
+      >
+        {n}
+      </span>
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-[#f0c977] shadow-sm">
+        <Icon name={icon} size={22} />
+      </span>
+      <h3 className="mt-5 text-xl font-semibold">{title}</h3>
       <p className="mt-2 leading-relaxed text-muted-foreground">{text}</p>
-    </div>
+    </li>
   );
 }

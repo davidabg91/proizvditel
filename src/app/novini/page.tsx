@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { NEWS_CATEGORIES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const revalidate = 300;
 
@@ -56,15 +57,14 @@ export default async function NewsPage({
   const total = upcoming.length + rest.length;
 
   return (
-    <main className="container-page py-12">
-      <div className="mb-8 max-w-2xl">
-        <p className="eyebrow">Новини</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl">Новини и събития</h1>
-        <p className="mt-2 text-muted-foreground">
-          Изложения, панаири, обучения и програми за българските земеделски
-          стопанства — какво предстои и къде.
-        </p>
-      </div>
+    <main>
+      <PageHero
+        eyebrow="Новини"
+        title="Новини и събития"
+        description="Изложения, панаири, обучения и програми за българските земеделски стопанства — какво предстои и къде."
+        breadcrumbs={[{ label: "Новини" }]}
+      />
+      <div className="container-page pb-16 pt-2 sm:pt-4">
 
       {/* Филтри по категория */}
       <div className="mb-8 flex flex-wrap gap-2">
@@ -118,6 +118,7 @@ export default async function NewsPage({
           </div>
         </section>
       ) : null}
+      </div>
     </main>
   );
 }

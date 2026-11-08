@@ -94,8 +94,15 @@ export function ProfileCover({
 
   if (!coverUrl) {
     return (
-      <div className="relative h-56 w-full overflow-hidden bg-primary-soft sm:h-72">
-        <div className="h-full w-full bg-gradient-to-br from-primary/15 via-accent/10 to-transparent" />
+      <div className="relative h-48 w-full overflow-hidden bg-primary sm:h-72">
+        <div className="h-full w-full bg-[radial-gradient(circle_at_82%_0%,rgba(240,201,119,0.4),transparent_55%),linear-gradient(170deg,#123126,#245039)]" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero-pattern.webp"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.07] mix-blend-screen invert"
+        />
       </div>
     );
   }
@@ -104,7 +111,7 @@ export function ProfileCover({
     <div
       ref={containerRef}
       className={[
-        "relative h-56 w-full overflow-hidden bg-primary-soft sm:h-72 select-none",
+        "relative h-56 w-full overflow-hidden bg-primary sm:h-80 select-none",
         isEditing ? "cursor-grab active:cursor-grabbing ring-2 ring-primary ring-inset" : "",
       ].join(" ")}
       onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
@@ -130,6 +137,11 @@ export function ProfileCover({
           transform: `scale(${scale / 100})`,
           transformOrigin: `${posX}% ${posY}%`,
         }}
+      />
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10"
       />
 
       {/* Индикация за успешна промяна */}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FaqSection } from "@/components/seo/faq-section";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { CATEGORY_LANDINGS } from "@/lib/seo-landing";
+import { PageHero } from "@/components/layout/page-hero";
 
 export const revalidate = 3600;
 
@@ -85,42 +86,43 @@ export default async function ForProducersPage() {
         ]}
       />
 
-      <section className="border-b border-border bg-surface-muted/40">
-        <div className="container-page py-16 lg:py-20">
-          <p className="eyebrow">За земеделски производители</p>
-          <h1 className="mt-4 max-w-4xl text-4xl leading-[1.1] sm:text-5xl">
-            Сайт за земеделски производители: продавайте директно на купувачите
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Производител.net е онлайн пазар, създаден за българските фермери, овощари,
-            градинари, пчелари и животновъди. Създайте безплатен профил на стопанството,
-            публикувайте продукцията си и получавайте поръчки от цяла България — без
-            прекупвачи.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button href="/registraciya" size="lg">
-              Регистрирайте стопанството си безплатно
-            </Button>
-            <Button href="/kak-raboti" size="lg" variant="outline">
-              Как работи
-            </Button>
-          </div>
-          {producerCount > 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              Вече {producerCount}{" "}
-              {producerCount === 1 ? "стопанство продава" : "стопанства продават"} през
-              платформата.
-            </p>
-          ) : null}
+      <PageHero
+        eyebrow="За земеделски производители"
+        title="Сайт за земеделски производители: продавайте директно на купувачите"
+        breadcrumbs={[{ label: "За производители" }]}
+        description="Производител.net е онлайн пазар, създаден за българските фермери, овощари, градинари, пчелари и животновъди. Създайте безплатен профил на стопанството, публикувайте продукцията си и получавайте поръчки от цяла България — без прекупвачи."
+      >
+        <div className="flex flex-wrap gap-3">
+          <Button href="/registraciya" size="lg" variant="accent">
+            Регистрирайте стопанството си безплатно
+          </Button>
+          <Button
+            href="/kak-raboti"
+            size="lg"
+            variant="outline"
+            className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+          >
+            Как работи
+          </Button>
         </div>
-      </section>
+        {producerCount > 0 ? (
+          <p className="mt-5 text-sm text-white/70">
+            Вече {producerCount}{" "}
+            {producerCount === 1 ? "стопанство продава" : "стопанства продават"} през
+            платформата.
+          </p>
+        ) : null}
+      </PageHero>
 
       <div className="container-page py-16">
         <section>
           <h2 className="text-3xl">Какво получавате</h2>
           <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {BENEFITS.map((b) => (
-              <div key={b.title} className="border-t-2 border-primary/20 pt-5">
+              <div
+                key={b.title}
+                className="rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs"
+              >
                 <h3 className="text-xl font-semibold">{b.title}</h3>
                 <p className="mt-2 leading-relaxed text-muted-foreground">{b.text}</p>
               </div>

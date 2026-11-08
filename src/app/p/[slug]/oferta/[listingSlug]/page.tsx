@@ -10,6 +10,7 @@ import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ListingCard, type ListingCardData } from "@/components/product/listing-card";
 import { getMutualPartners } from "@/lib/partners";
 import { formatPrice } from "@/lib/utils";
+import { Icon, categoryIcon } from "@/components/ui/icons";
 import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
 import { RatingStars } from "@/components/ui/rating";
@@ -213,7 +214,7 @@ export default async function ListingDetailPage({
     .slice(0, 8);
 
   return (
-    <main className="container-page py-10">
+    <main className="container-page py-8 sm:py-10">
       <ProductJsonLd
         title={listing.title}
         description={listing.description}
@@ -249,66 +250,194 @@ export default async function ListingDetailPage({
           { name: listing.title, path },
         ]}
       />
-      <nav className="mb-6 text-sm text-muted-foreground">
-        <Link href="/katalog" className="hover:text-primary">
-          Каталог
-        </Link>
-        <span className="mx-2">/</span>
-        <Link href={`/p/${p.slug}`} className="hover:text-primary">
-          {p.farmName}
-        </Link>
+      <nav aria-label="Пътечка" className="mb-6 text-sm text-muted-foreground">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          <li>
+            <Link href="/katalog" className="transition-colors hover:text-primary">
+              Каталог
+            </Link>
+          </li>
+          {listing.category ? (
+            <>
+              <li aria-hidden className="text-border-strong">/</li>
+              <li>{listing.category}</li>
+            </>
+          ) : null}
+          <li aria-hidden className="text-border-strong">/</li>
+          <li>
+            <Link href={`/p/${p.slug}`} className="transition-colors hover:text-primary">
+              {p.farmName}
+            </Link>
+          </li>
+        </ol>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
         <ProductGallery
           photos={listing.photos.map((ph) => ph.url)}
           alt={`${listing.title} от ${listing.producer.farmName}`}
         />
 
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            {listing.category ? <Badge tone="primary">{listing.category}</Badge> : null}
-            {listing.isOffer ? <Badge tone="accent">Оферта</Badge> : null}
-            {listing.soldOut ? <Badge tone="danger">Изчерпан</Badge> : null}
-            {!listing.available ? <Badge tone="neutral">Не е налично</Badge> : null}
-          </div>
+        <div className="flex flex-col gap-5">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {listing.category ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+                  <Icon name={categoryIcon(listing.category)} size={14} />
+                  {listing.category}
+                </span>
+              ) : null}
+              {listing.isOffer ? <Badge tone="accent">Оферта</Badge> : null}
+              {listing.soldOut ? <Badge tone="danger">Изчерпан</Badge> : null}
+              {!listing.available ? <Badge tone="neutral">Не е налично</Badge> : null}
+            </div>
 
-          <h1 className="mt-3 font-serif text-3xl font-semibold">{listing.title}</h1>
+            <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight sm:text-4xl">
+              {listing.title}
+            </h1>
 
-          {listing.ratingCount > 0 ? (
-            <a href="#otzivi" className="mt-2 inline-flex items-center gap-2 hover:opacity-80">
-              <RatingStars value={listing.ratingAvg} count={listing.ratingCount} size="sm" />
-              <span className="text-sm text-muted-foreground underline-offset-2 hover:underline">
-                {listing.ratingCount === 1 ? "1 оценка" : `${listing.ratingCount} оценки`}
-              </span>
-            </a>
-          ) : null}
-
-          <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-serif text-3xl font-semibold text-primary">
-              {formatPrice(listing.price)}
-            </span>
-            <span className="text-muted-foreground">/ {listing.unit}</span>
-            {listing.oldPrice && listing.oldPrice > listing.price ? (
-              <span className="text-lg text-muted-foreground line-through">
-                {formatPrice(listing.oldPrice)}
-              </span>
+            {listing.ratingCount > 0 ? (
+              <a href="#otzivi" className="mt-2 inline-flex items-center gap-2 hover:opacity-80">
+                <RatingStars value={listing.ratingAvg} count={listing.ratingCount} size="sm" />
+                <span className="text-sm text-muted-foreground underline-offset-2 hover:underline">
+                  {listing.ratingCount === 1 ? "1 оценка" : `${listing.ratingCount} оценки`}
+                </span>
+              </a>
             ) : null}
           </div>
 
-          {listing.stockNote ? (
-            <p className="mt-2 text-sm text-accent">{listing.stockNote}</p>
-          ) : null}
+          {/* Цена и поръчка */}
+          <div className="rounded-[var(--radius-xl)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-serif text-4xl font-semibold text-primary">
+                {formatPrice(listing.price)}
+              </span>
+              <span className="text-lg text-muted-foreground">/ {listing.unit}</span>
+              {listing.oldPrice && listing.oldPrice > listing.price ? (
+                <>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatPrice(listing.oldPrice)}
+                  </span>
+                  <span className="rounded-full bg-danger px-2.5 py-0.5 text-xs font-bold text-white">
+                    −{Math.round((1 - listing.price / listing.oldPrice) * 100)}%
+                  </span>
+                </>
+              ) : null}
+            </div>
 
-          {listing.description ? (
-            <p className="mt-5 whitespace-pre-line leading-relaxed text-foreground/90">
-              {listing.description}
-            </p>
-          ) : null}
+            {listing.stockNote ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent-hover">
+                <Icon name="clock" size={15} />
+                {listing.stockNote}
+              </p>
+            ) : null}
+
+            <div className="mt-5">
+              {listing.soldOut ? (
+                <div className="rounded-[var(--radius-lg)] border border-danger/30 bg-danger-soft px-4 py-4">
+                  <p className="font-semibold text-danger">Продуктът е изчерпан</p>
+                  <p className="mt-1 text-sm text-foreground/80">
+                    В момента този продукт го няма и не може да бъде поръчан. Попитайте
+                    производителя кога очаква нови количества.
+                  </p>
+                  <Button
+                    href={`/chat/${p.slug}`}
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                  >
+                    <Icon name="chat" size={16} />
+                    Попитай производителя
+                  </Button>
+                </div>
+              ) : listing.available ? (
+                <div className="flex gap-3">
+                  <AddToCartButton
+                    size="md"
+                    block
+                    className="h-12 text-base"
+                    item={{
+                      listingId: listing.id,
+                      producerSlug: p.slug,
+                      producerName: p.farmName,
+                      title: listing.title,
+                      price: listing.price,
+                      unit: listing.unit,
+                      currency: listing.currency,
+                      imageUrl: listing.photos[0]?.url ?? null,
+                    }}
+                  />
+                  <Button
+                    href={`/chat/${p.slug}`}
+                    variant="outline"
+                    size="md"
+                    className="h-12 shrink-0"
+                  >
+                    <Icon name="chat" size={17} />
+                    Попитай
+                  </Button>
+                </div>
+              ) : (
+                <p className="rounded-[var(--radius-md)] bg-surface-muted px-4 py-3 text-sm text-muted-foreground">
+                  Продуктът не е наличен в момента.
+                </p>
+              )}
+            </div>
+
+            {p.deliveryProviders || p.shippingPrice !== null ? (
+              <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 text-sm">
+                {p.shippingPrice !== null ? (
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                      <Icon name="truck" size={17} />
+                    </span>
+                    <div>
+                      <p>
+                        Доставка:{" "}
+                        <strong>
+                          {p.shippingPrice === 0
+                            ? "безплатна"
+                            : formatPrice(p.shippingPrice)}
+                        </strong>
+                        {p.freeShippingOver !== null && p.shippingPrice > 0
+                          ? ` — безплатна над ${formatPrice(p.freeShippingOver)}`
+                          : ""}
+                      </p>
+                      {deliveryDays ? (
+                        <p className="mt-0.5 text-muted-foreground">
+                          Получавате я за {deliveryDays}.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+                {p.deliveryProviders ? (
+                  <div>
+                    <p className="mb-2 text-muted-foreground">Изпраща с</p>
+                    <DeliveryBadges providers={p.deliveryProviders} />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <ul className="mt-5 grid gap-2 border-t border-border pt-5 text-sm text-muted-foreground sm:grid-cols-2">
+              <li className="flex items-center gap-2">
+                <Icon name="check-circle" size={17} className="text-success" />
+                Директно от стопанството
+              </li>
+              <li className="flex items-center gap-2">
+                <Icon name="shield" size={17} className="text-success" />
+                Поръчка без посредник
+              </li>
+            </ul>
+          </div>
 
           {/* Производител */}
-          <div className="mt-6 flex items-center gap-4 rounded-[var(--radius-lg)] border border-border bg-surface p-4">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-muted">
+          <Link
+            href={`/p/${p.slug}`}
+            className="group flex items-center gap-4 rounded-[var(--radius-xl)] border border-border bg-surface p-4 shadow-xs transition-colors hover:border-primary/30"
+          >
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-lg)] bg-primary-soft">
               {p.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={p.logoUrl} alt="" className="h-full w-full object-cover" />
@@ -319,123 +448,65 @@ export default async function ListingDetailPage({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <Link href={`/p/${p.slug}`} className="font-semibold hover:text-primary">
+              <p className="text-xs text-muted-foreground">Продава</p>
+              <p className="truncate font-semibold transition-colors group-hover:text-primary">
                 {p.farmName}
-              </Link>
+              </p>
               {location ? (
-                <p className="text-sm text-muted-foreground">{location}</p>
+                <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                  <Icon name="pin" size={14} />
+                  {location}
+                </p>
               ) : null}
             </div>
-            <Button href={`/p/${p.slug}`} variant="outline" size="sm">
-              Профил
-            </Button>
-          </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-foreground transition-colors group-hover:border-primary group-hover:bg-primary-soft group-hover:text-primary">
+              <Icon name="arrow-right" size={16} />
+            </span>
+          </Link>
 
           {p.sharedDelivery ? (
-            <div className="mt-4 rounded-[var(--radius-lg)] border border-success/30 bg-success-soft p-4 text-sm">
-              <p className="font-semibold text-success">Съвместна доставка</p>
-              <p className="mt-1 text-foreground/80">
-                Този производител работи заедно с други стопанства от{" "}
-                {p.town ?? "своя район"}. Можете да поръчате продукти от няколко
-                производители с една обща доставка.
-              </p>
-              {p.town ? (
-                <Link
-                  href={`/savmestno/${encodeURIComponent(p.town)}`}
-                  className="mt-2 inline-block font-semibold text-success hover:underline"
-                >
-                  Виж групата за {p.town} →
-                </Link>
-              ) : null}
+            <div className="flex items-start gap-3 rounded-[var(--radius-xl)] border border-primary/20 bg-primary-soft/60 p-4 text-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[#f0c977]">
+                <Icon name="handshake" size={17} />
+              </span>
+              <div>
+                <p className="font-semibold text-primary">Съвместна доставка</p>
+                <p className="mt-0.5 text-foreground/80">
+                  Този производител работи заедно с други стопанства от{" "}
+                  {p.town ?? "своя район"}. Можете да поръчате продукти от няколко
+                  производители с една обща доставка.
+                </p>
+                {p.town ? (
+                  <Link
+                    href={`/savmestno/${encodeURIComponent(p.town)}`}
+                    className="mt-1.5 inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                  >
+                    Виж групата за {p.town}
+                    <Icon name="arrow-right" size={14} />
+                  </Link>
+                ) : null}
+              </div>
             </div>
           ) : null}
-
-          {/* Действия */}
-          <div className="mt-6 flex flex-col gap-3">
-            {listing.soldOut ? (
-              <div className="rounded-[var(--radius-lg)] border border-danger/30 bg-danger-soft px-4 py-4">
-                <p className="font-semibold text-danger">Продуктът е изчерпан</p>
-                <p className="mt-1 text-sm text-foreground/80">
-                  В момента този продукт го няма и не може да бъде поръчан. Попитайте
-                  производителя кога очаква нови количества.
-                </p>
-                <Button
-                  href={`/chat/${p.slug}`}
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                >
-                  Попитай производителя
-                </Button>
-              </div>
-            ) : listing.available ? (
-              <div className="flex gap-3">
-                <AddToCartButton
-                  size="md"
-                  block
-                  item={{
-                    listingId: listing.id,
-                    producerSlug: p.slug,
-                    producerName: p.farmName,
-                    title: listing.title,
-                    price: listing.price,
-                    unit: listing.unit,
-                    currency: listing.currency,
-                    imageUrl: listing.photos[0]?.url ?? null,
-                  }}
-                />
-                <Button href={`/chat/${p.slug}`} variant="outline" size="md" className="shrink-0">
-                  Попитай
-                </Button>
-              </div>
-            ) : (
-              <p className="rounded-[var(--radius-md)] bg-surface-muted px-4 py-3 text-sm text-muted-foreground">
-                Продуктът не е наличен в момента.
-              </p>
-            )}
-
-            {p.deliveryProviders || p.shippingPrice !== null ? (
-              <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4">
-                {p.deliveryProviders ? (
-                  <>
-                    <p className="mb-2 text-sm text-muted-foreground">Доставка с</p>
-                    <DeliveryBadges providers={p.deliveryProviders} />
-                  </>
-                ) : null}
-                {p.shippingPrice !== null ? (
-                  <div
-                    className={
-                      p.deliveryProviders
-                        ? "mt-3 border-t border-border pt-3 text-sm"
-                        : "text-sm"
-                    }
-                  >
-                    <p>
-                      Доставка:{" "}
-                      <strong>
-                        {p.shippingPrice === 0
-                          ? "безплатна"
-                          : formatPrice(p.shippingPrice)}
-                      </strong>
-                      {p.freeShippingOver !== null && p.shippingPrice > 0
-                        ? ` — безплатна над ${formatPrice(p.freeShippingOver)}`
-                        : ""}
-                    </p>
-                    {deliveryDays ? (
-                      <p className="mt-1 text-muted-foreground">
-                        Получавате я за {deliveryDays}.
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
 
+      {listing.description ? (
+        <section className="mt-12 rounded-[var(--radius-xl)] border border-border bg-surface p-6 shadow-xs sm:p-8">
+          <h2 className="flex items-center gap-2.5 text-xl font-semibold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <Icon name="leaf" size={18} />
+            </span>
+            За продукта
+          </h2>
+          <p className="mt-4 max-w-3xl whitespace-pre-line leading-relaxed text-foreground/90">
+            {listing.description}
+          </p>
+        </section>
+      ) : null}
+
       {/* Оценки за продукта */}
-      <section id="otzivi" className="mt-16 border-t border-border pt-10">
+      <section id="otzivi" className="mt-14 scroll-mt-28">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="font-serif text-2xl font-semibold">Оценки за продукта</h2>
           {listing.ratingCount > 0 ? (
@@ -477,7 +548,7 @@ export default async function ListingDetailPage({
 
       {/* Още от същото стопанство */}
       {otherCards.length > 0 ? (
-        <section className="mt-16 border-t border-border pt-10">
+        <section className="mt-14">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-serif text-2xl font-semibold">
               Още от {p.farmName}
@@ -503,15 +574,15 @@ export default async function ListingDetailPage({
 
       {/* Продукти на партньорите по съвместна доставка */}
       {partnerCards.length > 0 ? (
-        <section className="mt-16 rounded-[var(--radius-lg)] border border-success/30 bg-success-soft/40 p-6 sm:p-8">
+        <section className="mt-14 rounded-[var(--radius-xl)] border border-primary/20 bg-primary-soft/50 p-6 sm:p-8">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="font-serif text-2xl font-semibold text-success">
+            <h2 className="font-serif text-2xl font-semibold text-primary">
               Може да дойде с една доставка
             </h2>
             {p.town ? (
               <Link
                 href={`/savmestno/${encodeURIComponent(p.town)}`}
-                className="text-sm font-semibold text-success hover:underline"
+                className="text-sm font-semibold text-primary hover:underline"
               >
                 Виж цялата група за {p.town} →
               </Link>
