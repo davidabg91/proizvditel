@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RatingStars } from "@/components/ui/rating";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, farmInitial } from "@/lib/utils";
 
 /**
  * Визитка на стопанството под статията.
@@ -54,7 +54,7 @@ export function ArticleAuthorCard({ author }: { author: ArticleAuthor }) {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center font-serif text-2xl font-semibold text-primary">
-                {author.farmName.charAt(0)}
+                {farmInitial(author.farmName)}
               </div>
             )}
           </div>

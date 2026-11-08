@@ -2,6 +2,7 @@
 
 import { useState, useRef, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { FarmNameCover } from "@/components/brand/farm-name-cover";
 import { updateCoverPosition } from "@/app/tablo/profil/actions";
 
 export function ProfileCover({
@@ -10,8 +11,12 @@ export function ProfileCover({
   initialPositionX = 50,
   initialScale = 100,
   isOwner = false,
+  farmName,
+  place,
 }: {
   coverUrl: string | null;
+  farmName: string;
+  place?: string | null;
   initialPositionY?: number;
   initialPositionX?: number;
   initialScale?: number;
@@ -95,14 +100,7 @@ export function ProfileCover({
   if (!coverUrl) {
     return (
       <div className="relative h-48 w-full overflow-hidden bg-primary sm:h-72">
-        <div className="h-full w-full bg-[radial-gradient(circle_at_82%_0%,rgba(240,201,119,0.4),transparent_55%),linear-gradient(170deg,#123126,#245039)]" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero-pattern.webp"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover opacity-[0.07] mix-blend-screen invert"
-        />
+        <FarmNameCover farmName={farmName} place={place} size="profile" />
       </div>
     );
   }

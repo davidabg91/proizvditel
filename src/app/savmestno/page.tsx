@@ -4,7 +4,7 @@ import { getDeliveryBoard, type DeliveryGroup } from "@/lib/shared-delivery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, farmInitial } from "@/lib/utils";
 import { PageHero } from "@/components/layout/page-hero";
 
 export const metadata: Metadata = {
@@ -170,7 +170,7 @@ function GroupSection({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.logoUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    p.farmName.charAt(0)
+                    farmInitial(p.farmName)
                   )}
                 </span>
                 <span className="truncate text-sm font-semibold hover:text-primary">

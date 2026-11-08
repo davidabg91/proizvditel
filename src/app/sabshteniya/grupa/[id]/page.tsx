@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, farmInitial } from "@/lib/utils";
 import { getDeliveryChatForUser, markDeliveryChatRead } from "@/lib/delivery-chat";
 import { GroupThread } from "./group-thread";
 
@@ -126,7 +126,7 @@ export default async function DeliveryChatPage({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        o.farmName.charAt(0)
+                        farmInitial(o.farmName)
                       )}
                     </div>
                     <Link

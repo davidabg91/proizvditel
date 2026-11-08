@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { farmInitial } from "@/lib/utils";
 import { RatingStars } from "@/components/ui/rating";
 import { Icon } from "@/components/ui/icons";
+import { FarmNameCover } from "@/components/brand/farm-name-cover";
 
 export type ProducerCardData = {
   slug: string;
@@ -48,7 +50,7 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
             }}
           />
         ) : (
-          <div className="h-full w-full bg-[radial-gradient(circle_at_80%_10%,rgba(240,201,119,0.35),transparent_55%),linear-gradient(160deg,#173b2d,#2b5a44)]" />
+          <FarmNameCover farmName={producer.farmName} />
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
 
@@ -79,7 +81,7 @@ export function ProducerCard({ producer }: { producer: ProducerCardData }) {
               <img src={producer.logoUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center font-serif text-xl font-bold text-primary">
-                {producer.farmName.charAt(0)}
+                {farmInitial(producer.farmName)}
               </div>
             )}
           </div>

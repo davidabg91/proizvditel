@@ -9,7 +9,7 @@ import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { DeliveryBadges } from "@/components/product/delivery-badges";
 import { ListingCard, type ListingCardData } from "@/components/product/listing-card";
 import { getMutualPartners } from "@/lib/partners";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, farmInitial } from "@/lib/utils";
 import { Icon, categoryIcon } from "@/components/ui/icons";
 import { ReviewsList } from "@/components/product/reviews-list";
 import { ReviewForm } from "@/components/product/review-form";
@@ -443,7 +443,7 @@ export default async function ListingDetailPage({
                 <img src={p.logoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center font-serif text-lg font-semibold text-primary">
-                  {p.farmName.charAt(0)}
+                  {farmInitial(p.farmName)}
                 </div>
               )}
             </div>

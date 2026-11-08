@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { farmInitial } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -98,7 +99,7 @@ export default async function TownGroupPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.logoUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    p.farmName.charAt(0)
+                    farmInitial(p.farmName)
                   )}
                 </span>
                 <span className="text-lg font-semibold hover:text-primary">

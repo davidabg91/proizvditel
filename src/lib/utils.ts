@@ -57,3 +57,13 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 }
+
+/** Името на стопанството без кавичките около него („"Умаревска ябълка"“). */
+export function cleanFarmName(name: string): string {
+  return name.trim().replace(/^["'„“”«»]+|["'„“”«»]+$/g, "").trim() || name;
+}
+
+/** Първата буква за резервното лого — без кавички отпред. */
+export function farmInitial(name: string): string {
+  return cleanFarmName(name).charAt(0).toUpperCase();
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { farmInitial } from "@/lib/utils";
 import { after } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -205,6 +206,8 @@ export default async function ProducerProfilePage({
         initialPositionX={producer.coverPositionX ?? 50}
         initialScale={producer.coverScale ?? 100}
         isOwner={isOwner}
+        farmName={producer.farmName}
+        place={location}
       />
 
       <div className="container-page">
@@ -222,7 +225,7 @@ export default async function ProducerProfilePage({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-serif text-3xl font-semibold text-primary">
-                    {producer.farmName.charAt(0)}
+                    {farmInitial(producer.farmName)}
                   </div>
                 )}
               </div>
@@ -546,7 +549,7 @@ export default async function ProducerProfilePage({
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={n.logoUrl} alt="" className="h-full w-full object-cover" />
                               ) : (
-                                n.farmName.charAt(0)
+                                farmInitial(n.farmName)
                               )}
                             </span>
                             <span className="truncate">{n.farmName}</span>
