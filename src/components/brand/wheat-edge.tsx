@@ -24,7 +24,7 @@ export function WheatEdge({
       aria-hidden
       viewBox="0 0 1440 64"
       preserveAspectRatio="none"
-      className={cn("pointer-events-none absolute inset-x-0 top-0 h-16 w-full", className)}
+      className={cn("pointer-events-none absolute inset-x-0 -top-px h-[65px] w-full", className)}
     >
       <defs>
         <linearGradient id={`${id}-wheat-edge`} x1="0" y1="0" x2="1" y2="0">
