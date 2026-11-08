@@ -57,7 +57,7 @@ export async function resetPassword(token: string, password: string): Promise<Re
     return { ok: false, error: "Паролата трябва да е поне 8 символа." };
   }
   const user = token
-    ? await prisma.user.findUnique({
+    ? await prisma.user.findFirst({
         where: { resetTokenHash: sha256(token) },
         select: { id: true, resetTokenExpiresAt: true, banned: true },
       })

@@ -25,10 +25,12 @@ model User {
   role         String   @default("producer")
   banned       Boolean  @default(false)
   // Възстановяване на парола: пазим само хеша на токена и срока му.
-  resetTokenHash      String?   @unique
+  resetTokenHash      String?
   resetTokenExpiresAt DateTime?
   // Изтрит по желание на потребителя — личните данни са обезличени.
   deletedAt    DateTime?
+
+  @@index([resetTokenHash])
   // Приемане на Общите условия при регистрация (доказателство за съгласие)
   termsAcceptedAt DateTime?
   termsVersion    String?
