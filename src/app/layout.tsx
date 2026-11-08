@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Lora } from "next/font/google";
+import { Manrope, Lora, Caveat } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -21,6 +21,16 @@ const lora = Lora({
   variable: "--font-lora",
   subsets: ["latin", "cyrillic"],
   display: "swap",
+});
+
+// Ръкописен шрифт за името на стопанство без корица. Без preload — браузърът
+// го изтегля само на страниците, където наистина се появява.
+const caveat = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin", "cyrillic"],
+  weight: ["700"],
+  display: "swap",
+  preload: false,
 });
 
 const siteUrl = getSiteUrl();
@@ -80,7 +90,7 @@ export default async function RootLayout({
   return (
     <html
       lang="bg"
-      className={`${manrope.variable} ${lora.variable} h-full antialiased`}
+      className={`${manrope.variable} ${lora.variable} ${caveat.variable} h-full antialiased`}
       style={{
         // Свързваме избраните шрифтове с токените от дизайн системата
         ["--font-sans" as string]: "var(--font-manrope), ui-sans-serif, system-ui, sans-serif",

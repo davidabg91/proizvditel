@@ -1,12 +1,4 @@
-import { Caveat } from "next/font/google";
 import { cn, cleanFarmName } from "@/lib/utils";
-
-// Ръкописният шрифт се зарежда само на страниците, които го ползват.
-const handwriting = Caveat({
-  subsets: ["latin", "cyrillic"],
-  weight: ["600", "700"],
-  display: "swap",
-});
 
 /**
  * Корица по подразбиране за стопанство без собствена снимка: фирменият зелен
@@ -49,7 +41,7 @@ export function FarmNameCover({
 
       <p
         className={cn(
-          handwriting.className,
+          "font-[family-name:var(--font-hand)]",
           "relative line-clamp-2 font-bold leading-[0.95] text-[#f6dfa6] [text-shadow:0_2px_12px_rgba(0,0,0,0.35)]",
           profile
             ? "max-w-4xl text-[2.9rem] sm:text-7xl lg:text-8xl"
